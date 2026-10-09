@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FileCheck2, Trash2, FolderOpen } from "lucide-react";
 import { Card } from "../components/Card";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useSeo } from "../hooks/useSeo";
 import { useScanLibrary } from "../hooks/useScanLibrary";
 import type { ScanDocument } from "../hooks/useScanLibrary";
@@ -15,12 +16,12 @@ function formatDate(ts: number): string {
 interface DocumentCardProps {
   doc: ScanDocument;
   onRename: (id: string, name: string) => void;
-  onDelete: (id: string) => void;
+  onRequestDelete: (doc: ScanDocument) => void;
   onExport: (doc: ScanDocument) => void;
   exporting: boolean;
 }
 
-function DocumentCard({ doc, onRename, onDelete, onExport, exporting }: DocumentCardProps) {
+function DocumentCard({ doc, onRename, onRequestDelete, onExport, exporting }: DocumentCardProps) {
   // Uncontrolled-ish local value, committed to the store only on blur —
   // persisting (and round-tripping through IndexedDB) on every keystroke
   // would both lag the input and risk out-of-order writes clobbering each
@@ -65,9 +66,9 @@ function DocumentCard({ doc, onRename, onDelete, onExport, exporting }: Document
         </button>
         <button
           type="button"
-          aria-label="Delete"
-          onClick={() => onDelete(doc.id)}
-          className="rounded-lg border border-border bg-surface p-1.5 text-bad"
+          aria-label={`Delete ${doc.name}`}
+          onClick={() => onRequestDelete(doc)}
+          className="rounded-lg border border-border bg-surface p-1.5 text-bad focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -84,6 +85,7 @@ export default function ScanLibraryPage() {
 
   const { documents, loaded, deleteDocument, renameDocument } = useScanLibrary();
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ScanDocument | null>(null);
 
   const handleExport = async (doc: ScanDocument) => {
     setExportingId(doc.id);
@@ -123,7 +125,7 @@ export default function ScanLibraryPage() {
                 key={doc.id}
                 doc={doc}
                 onRename={renameDocument}
-                onDelete={deleteDocument}
+                onRequestDelete={setPendingDelete}
                 onExport={handleExport}
                 exporting={exportingId === doc.id}
               />
@@ -131,6 +133,18 @@ export default function ScanLibraryPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={`Delete "${pendingDelete?.name ?? ""}"?`}
+        description={`This removes it from your library on this device. It's a ${pendingDelete?.pages.length ?? 0}-page document — this can't be undone.`}
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (pendingDelete) deleteDocument(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </section>
   );
 }

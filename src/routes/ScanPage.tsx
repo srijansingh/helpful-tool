@@ -11,6 +11,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useScanStore } from "../store/useScanStore";
+import { useToastStore } from "../store/useToastStore";
 import { useScanLibrary } from "../hooks/useScanLibrary";
 import { warpPerspective } from "../lib/scan/perspective";
 import type { Quad } from "../lib/scan/perspective";
@@ -35,8 +36,10 @@ export default function ScanPage() {
   const pages = useScanStore((s) => s.pages);
   const addPage = useScanStore((s) => s.addPage);
   const removePage = useScanStore((s) => s.removePage);
+  const insertPageAt = useScanStore((s) => s.insertPageAt);
   const reorderPages = useScanStore((s) => s.reorderPages);
   const clearSession = useScanStore((s) => s.clear);
+  const pushToast = useToastStore((s) => s.push);
   const { saveDocument } = useScanLibrary();
 
   const [step, setStep] = useState<Step>("capture");
@@ -119,6 +122,18 @@ export default function ScanPage() {
       filter: selectedFilter,
     });
     resetEditor();
+  };
+
+  const handleRemovePage = (id: string) => {
+    const index = pages.findIndex((p) => p.id === id);
+    if (index === -1) return;
+    const removed = pages[index];
+    removePage(id);
+    pushToast({
+      message: "Page removed",
+      actionLabel: "Undo",
+      onAction: () => insertPageAt(index, removed),
+    });
   };
 
   const buildPdfBytes = async () => {
@@ -238,7 +253,7 @@ export default function ScanPage() {
             {pages.length} page{pages.length === 1 ? "" : "s"} in this scan
           </h2>
           <div className="mt-3">
-            <PageFilmstrip pages={pages} onReorder={reorderPages} onRemove={removePage} />
+            <PageFilmstrip pages={pages} onReorder={reorderPages} onRemove={handleRemovePage} />
           </div>
 
           <div className="mt-5 sm:max-w-xs">

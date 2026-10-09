@@ -12,6 +12,7 @@ interface OrganizeState {
   setPages: (pages: OrganizePageState[]) => void;
   rotatePage: (id: string) => void;
   removePage: (id: string) => void;
+  insertPageAt: (index: number, page: OrganizePageState) => void;
   setOutputName: (name: string) => void;
   reset: () => void;
 }
@@ -40,6 +41,15 @@ export const useOrganizeStore = create<OrganizeState>((set) => ({
       pages: s.pages.map((p) => (p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p)),
     })),
   removePage: (id) => set((s) => ({ pages: s.pages.filter((p) => p.id !== id) })),
+  // Puts a removed page back at its original position — the undo side of
+  // removePage, used by the undo toast rather than a blocking confirm on
+  // every single page removal.
+  insertPageAt: (index, page) =>
+    set((s) => {
+      const next = [...s.pages];
+      next.splice(Math.min(index, next.length), 0, page);
+      return { pages: next };
+    }),
   setOutputName: (outputName) => set({ outputName }),
   reset: () => set({ fileName: null, bytes: null, rotations: [], thumbs: [], pages: [], outputName: "organized" }),
 }));

@@ -7,9 +7,11 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
 import { PdfPreview } from "../components/PdfPreview";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useOrganizeStore } from "../store/useOrganizeStore";
+import { useToastStore } from "../store/useToastStore";
 import { loadOrganizeSource, buildOrganizedPdf } from "../lib/pdf/organize";
 import { renderAllPageThumbnails } from "../lib/pdf/pageThumbnails";
 import { downloadBytes } from "../lib/download";
@@ -31,13 +33,16 @@ export default function OrganizePage() {
   const setPages = useOrganizeStore((s) => s.setPages);
   const rotatePage = useOrganizeStore((s) => s.rotatePage);
   const removePage = useOrganizeStore((s) => s.removePage);
+  const insertPageAt = useOrganizeStore((s) => s.insertPageAt);
   const setOutputName = useOrganizeStore((s) => s.setOutputName);
   const resetStore = useOrganizeStore((s) => s.reset);
+  const pushToast = useToastStore((s) => s.push);
 
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
+  const [confirmStartOver, setConfirmStartOver] = useState(false);
   const { entries, logActivity } = useRecentActivity();
 
   const handleFile = async (files: File[]) => {
@@ -55,6 +60,18 @@ export default function OrganizePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRemovePage = (id: string) => {
+    const index = pages.findIndex((p) => p.id === id);
+    if (index === -1) return;
+    const removed = pages[index];
+    removePage(id);
+    pushToast({
+      message: "Page removed",
+      actionLabel: "Undo",
+      onAction: () => insertPageAt(index, removed),
+    });
   };
 
   const build = () => {
@@ -111,7 +128,7 @@ export default function OrganizePage() {
           />
         )}
 
-        {bytes && pages.length > 0 && (
+        {bytes && (
           <>
             <div className="flex items-center justify-between">
               <h2 className="truncate font-display text-sm font-semibold text-muted">
@@ -119,45 +136,50 @@ export default function OrganizePage() {
               </h2>
               <button
                 type="button"
-                onClick={() => {
-                  resetStore();
-                  setStatus({ kind: "idle" });
-                }}
-                className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted hover:text-fg"
+                onClick={() => setConfirmStartOver(true)}
+                className="flex shrink-0 items-center gap-1 text-xs font-semibold text-muted hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <RotateCcw className="h-3 w-3" aria-hidden="true" />
                 Start Over
               </button>
             </div>
 
-            <div className="mt-3">
-              <PageGrid pages={pages} thumbs={thumbs} onReorder={setPages} onRotate={rotatePage} onRemove={removePage} />
-            </div>
+            {pages.length === 0 ? (
+              <p className="mt-4 rounded-xl border border-dashed border-border bg-surface-2/50 p-6 text-center text-sm text-muted">
+                Every page has been removed. Start over to load a PDF again.
+              </p>
+            ) : (
+              <>
+                <div className="mt-3">
+                  <PageGrid pages={pages} thumbs={thumbs} onReorder={setPages} onRotate={rotatePage} onRemove={handleRemovePage} />
+                </div>
 
-            <div className="mt-5 sm:max-w-xs">
-              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
-            </div>
+                <div className="mt-5 sm:max-w-xs">
+                  <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+                </div>
 
-            <button
-              type="button"
-              onClick={handlePreview}
-              disabled={previewing}
-              className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
-            >
-              <Eye className="h-4 w-4" aria-hidden="true" />
-              {previewing ? "Building preview…" : "Preview PDF"}
-            </button>
+                <button
+                  type="button"
+                  onClick={handlePreview}
+                  disabled={previewing}
+                  className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+                >
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  {previewing ? "Building preview…" : "Preview PDF"}
+                </button>
 
-            <button
-              type="button"
-              onClick={handleExport}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
-            >
-              <FileCheck2 className="h-5 w-5" aria-hidden="true" />
-              Export PDF
-            </button>
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+                >
+                  <FileCheck2 className="h-5 w-5" aria-hidden="true" />
+                  Export PDF
+                </button>
 
-            <StatusMessage status={status} />
+                <StatusMessage status={status} />
+              </>
+            )}
           </>
         )}
       </Card>
@@ -165,6 +187,19 @@ export default function OrganizePage() {
       <RecentActivity entries={entries.filter((e) => e.tool === "organize")} />
 
       {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+
+      <ConfirmDialog
+        open={confirmStartOver}
+        title="Start over?"
+        description={`This discards every change you've made to ${fileName ?? "this PDF"} — reordering, deleted pages, and rotations. The original file on your computer is untouched.`}
+        confirmLabel="Start Over"
+        onConfirm={() => {
+          resetStore();
+          setStatus({ kind: "idle" });
+          setConfirmStartOver(false);
+        }}
+        onCancel={() => setConfirmStartOver(false)}
+      />
     </section>
   );
 }

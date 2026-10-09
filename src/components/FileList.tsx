@@ -6,10 +6,11 @@ import { formatSize } from "../lib/formatSize";
 interface FileListProps {
   files: File[];
   onReorder: (files: File[]) => void;
+  onRemove?: (file: File, index: number) => void;
   thumbnails?: Map<File, string>;
 }
 
-export function FileList({ files, onReorder, thumbnails }: FileListProps) {
+export function FileList({ files, onReorder, onRemove, thumbnails }: FileListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
 
@@ -24,6 +25,7 @@ export function FileList({ files, onReorder, thumbnails }: FileListProps) {
   };
 
   const remove = (i: number) => {
+    onRemove?.(files[i], i);
     onReorder(files.filter((_, idx) => idx !== i));
   };
 

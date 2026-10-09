@@ -12,6 +12,7 @@ import { mergePdfs } from "../lib/pdf/merge";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { useMergeStore } from "../store/useMergeStore";
+import { useToastStore } from "../store/useToastStore";
 
 export default function MergePage() {
   useSeo(
@@ -27,8 +28,22 @@ export default function MergePage() {
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = usePdfThumbnails(files);
+  const pushToast = useToastStore((s) => s.push);
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+
+  const handleRemoveFile = (file: File, index: number) => {
+    pushToast({
+      message: `Removed ${file.name}`,
+      actionLabel: "Undo",
+      onAction: () => {
+        const current = useMergeStore.getState().files;
+        const next = [...current];
+        next.splice(Math.min(index, next.length), 0, file);
+        setFiles(next);
+      },
+    });
+  };
 
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -65,7 +80,7 @@ export default function MergePage() {
         />
 
         <div className="mt-5">
-          <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
+          <FileList files={files} onReorder={setFiles} onRemove={handleRemoveFile} thumbnails={thumbnails} />
         </div>
 
         {files.length > 0 && (

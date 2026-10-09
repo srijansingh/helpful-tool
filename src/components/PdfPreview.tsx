@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { renderPdfPages } from "../lib/pdf/renderPdfPages";
+import { useScrollLock } from "../hooks/useScrollLock";
 
 interface PdfPreviewProps {
   bytes: Uint8Array;
@@ -14,6 +15,18 @@ interface PdfPreviewProps {
 export function PdfPreview({ bytes, onClose }: PdfPreviewProps) {
   const [pages, setPages] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useScrollLock(true);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,6 +50,9 @@ export function PdfPreview({ bytes, onClose }: PdfPreviewProps) {
       role="dialog"
       aria-modal="true"
       aria-label="PDF preview"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div className="flex w-full max-w-lg flex-1 flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl sm:flex-none sm:h-[85vh]">
         <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
@@ -44,10 +60,11 @@ export function PdfPreview({ bytes, onClose }: PdfPreviewProps) {
             {pages ? `${pages.length} page${pages.length === 1 ? "" : "s"}` : "Preview"}
           </h2>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Close preview"
-            className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-fg"
+            className="rounded-full p-1.5 text-muted hover:bg-surface-2 hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-5 w-5" />
           </button>
