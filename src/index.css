@@ -461,3 +461,208 @@ button:disabled {
   border-radius: 8px;
   font-size: 13px;
 }
+
+/* The document is the workspace; options become an inspector or a sheet. */
+.app-sidebar {
+  display: none;
+}
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  transform: translateY(-200%);
+  padding: 12px;
+  background: var(--color-surface);
+}
+.skip-link:focus {
+  transform: none;
+}
+.task-back {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+}
+.document-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.workspace-document {
+  order: 0;
+  min-width: 0;
+}
+.workspace-inspector {
+  order: 1;
+  min-width: 0;
+}
+.settings-content {
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 20px;
+  background: var(--color-surface);
+}
+.settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.settings-trigger,
+.settings-close,
+.settings-backdrop {
+  display: none;
+}
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+input[type="range"] {
+  min-height: 44px;
+}
+label:has(input[type="checkbox"]) {
+  min-height: 44px;
+  align-items: center;
+}
+@media (min-width: 768px) {
+  .app-sidebar {
+    display: flex;
+    position: sticky;
+    top: 0;
+    height: 100dvh;
+    width: 208px;
+    flex-shrink: 0;
+    flex-direction: column;
+    overflow-y: auto;
+    border-right: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 20px 12px;
+  }
+  .document-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+  .workspace-document {
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100dvh - 40px);
+    overflow: auto;
+  }
+  .workspace-inspector {
+    grid-column: 2;
+    grid-row: 1;
+  }
+}
+@media (min-width: 640px) and (max-width: 767px) {
+  .mobile-header {
+    display: flex;
+  }
+  .app-tabs {
+    display: flex;
+  }
+}
+@media (max-width: 767px) {
+  .workspace.focused [data-primary-action] {
+    bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  .workspace.focused:has([data-primary-action]) {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  }
+  .settings-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+  }
+  .settings-content:not(.is-empty):not(.is-open) {
+    display: none;
+  }
+  .settings-content.is-open {
+    position: fixed;
+    z-index: 61;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 24px 24px 0 0;
+    max-height: 85dvh;
+    overflow-y: auto;
+    padding: 20px 20px calc(24px + env(safe-area-inset-bottom));
+  }
+  .settings-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: #0007;
+    z-index: 60;
+  }
+  .settings-close {
+    display: flex;
+  }
+  .workspace-document .reader-search {
+    display: flex;
+  }
+  .workspace-document .reader-scroll {
+    max-height: 60dvh;
+  }
+  .workspace-document .reader-controls {
+    gap: 4px;
+  }
+}
+@media (max-width: 767px) {
+  .settings-content.is-empty .settings-close {
+    display: none;
+  }
+  .document-workspace:has(.settings-content.is-empty) .workspace-document {
+    display: none;
+  }
+  .editor-toolbar button {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+}
+
+.file-workspace-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .file-workspace-preview {
+    position: sticky;
+    top: 20px;
+    max-height: calc(100dvh - 40px);
+    overflow: auto;
+    margin-top: 0;
+  }
+}
+@media (max-width: 767px) {
+  .settings-trigger {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    width: calc(100% - 32px);
+    z-index: 26;
+    box-shadow: 0 4px 16px #0002;
+  }
+  .workspace.focused:has(.settings-trigger) {
+    padding-bottom: calc(164px + env(safe-area-inset-bottom));
+  }
+  .settings-content.is-open {
+    z-index: 61;
+  }
+}

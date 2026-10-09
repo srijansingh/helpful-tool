@@ -4,7 +4,9 @@ import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
-import { Card } from "../components/Card";
+import { ToolSettings } from "../components/ToolSettings";
+import { sourceKey } from "../lib/sourceKey";
+import { useSessionState } from "../hooks/useSessionState";
 import { LivePreviewPane } from "../components/LivePreviewPane";
 import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
@@ -49,10 +51,14 @@ export default function PageNumbersPage() {
   const setFontSize = usePageNumbersStore((s) => s.setFontSize);
   const outputName = usePageNumbersStore((s) => s.outputName);
   const setOutputName = usePageNumbersStore((s) => s.setOutputName);
-  const [ranges, setRanges] = useState("");
-  const [prefix, setPrefix] = useState("");
-  const [margin, setMargin] = useState(24);
-  const [skipCover, setSkipCover] = useState(false);
+  const [ranges, setRanges] = useSessionState("PageNumbersPage", "ranges", "");
+  const [prefix, setPrefix] = useSessionState("PageNumbersPage", "prefix", "");
+  const [margin, setMargin] = useSessionState("PageNumbersPage", "margin", 24);
+  const [skipCover, setSkipCover] = useSessionState(
+    "PageNumbersPage",
+    "skipCover",
+    false,
+  );
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -141,9 +147,9 @@ export default function PageNumbersPage() {
         Number every page — pick where and how, preview it, then download.
       </p>
 
-      <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
-        <div>
-          <Card>
+      <div className="mt-6 lg:grid document-workspace lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+        <div className="workspace-inspector">
+          <ToolSettings enabled={!!current} title="Number settings">
             <Dropzone
               accept="application/pdf"
               label="Drop a PDF here or click to browse"
@@ -297,27 +303,26 @@ export default function PageNumbersPage() {
                   type="button"
                   onClick={handlePreview}
                   disabled={previewing}
-                  className="flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50 lg:hidden"
+                  className="btn-secondary"
                 >
                   <Eye className="h-4 w-4" aria-hidden="true" />
                   {previewing ? "Building preview…" : "Preview PDF"}
-                </button>
-
-                <button
-                  type="button"
-                  data-primary-action="true"
-                  disabled={status.kind === "working" || !current}
-                  onClick={handleApply}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
-                >
-                  <Hash className="h-5 w-5" aria-hidden="true" />
-                  Apply &amp; Download
                 </button>
               </div>
             )}
 
             <StatusMessage status={status} />
-          </Card>
+          </ToolSettings>
+          <button
+            type="button"
+            data-primary-action="true"
+            disabled={status.kind === "working" || !current}
+            onClick={handleApply}
+            className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
+          >
+            <Hash className="h-5 w-5" aria-hidden="true" />
+            Apply &amp; Download
+          </button>
 
           <div className="lg:hidden">
             <RecentActivity
@@ -326,12 +331,12 @@ export default function PageNumbersPage() {
           </div>
         </div>
 
-        <div className="hidden lg:sticky lg:top-8 lg:flex lg:h-[calc(100vh-4rem)] lg:flex-col lg:gap-4">
+        <div className="workspace-document">
           <div className="min-h-0 flex-1">
             {current ? (
               <LivePreviewPane
                 build={build}
-                watch={`${current.name}-${current.size}-${position}-${format}-${startAt}-${fontSize}-${ranges}-${prefix}-${margin}-${skipCover}`}
+                watch={`${sourceKey(current.bytes)}-${position}-${format}-${startAt}-${fontSize}-${ranges}-${prefix}-${margin}-${skipCover}`}
                 emptyMessage="Add a PDF to see a live preview of the page numbers."
               />
             ) : (

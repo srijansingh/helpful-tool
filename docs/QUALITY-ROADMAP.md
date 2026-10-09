@@ -12,9 +12,16 @@ Scan crop/filter drafts survive navigation in memory; source pages and PDF save 
 
 Validated: production build, regression tests and browser password retry, owner-password retry, form-copy consent/reopen, strict split, 500-page bounded grid, retained scan crop and atomic scan-source save. Evidence lives outside the repository in the user's `quality-implementation-evidence` folder.
 
+## Phase 2 — document workspaces
+
+Watermark and page-number tools show a persistent document preview on mobile and a document/inspector layout on desktop. Options move into a focus-contained mobile sheet; export remains reachable outside it. Editor annotation controls use named icons and settings follow the page instead of pushing it below the fold. Merge and image-to-PDF previews are available at mobile widths. Task navigation includes an explicit return to Tools, tablet layouts retain full content width, and keyboard users can skip navigation.
+
+Preview identity tracks actual source bytes, including equal-name/equal-size replacements. Changing settings clears the old preview immediately. Dialogs cover textarea/select/summary controls, isolate background focus, restore focus and handle Escape. Range and checkbox targets meet the chosen 44px touch target standard.
+
+Validation: production build, existing regression tests, and mobile settings/preview browser checks. This is the shared workspace foundation; full editor mark interaction, richer contextual previews and every physical-device accessibility gate remain tracked for subsequent work.
+
 ## Remaining approved phases
 
-2. Desktop/mobile workspaces, common preview and selection workflows, accessible controls.
 3. Editor/forms/signatures, scan/OCR/compression, archive/offline/share, security/booklet refinements.
 4. Consistent visual language, discovery and measured regression/release validation.
 

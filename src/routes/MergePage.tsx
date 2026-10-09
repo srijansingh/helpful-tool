@@ -102,7 +102,7 @@ export default function MergePage() {
       </h1>
       <p className="mt-1 text-muted">Combine PDFs and photos in any order.</p>
 
-      <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
+      <div className="mt-6 lg:grid file-workspace lg:grid-cols-[minmax(0,1fr)_minmax(320px,1fr)] lg:items-start lg:gap-6">
         <div>
           <Card>
             <Dropzone
@@ -171,7 +171,7 @@ export default function MergePage() {
 
         {/* Desktop only — a live-updating preview of the merged result, not
             a modal you have to ask for, since there's width to spare here. */}
-        <div className="hidden lg:sticky lg:top-8 lg:flex lg:h-[calc(100vh-4rem)] lg:flex-col lg:gap-4">
+        <div className="file-workspace-preview">
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
               <LivePreviewPane

@@ -7,6 +7,8 @@ import { hasSessionDrafts } from "./hooks/useSessionState";
 import { useDocumentStore } from "./store/useDocumentStore";
 import { Suspense, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { TOOLS } from "./lib/tools";
 import { Sidebar } from "./components/Sidebar";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { PageLoading } from "./components/PageLoading";
@@ -32,18 +34,41 @@ export default function App() {
     window.addEventListener("beforeunload", guard);
     return () => window.removeEventListener("beforeunload", guard);
   }, []);
-  const focused = ["/edit", "/reader"].includes(path);
+  const tool = TOOLS.find((t) => t.to === path);
+  const focused = !!tool || path === "/reader";
   return (
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar />
       <div className="min-w-0 flex-1">
         <header className="mobile-header">
-          <NavLink to="/" className="font-bold">
-            Local<span className="text-accent">PDF</span>
-          </NavLink>
+          {focused ? (
+            <>
+              <NavLink
+                to="/tools"
+                className="task-back"
+                aria-label="Back to tools"
+              >
+                <ArrowLeft size={20} />
+              </NavLink>
+              <span className="font-bold">
+                {tool?.shortLabel ?? "Read PDF"}
+              </span>
+            </>
+          ) : (
+            <NavLink to="/" className="font-bold">
+              Local<span className="text-accent">PDF</span>
+            </NavLink>
+          )}
           <span className="text-xs text-muted">Private. On your device.</span>
         </header>
-        <main className={`workspace ${focused ? "focused" : ""}`}>
+        <a href="#workspace" className="skip-link">
+          Skip to workspace
+        </a>
+        <main
+          id="workspace"
+          tabIndex={-1}
+          className={`workspace ${focused ? "focused" : ""}`}
+        >
           <Suspense fallback={<PageLoading />}>
             <DocumentGate>
               <Outlet />

@@ -1,3 +1,12 @@
+import { ToolSettings } from "../components/ToolSettings";
+import {
+  MousePointer2,
+  Type,
+  PenLine,
+  Highlighter,
+  Square,
+  ImageIcon,
+} from "lucide-react";
 import { editPdf } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
@@ -252,15 +261,35 @@ export default function EditPage() {
             ).map((t) => (
               <button
                 key={t}
+                title={
+                  t === "image"
+                    ? "Image / signature"
+                    : t === "pen"
+                      ? "Draw signature"
+                      : t
+                }
+                aria-label={
+                  t === "image"
+                    ? "Image / signature"
+                    : t === "pen"
+                      ? "Draw signature"
+                      : t
+                }
                 className={mode === t ? "btn" : "btn-secondary"}
                 aria-pressed={mode === t}
                 onClick={() => setMode(t)}
               >
-                {t === "image"
-                  ? "Image / signature"
-                  : t === "pen"
-                    ? "Draw signature"
-                    : t[0].toUpperCase() + t.slice(1)}
+                {(() => {
+                  const Icon = {
+                    select: MousePointer2,
+                    text: Type,
+                    pen: PenLine,
+                    highlight: Highlighter,
+                    rectangle: Square,
+                    image: ImageIcon,
+                  }[t];
+                  return <Icon size={20} aria-hidden="true" />;
+                })()}
               </button>
             ))}
             <button
@@ -284,67 +313,7 @@ export default function EditPage() {
               Redo
             </button>
           </div>
-          <details className="panel" open={mode === "text" || mode === "image"}>
-            <summary>Text, color & signature options</summary>
-            <div className="editor-options">
-              <label className="field-label">
-                Text or typed signature
-                <input
-                  className="field"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                />
-              </label>
-              <label className="field-label">
-                Text size
-                <input
-                  className="field"
-                  type="number"
-                  min="6"
-                  max="120"
-                  value={fontSize}
-                  onChange={(e) =>
-                    setFontSize(
-                      Math.max(6, Math.min(120, Number(e.target.value) || 20)),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Ink color
-                <input
-                  aria-label="Ink color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                />
-              </label>
-              <label className="btn-secondary">
-                Import image / signature
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg"
-                  className="sr-only"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (!f) return;
-                    try {
-                      const b = await createImageBitmap(f);
-                      const c = document.createElement("canvas");
-                      c.width = Math.min(1200, b.width);
-                      c.height = (b.height * c.width) / b.width;
-                      c.getContext("2d")!.drawImage(b, 0, 0, c.width, c.height);
-                      b.close();
-                      setImage(c.toDataURL("image/png"));
-                      setMode("image");
-                    } catch (e) {
-                      setError(friendlyError(e));
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          </details>
+
           <p className="text-sm text-muted mt-2">
             Tap or draw on the page. Use Select to move a mark. Signatures are
             visual marks, not certificate signatures.
@@ -454,6 +423,66 @@ export default function EditPage() {
               }
             />
           </div>
+          <ToolSettings enabled title="Annotation settings">
+            <div className="editor-options">
+              <label className="field-label">
+                Text or typed signature
+                <input
+                  className="field"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              </label>
+              <label className="field-label">
+                Text size
+                <input
+                  className="field"
+                  type="number"
+                  min="6"
+                  max="120"
+                  value={fontSize}
+                  onChange={(e) =>
+                    setFontSize(
+                      Math.max(6, Math.min(120, Number(e.target.value) || 20)),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Ink color
+                <input
+                  aria-label="Ink color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                />
+              </label>
+              <label className="btn-secondary">
+                Import image / signature
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try {
+                      const b = await createImageBitmap(f);
+                      const c = document.createElement("canvas");
+                      c.width = Math.min(1200, b.width);
+                      c.height = (b.height * c.width) / b.width;
+                      c.getContext("2d")!.drawImage(b, 0, 0, c.width, c.height);
+                      b.close();
+                      setImage(c.toDataURL("image/png"));
+                      setMode("image");
+                    } catch (e) {
+                      setError(friendlyError(e));
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </ToolSettings>
           {active && (
             <div className="panel mt-3">
               <p>Selected {active.kind}</p>
