@@ -79,82 +79,86 @@ export default function OcrPage() {
           onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
         />
       </div>
-      <div className="editor-options">
-        <label className="field-label">
-          Language
-          <select
-            className="field"
-            value={language}
+      <div className="tool-form mt-4">
+        <div className="editor-options" style={{ margin: 0 }}>
+          <label className="field-label">
+            Language
+            <select
+              className="field"
+              value={language}
+              disabled={busy}
+              onChange={(e) => setLanguage(e.target.value as OcrLanguage)}
+            >
+              <option value="eng">English</option>
+              <option value="eng+hin">English + Hindi</option>
+            </select>
+          </label>
+          <label className="field-label">
+            PDF pages (up to 20; blank = all)
+            <input
+              className="field"
+              placeholder="1, 3-5"
+              disabled={busy}
+              value={ranges}
+              onChange={(e) => setRanges(e.target.value)}
+            />
+          </label>
+        </div>
+        <div>
+          <button
+            className="btn-secondary"
             disabled={busy}
-            onChange={(e) => setLanguage(e.target.value as OcrLanguage)}
+            onClick={async () => {
+              controller.current = new AbortController();
+              setBusy(true);
+              try {
+                await prepareOcr(language, setStatus, controller.current.signal);
+              } catch (e) {
+                setStatus(
+                  e instanceof Error
+                    ? e.message
+                    : typeof e === "string"
+                      ? e
+                      : "OCR could not finish. Prepare the offline assets and try again.",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
           >
-            <option value="eng">English</option>
-            <option value="eng+hin">English + Hindi</option>
-          </select>
-        </label>
-        <label className="field-label">
-          PDF pages (up to 20; blank = all)
-          <input
-            className="field"
-            placeholder="1, 3-5"
-            disabled={busy}
-            value={ranges}
-            onChange={(e) => setRanges(e.target.value)}
-          />
-        </label>
+            Download OCR for offline use
+          </button>
+          <p className="text-sm text-muted mt-2">
+            Initial OCR files are about 13 MB plus language data. This
+            optional download makes them available offline after the app
+            service worker is active.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="btn"
+            data-primary-action
+            disabled={
+              !file ||
+              (!file.type.startsWith("image/") &&
+                file.type !== "application/pdf") ||
+              busy
+            }
+            onClick={() => void run()}
+          >
+            {busy ? "Working…" : "Recognize text & export PDF"}
+          </button>
+          {busy && controller.current && (
+            <button
+              className="btn-secondary"
+              onClick={() => controller.current?.abort()}
+            >
+              Cancel OCR
+            </button>
+          )}
+        </div>
+        {status && <p role="status">{status}</p>}
       </div>
-      <button
-        className="btn-secondary"
-        disabled={busy}
-        onClick={async () => {
-          controller.current = new AbortController();
-          setBusy(true);
-          try {
-            await prepareOcr(language, setStatus, controller.current.signal);
-          } catch (e) {
-            setStatus(
-              e instanceof Error
-                ? e.message
-                : typeof e === "string"
-                  ? e
-                  : "OCR could not finish. Prepare the offline assets and try again.",
-            );
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        Download OCR for offline use
-      </button>
-      <p className="text-sm text-muted mt-2">
-        Initial OCR files are about 13 MB plus language data. This optional
-        download makes them available offline after the app service worker is
-        active.
-      </p>
-      <button
-        className="btn mt-4"
-        data-primary-action
-        disabled={
-          !file ||
-          (!file.type.startsWith("image/") &&
-            file.type !== "application/pdf") ||
-          busy
-        }
-        onClick={() => void run()}
-      >
-        {busy ? "Working…" : "Recognize text & export PDF"}
-      </button>
-      {busy && controller.current && (
-        <button
-          className="btn-secondary mt-3"
-          onClick={() => controller.current?.abort()}
-        >
-          Cancel OCR
-        </button>
-      )}
-      <p className="mt-3" role="status">
-        {status}
-      </p>
       {text && (
         <div className="panel mt-4">
           <h2 className="font-bold">Review extracted text</h2>

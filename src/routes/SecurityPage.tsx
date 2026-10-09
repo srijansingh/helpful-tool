@@ -73,83 +73,87 @@ export default function SecurityPage() {
           onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
         />
       </div>
-      <label className="field-label mt-4">
-        Action
-        <select
-          className="field"
-          disabled={busy}
-          value={action}
-          onChange={(e) => {
-            setAction(e.target.value as QpdfAction);
-            setPassword("");
-            setConfirm("");
-            setStatus("");
-          }}
-        >
-          <option value="protect">Add password · AES-256</option>
-          <option value="unlock">
-            Remove password · known password required
-          </option>
-          <option value="optimize">
-            Optimize PDF · preserve text and page quality
-          </option>
-        </select>
-      </label>
-      {(action === "protect" || action === "unlock") && (
-        <label className="field-label mt-4">
-          {action === "protect" ? "New password" : "Known document password"}
-          <input
+      <div className="tool-form mt-4">
+        <label className="field-label">
+          Action
+          <select
             className="field"
-            type="password"
-            autoComplete="off"
             disabled={busy}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+            value={action}
+            onChange={(e) => {
+              setAction(e.target.value as QpdfAction);
+              setPassword("");
+              setConfirm("");
+              setStatus("");
+            }}
+          >
+            <option value="protect">Add password · AES-256</option>
+            <option value="unlock">
+              Remove password · known password required
+            </option>
+            <option value="optimize">
+              Optimize PDF · preserve text and page quality
+            </option>
+          </select>
         </label>
-      )}
-      {action === "protect" && (
-        <label className="field-label mt-4">
-          Confirm new password
-          <input
-            className="field"
-            type="password"
-            autoComplete="off"
-            disabled={busy}
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-          />
-        </label>
-      )}
-      <p className="text-sm text-muted mt-3">
-        Optimization recompresses internal PDF streams; the size reduction
-        varies. Rewriting a PDF invalidates existing certificate signatures.
-      </p>
-      <button
-        className="btn mt-4"
-        data-primary-action
-        disabled={busy || file?.type !== "application/pdf"}
-        onClick={() => void run()}
-      >
-        {busy
-          ? "Working…"
-          : action === "protect"
-            ? "Protect PDF"
-            : action === "unlock"
-              ? "Remove password"
-              : "Optimize PDF"}
-      </button>
-      {busy && (
-        <button
-          className="btn-secondary mt-3"
-          onClick={() => controller.current?.abort()}
-        >
-          Cancel
-        </button>
-      )}
-      <p role="status" className="mt-4">
-        {status}
-      </p>
+        {(action === "protect" || action === "unlock") && (
+          <label className="field-label">
+            {action === "protect" ? "New password" : "Known document password"}
+            <input
+              className="field"
+              type="password"
+              autoComplete="off"
+              disabled={busy}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+        )}
+        {action === "protect" && (
+          <label className="field-label">
+            Confirm new password
+            <input
+              className="field"
+              type="password"
+              autoComplete="off"
+              disabled={busy}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+            />
+          </label>
+        )}
+        <p className="text-sm text-muted">
+          Optimization recompresses internal PDF streams; the size reduction
+          varies. Rewriting a PDF invalidates existing certificate signatures.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            className="btn"
+            data-primary-action
+            disabled={busy || file?.type !== "application/pdf"}
+            onClick={() => void run()}
+          >
+            {busy
+              ? "Working…"
+              : action === "protect"
+                ? "Protect PDF"
+                : action === "unlock"
+                  ? "Remove password"
+                  : "Optimize PDF"}
+          </button>
+          {busy && (
+            <button
+              className="btn-secondary"
+              onClick={() => controller.current?.abort()}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+        {status && (
+          <p role="status">{status}</p>
+        )}
+      </div>
     </section>
   );
 }

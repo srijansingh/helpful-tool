@@ -126,102 +126,102 @@ export default function CompressPage() {
             }}
           />
         </div>
-        <div className="editor-options">
-          <label className="field-label">
-            Resolution
-            <select
-              className="field"
-              value={scale}
-              onChange={(e) => setScale(Number(e.target.value))}
-            >
-              <option value="1">72 dpi · smallest</option>
-              <option value="1.5">108 dpi · balanced</option>
-              <option value="2">144 dpi · detailed</option>
-            </select>
-          </label>
-          <label className="field-label">
-            JPEG quality
-            <input
-              type="range"
-              min="0.3"
-              max="0.95"
-              step="0.05"
-              value={quality}
-              onChange={(e) => setQuality(Number(e.target.value))}
-            />
-          </label>
-          <label className="field-label">
-            Try to fit upload limit (KB; 0 = none)
-            <input
-              className="field"
-              type="number"
-              min="0"
-              value={target}
-              onChange={(e) => setTarget(Math.max(0, Number(e.target.value)))}
-            />
-          </label>
-        </div>
-        <label className="flex items-start gap-2 panel">
-          <input
-            type="checkbox"
-            checked={accepted}
-            onChange={(e) => setAccepted(e.target.checked)}
-          />
-          I want a flattened photo PDF and accept the loss of text and
-          interactive features.
-        </label>
-        <button
-          className="btn mt-4"
-          data-primary-action
-          disabled={
-            !file || file.type !== "application/pdf" || !accepted || busy
-          }
-          onClick={() => {
-            if (candidate && file)
-              downloadBytes(
-                candidate,
-                file.name.replace(/\.pdf$/i, "") + "-smaller.pdf",
-                "application/pdf",
-              );
-            else void build();
-          }}
-        >
-          {busy
-            ? "Processing…"
-            : candidate
-              ? "Download smaller PDF"
-              : "Create smaller PDF"}
-        </button>
-        {candidate && (
-          <div className="flex gap-2 mt-3">
-            <button
-              className="btn-secondary"
-              onClick={async () => {
-                if (file) setPreview(new Uint8Array(await file.arrayBuffer()));
-              }}
-            >
-              Review original
-            </button>
-            <button
-              className="btn-secondary"
-              onClick={() => setPreview(candidate)}
-            >
-              Review smaller PDF
-            </button>
+        <div className="tool-form mt-4">
+          <div className="editor-options" style={{ margin: 0 }}>
+            <label className="field-label">
+              Resolution
+              <select
+                className="field"
+                value={scale}
+                onChange={(e) => setScale(Number(e.target.value))}
+              >
+                <option value="1">72 dpi · smallest</option>
+                <option value="1.5">108 dpi · balanced</option>
+                <option value="2">144 dpi · detailed</option>
+              </select>
+            </label>
+            <label className="field-label">
+              JPEG quality
+              <input
+                type="range"
+                min="0.3"
+                max="0.95"
+                step="0.05"
+                value={quality}
+                onChange={(e) => setQuality(Number(e.target.value))}
+              />
+            </label>
+            <label className="field-label">
+              Try to fit upload limit (KB; 0 = none)
+              <input
+                className="field"
+                type="number"
+                min="0"
+                value={target}
+                onChange={(e) => setTarget(Math.max(0, Number(e.target.value)))}
+              />
+            </label>
           </div>
-        )}
+          <label className="flex items-start gap-2 panel">
+            <input
+              type="checkbox"
+              checked={accepted}
+              onChange={(e) => setAccepted(e.target.checked)}
+            />
+            I want a flattened photo PDF and accept the loss of text and
+            interactive features.
+          </label>
+          <button
+            className="btn"
+            data-primary-action
+            disabled={
+              !file || file.type !== "application/pdf" || !accepted || busy
+            }
+            onClick={() => {
+              if (candidate && file)
+                downloadBytes(
+                  candidate,
+                  file.name.replace(/\.pdf$/i, "") + "-smaller.pdf",
+                  "application/pdf",
+                );
+              else void build();
+            }}
+          >
+            {busy
+              ? "Processing…"
+              : candidate
+                ? "Download smaller PDF"
+                : "Create smaller PDF"}
+          </button>
+          {candidate && (
+            <div className="flex gap-2">
+              <button
+                className="btn-secondary"
+                onClick={async () => {
+                  if (file) setPreview(new Uint8Array(await file.arrayBuffer()));
+                }}
+              >
+                Review original
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setPreview(candidate)}
+              >
+                Review smaller PDF
+              </button>
+            </div>
+          )}
+          {busy && (
+            <button
+              className="btn-secondary"
+              onClick={() => cancel.current?.abort()}
+            >
+              Cancel
+            </button>
+          )}
+          {status && <p role="status">{status}</p>}
+        </div>
       </fieldset>
-      {busy && (
-        <button
-          className="btn-secondary mt-3"
-          onClick={() => cancel.current?.abort()}
-        >
-          Cancel
-        </button>
-      )}
-      <p className="mt-3" role="status">
-        {status}
-      </p>
       {preview && (
         <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
       )}

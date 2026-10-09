@@ -253,6 +253,24 @@ button:disabled {
   background: var(--color-surface);
   font-size: 16px;
 }
+/* A single-column settings form (Security, Compress, Booklet, OCR) has no
+   document pane to share width with, so left unconstrained its .field
+   inputs stretch edge-to-edge on desktop. Group them in one bounded card
+   instead, same as every per-file-store tool's <Card>. */
+.tool-form {
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+.tool-form > .field-label,
+.tool-form > .panel {
+  margin-top: 0;
+}
 .dropzone {
   background: var(--color-surface);
   border: 1px dashed var(--color-border);

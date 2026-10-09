@@ -80,72 +80,74 @@ export default function BookletPage() {
             }}
           />
         </div>
-        <label className="field-label mt-4">
-          Paper
-          <select
-            className="field"
-            value={paper}
-            onChange={(e) => setPaper(e.target.value as typeof paper)}
-          >
-            <option value="a4">A4</option>
-            <option value="letter">Letter</option>
-          </select>
-        </label>
-        <label className="panel flex gap-2 mt-4">
-          <input
-            type="checkbox"
-            checked={right}
-            onChange={(e) => setRight(e.target.checked)}
-          />
-          Right-side binding
-        </label>
-        {count > 0 && (
-          <details className="panel mt-3">
-            <summary>
-              Sheet plan · {Math.ceil(count / 4)} sheets ·{" "}
-              {Math.ceil(count / 4) * 4 - count} blank pages
-            </summary>
-            <ol className="text-sm mt-3 space-y-2">
-              {bookletOrder(count, right)
-                .slice(0, 40)
-                .map((pair, i) => (
-                  <li key={i}>
-                    Sheet {Math.floor(i / 2) + 1}, {i % 2 ? "back" : "front"}:{" "}
-                    {pair
-                      .map((n) => (n === null ? "blank" : `page ${n + 1}`))
-                      .join(" | ")}
-                  </li>
-                ))}
-            </ol>
-            {Math.ceil(count / 2) > 40 && (
-              <p>Preview the PDF for the remaining sheet sides.</p>
-            )}
-          </details>
-        )}
-        <p className="text-sm text-muted mt-3">
-          Export includes page content and flattened interactive form fields.
-          Other annotations, links and attachments are omitted. Check the
-          preview before printing. Existing certificate signatures are not
-          retained.
-        </p>
-        <button
-          className="btn-secondary mt-4"
-          disabled={busy || file?.type !== "application/pdf"}
-          onClick={() => void build(false)}
-        >
-          Preview booklet
-        </button>
-        <button
-          className="btn mt-4"
-          data-primary-action
-          disabled={busy || file?.type !== "application/pdf"}
-          onClick={() => void build(true)}
-        >
-          {busy ? "Arranging pages…" : "Export booklet PDF"}
-        </button>
-        <p role="status" className="mt-3">
-          {status}
-        </p>
+        <div className="tool-form mt-4">
+          <label className="field-label">
+            Paper
+            <select
+              className="field"
+              value={paper}
+              onChange={(e) => setPaper(e.target.value as typeof paper)}
+            >
+              <option value="a4">A4</option>
+              <option value="letter">Letter</option>
+            </select>
+          </label>
+          <label className="panel flex gap-2">
+            <input
+              type="checkbox"
+              checked={right}
+              onChange={(e) => setRight(e.target.checked)}
+            />
+            Right-side binding
+          </label>
+          {count > 0 && (
+            <details className="panel">
+              <summary>
+                Sheet plan · {Math.ceil(count / 4)} sheets ·{" "}
+                {Math.ceil(count / 4) * 4 - count} blank pages
+              </summary>
+              <ol className="text-sm mt-3 space-y-2">
+                {bookletOrder(count, right)
+                  .slice(0, 40)
+                  .map((pair, i) => (
+                    <li key={i}>
+                      Sheet {Math.floor(i / 2) + 1}, {i % 2 ? "back" : "front"}:{" "}
+                      {pair
+                        .map((n) => (n === null ? "blank" : `page ${n + 1}`))
+                        .join(" | ")}
+                    </li>
+                  ))}
+              </ol>
+              {Math.ceil(count / 2) > 40 && (
+                <p>Preview the PDF for the remaining sheet sides.</p>
+              )}
+            </details>
+          )}
+          <p className="text-sm text-muted">
+            Export includes page content and flattened interactive form
+            fields. Other annotations, links and attachments are omitted.
+            Check the preview before printing. Existing certificate
+            signatures are not retained.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <button
+              className="btn-secondary"
+              disabled={busy || file?.type !== "application/pdf"}
+              onClick={() => void build(false)}
+            >
+              Preview booklet
+            </button>
+            <button
+              className="btn"
+              data-primary-action
+              disabled={busy || file?.type !== "application/pdf"}
+              onClick={() => void build(true)}
+            >
+              {busy ? "Arranging pages…" : "Export booklet PDF"}
+            </button>
+          </div>
+          {status && <p role="status">{status}</p>}
+        </div>
         {preview && (
           <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
         )}
