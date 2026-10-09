@@ -4,6 +4,7 @@ import { FileStack, Scissors, ImageIcon, Images } from "lucide-react";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { PageLoading } from "./components/PageLoading";
 import { AdSlot } from "./components/AdSlot";
+import { TrustBadge } from "./components/TrustBadge";
 
 const TOOLS = [
   { to: "/merge", label: "Merge PDFs", icon: FileStack },
@@ -18,7 +19,7 @@ export default function App() {
       <header className="mx-auto max-w-4xl px-4 pt-6 sm:pt-10">
         <div className="flex items-center justify-between gap-4">
           <NavLink to="/" className="font-display text-xl font-extrabold tracking-tight sm:text-2xl">
-            PDF<span className="text-accent">Toolkit</span>
+            Local<span className="text-accent">PDF</span>
           </NavLink>
           <ThemeToggle />
         </div>
@@ -26,6 +27,9 @@ export default function App() {
           Merge, split and convert PDFs — entirely in your browser. Nothing is
           uploaded, no login needed.
         </p>
+        <div className="mt-3">
+          <TrustBadge />
+        </div>
       </header>
 
       <nav className="mx-auto mt-6 flex max-w-4xl gap-2 overflow-x-auto px-4 pb-1 sm:mt-8" aria-label="Tools">

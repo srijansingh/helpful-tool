@@ -1,26 +1,32 @@
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FileList } from "../components/FileList";
+import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
+import { useImageThumbnails } from "../hooks/useImageThumbnails";
 import { imagesToPdf } from "../lib/pdf/imagesToPdf";
 import { downloadBytes } from "../lib/download";
+import { formatSize } from "../lib/formatSize";
 
 export default function ImagesToPdfPage() {
   useSeo(
-    "Convert Images to PDF Online Free — JPG, PNG to PDF | PDF Toolkit",
-    "Combine JPG, PNG, WebP and other images into a single PDF, right in your browser. No upload, no login."
+    "Convert Images to PDF Online Free — JPG, PNG to PDF | LocalPDF",
+    "Combine JPG, PNG, WebP and other images into a single PDF, right in your browser. Preview and reorder first, no upload, no login."
   );
 
   const [files, setFiles] = useState<File[]>([]);
+  const [outputName, setOutputName] = useState("images");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
+  const thumbnails = useImageThumbnails(files);
 
   const addFiles = (newFiles: File[]) => setFiles((prev) => [...prev, ...newFiles]);
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const handleConvert = async () => {
     if (files.length === 0) {
@@ -30,9 +36,13 @@ export default function ImagesToPdfPage() {
     setStatus({ kind: "working", message: "Converting…" });
     try {
       const bytes = await imagesToPdf(files);
-      downloadBytes(bytes, "images.pdf", "application/pdf");
-      setStatus({ kind: "done", message: "Done — images.pdf downloaded." });
-      logActivity({ tool: "images-to-pdf", label: `Converted ${files.length} images to PDF` });
+      const filename = `${outputName.trim() || "images"}.pdf`;
+      downloadBytes(bytes, filename, "application/pdf");
+      setStatus({
+        kind: "done",
+        message: `Done — ${filename} (${formatSize(bytes.length)}) downloaded, processed entirely on this device.`,
+      });
+      logActivity({ tool: "images-to-pdf", label: `Converted ${files.length} images to ${filename}` });
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't convert: ${(e as Error).message}` });
     }
@@ -42,7 +52,7 @@ export default function ImagesToPdfPage() {
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Images to PDF</h1>
       <p className="mt-1 text-muted">
-        Pick one or more images (JPG, PNG, WebP…), reorder them, then combine into one PDF.
+        Pick one or more images (JPG, PNG, WebP…), preview and reorder them, then combine into one PDF.
       </p>
 
       <div className="mt-6">
@@ -56,7 +66,17 @@ export default function ImagesToPdfPage() {
       </div>
 
       <div className="mt-5">
-        <FileList files={files} onReorder={setFiles} />
+        <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
+      </div>
+
+      {files.length > 0 && (
+        <p className="mt-2 text-xs text-muted">
+          {files.length} image{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+        </p>
+      )}
+
+      <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
+        <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
       </div>
 
       <button

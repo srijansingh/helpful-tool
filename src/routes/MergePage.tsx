@@ -1,26 +1,32 @@
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FileList } from "../components/FileList";
+import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
+import { usePdfThumbnails } from "../hooks/usePdfThumbnails";
 import { mergePdfs } from "../lib/pdf/merge";
 import { downloadBytes } from "../lib/download";
+import { formatSize } from "../lib/formatSize";
 
 export default function MergePage() {
   useSeo(
-    "Merge PDF Files Online Free — PDF Toolkit",
-    "Combine multiple PDF files into one, in your browser. Reorder pages, no upload, no login, completely free."
+    "Merge PDF Files Online Free — LocalPDF",
+    "Combine multiple PDF files into one, in your browser. See page previews, rename the result, no upload, no login."
   );
 
   const [files, setFiles] = useState<File[]>([]);
+  const [outputName, setOutputName] = useState("merged");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
+  const thumbnails = usePdfThumbnails(files);
 
   const addFiles = (newFiles: File[]) => setFiles((prev) => [...prev, ...newFiles]);
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const handleMerge = async () => {
     if (files.length < 2) {
@@ -30,9 +36,13 @@ export default function MergePage() {
     setStatus({ kind: "working", message: "Merging…" });
     try {
       const bytes = await mergePdfs(files);
-      downloadBytes(bytes, "merged.pdf", "application/pdf");
-      setStatus({ kind: "done", message: "Done — merged.pdf downloaded." });
-      logActivity({ tool: "merge", label: `Merged ${files.length} PDFs` });
+      const filename = `${outputName.trim() || "merged"}.pdf`;
+      downloadBytes(bytes, filename, "application/pdf");
+      setStatus({
+        kind: "done",
+        message: `Done — ${filename} (${formatSize(bytes.length)}) downloaded, processed entirely on this device.`,
+      });
+      logActivity({ tool: "merge", label: `Merged ${files.length} PDFs into ${filename}` });
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't merge: ${(e as Error).message}` });
     }
@@ -41,7 +51,7 @@ export default function MergePage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Merge PDFs</h1>
-      <p className="mt-1 text-muted">Pick two or more PDFs, reorder them, then merge into one file.</p>
+      <p className="mt-1 text-muted">Pick two or more PDFs, preview and reorder them, then merge into one file.</p>
 
       <div className="mt-6">
         <Dropzone
@@ -54,7 +64,17 @@ export default function MergePage() {
       </div>
 
       <div className="mt-5">
-        <FileList files={files} onReorder={setFiles} />
+        <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
+      </div>
+
+      {files.length > 0 && (
+        <p className="mt-2 text-xs text-muted">
+          {files.length} file{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+        </p>
+      )}
+
+      <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
+        <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
       </div>
 
       <button

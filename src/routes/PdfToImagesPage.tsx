@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
+import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
@@ -7,19 +8,31 @@ import { AdSlot } from "../components/AdSlot";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { renderPdfToImages } from "../lib/pdf/pdfToImages";
+import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
 import { downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
+import { formatSize } from "../lib/formatSize";
 
 export default function PdfToImagesPage() {
   useSeo(
-    "Convert PDF to Images Online Free — PDF to JPG/PNG | PDF Toolkit",
+    "Convert PDF to Images Online Free — PDF to JPG/PNG | LocalPDF",
     "Export every page of a PDF as a JPG or PNG image, right in your browser. No upload, no login."
   );
 
   const [file, setFile] = useState<File | null>(null);
+  const [thumb, setThumb] = useState<string | null>(null);
   const [format, setFormat] = useState<"image/jpeg" | "image/png">("image/jpeg");
+  const [outputName, setOutputName] = useState("images");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
+
+  const handleFile = (files: File[]) => {
+    const f = files[0];
+    setFile(f);
+    setThumb(null);
+    setOutputName(f.name.replace(/\.pdf$/i, "-images"));
+    renderPdfThumbnail(f).then(setThumb).catch(() => {});
+  };
 
   const handleConvert = async () => {
     if (!file) {
@@ -29,14 +42,24 @@ export default function PdfToImagesPage() {
     setStatus({ kind: "working", message: "Rendering pages…" });
     try {
       const images = await renderPdfToImages(file, { format });
-      const base = file.name.replace(/\.pdf$/i, "");
+      const base = outputName.trim() || "images";
       if (images.length === 1) {
-        downloadBlob(new Blob([new Uint8Array(images[0].bytes)], { type: format }), images[0].name);
+        const blob = new Blob([new Uint8Array(images[0].bytes)], { type: format });
+        const ext = format === "image/png" ? "png" : "jpg";
+        downloadBlob(blob, `${base}.${ext}`);
+        setStatus({
+          kind: "done",
+          message: `Done — ${base}.${ext} (${formatSize(blob.size)}) downloaded, processed entirely on this device.`,
+        });
       } else {
-        downloadBlob(toZipBlob(images), `${base}-images.zip`);
+        const zipBlob = toZipBlob(images);
+        downloadBlob(zipBlob, `${base}.zip`);
+        setStatus({
+          kind: "done",
+          message: `Done — ${base}.zip (${formatSize(zipBlob.size)}, ${images.length} images) downloaded, processed entirely on this device.`,
+        });
       }
-      setStatus({ kind: "done", message: `Done — ${images.length} page${images.length === 1 ? "" : "s"} exported.` });
-      logActivity({ tool: "pdf-to-images", label: `Exported ${images.length} images from ${base}.pdf` });
+      logActivity({ tool: "pdf-to-images", label: `Exported ${images.length} images as ${base}` });
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't render that PDF: ${(e as Error).message}` });
     }
@@ -53,24 +76,39 @@ export default function PdfToImagesPage() {
         <Dropzone
           accept="application/pdf"
           label="Drop a PDF here or click to browse"
-          hint={file ? file.name : "One file at a time"}
-          onFiles={(files) => setFile(files[0])}
+          hint={file ? `${file.name} — ${formatSize(file.size)}` : "One file at a time"}
+          onFiles={handleFile}
         />
       </div>
 
-      <div className="mt-5 flex items-center gap-3">
-        <label htmlFor="format" className="text-sm text-muted">
-          Format
+      {file && (
+        <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
+          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+            {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : null}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-display text-sm font-semibold">{file.name}</p>
+            <p className="text-xs text-muted">{formatSize(file.size)}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-wrap items-end gap-3">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm text-muted">Format</span>
+          <select
+            id="format"
+            value={format}
+            onChange={(e) => setFormat(e.target.value as "image/jpeg" | "image/png")}
+            className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-display text-sm outline-none focus:border-accent"
+          >
+            <option value="image/jpeg">JPG</option>
+            <option value="image/png">PNG</option>
+          </select>
         </label>
-        <select
-          id="format"
-          value={format}
-          onChange={(e) => setFormat(e.target.value as "image/jpeg" | "image/png")}
-          className="rounded-xl border border-border bg-surface-2 px-3 py-2 font-display text-sm outline-none focus:border-accent"
-        >
-          <option value="image/jpeg">JPG</option>
-          <option value="image/png">PNG</option>
-        </select>
+        <div className="sm:max-w-xs">
+          <FilenameInput value={outputName} onChange={setOutputName} extension="jpg / png / zip" />
+        </div>
       </div>
 
       <button

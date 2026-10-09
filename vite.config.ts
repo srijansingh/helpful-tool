@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'PDF Toolkit — Merge, Split, Convert',
-        short_name: 'PDF Toolkit',
+        name: 'LocalPDF — Merge, Split, Convert PDFs',
+        short_name: 'LocalPDF',
         description: 'Merge, split and convert PDFs entirely in your browser. No upload, no login.',
         theme_color: '#0b2440',
         background_color: '#0b2440',

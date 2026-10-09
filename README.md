@@ -1,9 +1,33 @@
-# PDF Toolkit
+# LocalPDF
 
 A free, no-login PDF toolkit: merge PDFs, split/extract pages, convert
 images to PDF, and export PDF pages as images. Everything runs in the
 browser — no file is ever uploaded to a server — and it installs as an
 offline-capable PWA.
+
+Named deliberately: "Local" is the whole pitch, not just a tagline — every
+operation runs in your browser's own JavaScript engine, and the UI
+reinforces that at every step (a persistent trust badge, "processed
+entirely on this device" in every success message) rather than stating it
+once and hoping it's believed.
+
+## What makes a file feel trustworthy to hand to this tool
+
+- **Real previews, not just filenames.** Merge and Images→PDF render an
+  actual thumbnail of each file (first PDF page, or the image itself) —
+  see `src/hooks/usePdfThumbnails.ts` / `useImageThumbnails.ts`. Split and
+  PDF→Images show a thumbnail + page count of the loaded file. You're
+  looking at what you're about to process, not trusting a filename.
+- **Rename before you download**, on every tool (`FilenameInput`) —
+  sanitized against characters that break filenames cross-platform, with
+  the extension shown but not editable (so it can't produce a file your
+  OS won't open).
+- **Sizes shown throughout**: per-file size in every list, a running total
+  while you're adding files, and the actual output size in the success
+  message after conversion — so there's no mystery about what you're
+  about to get.
+- **A persistent trust badge** (`TrustBadge`) stays visible near the top
+  of every page, not just stated once in a footer nobody reads.
 
 ## Stack
 
