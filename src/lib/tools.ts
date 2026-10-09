@@ -137,3 +137,53 @@ export const TOOLS: ToolDef[] = [
 // app's usual 5 tabs, with the rest reachable via the command palette
 // ("More" opens the same Cmd/Ctrl+K search everyone else uses).
 export const PRIMARY_MOBILE_TOOLS = TOOLS.slice(0, 4);
+
+export const TOOL_GROUPS = [
+  {
+    name: "Create & convert",
+    paths: [
+      "/scan",
+      "/merge",
+      "/images-to-pdf",
+      "/pdf-to-images",
+      "/image",
+      "/ocr",
+    ],
+  },
+  {
+    name: "Organize",
+    paths: ["/split", "/organize", "/page-numbers", "/booklet"],
+  },
+  { name: "Edit & sign", paths: ["/edit", "/watermark"] },
+  { name: "Reduce & secure", paths: ["/compress", "/security", "/redact"] },
+];
+const aliases: Record<string, string> = {
+  "/merge": "combine join PDFs documents pages",
+  "/split": "extract separate select pages",
+  "/organize": "reorder move delete remove rotate crop duplicate pages",
+  "/images-to-pdf": "photo picture photos pictures jpg png convert PDF",
+  "/pdf-to-images":
+    "export extract photo picture photos pictures jpg png convert PDF pages",
+  "/edit": "fill form forms annotate annotation signature signing draw text",
+  "/watermark": "stamp logo confidential draft",
+  "/page-numbers": "number numbering pagination page pages",
+  "/compress": "smaller size upload limit reduce compression",
+  "/security": "password encryption encrypt decrypt unlock optimize",
+  "/ocr": "recognize recognition searchable text Hindi English scan scans",
+  "/booklet": "print printing fold sheets paper binding",
+  "/image": "photo picture photos pictures crop rotate resize webp jpg png",
+  "/scan": "camera photo document documents scanning",
+  "/redact": "black out hide sensitive erase remove permanently",
+};
+export function matchesTool(
+  tool: Pick<ToolDef, "to" | "label" | "description">,
+  query: string,
+): boolean {
+  const haystack =
+    `${tool.label} ${tool.description} ${aliases[tool.to] ?? ""}`.toLowerCase();
+  return query
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .every((word) => haystack.includes(word));
+}

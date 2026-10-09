@@ -13,7 +13,8 @@
   --color-surface-2: #1c1f2b;
   --color-fg: #f5f6f8;
   --color-muted: #8b91a0;
-  --color-accent: #6366f1;
+  --color-accent: #a5b4fc;
+  --color-action: #4f46e5;
   --color-accent-2: #22d3ee;
   --color-good: #4ade80;
   --color-bad: #f87171;
@@ -161,7 +162,7 @@ button:disabled {
   border: 1px solid var(--color-border);
 }
 .primary-tile {
-  background: var(--color-accent);
+  background: var(--color-action);
   color: white;
 }
 .secondary-tile {
@@ -231,7 +232,7 @@ button:disabled {
   font-size: 14px;
 }
 .btn {
-  background: var(--color-accent);
+  background: var(--color-action);
   color: white;
 }
 .btn-secondary {
@@ -288,7 +289,7 @@ button:disabled {
   }
   main section > div button[aria-label^="Move"],
   main section > div button[aria-label^="Remove"] {
-    min-width: 36px;
+    min-width: 44px;
   }
   h1 {
     overflow-wrap: break-word;
@@ -691,4 +692,75 @@ label:has(input[type="checkbox"]) {
   .editor .reader-scroll {
     max-height: 60dvh;
   }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .document-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+  .workspace-document {
+    position: static;
+    max-height: none;
+    width: 100%;
+  }
+  .workspace-inspector {
+    width: 100%;
+  }
+}
+@media (max-width: 767px) {
+  .mobile-header > .text-xs {
+    display: none;
+  }
+  .workspace.focused > section > h1 {
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .workspace.focused > section > h1 + p {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .editor-toolbar {
+    top: 56px;
+  }
+  .editor .reader-search {
+    margin: 8px 0;
+  }
+  [data-file-index] button {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
+  }
+}
+[data-page-id] button {
+  min-height: 44px;
+  min-width: 44px;
+}
+summary {
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.bg-accent {
+  background-color: var(--color-action);
+}
+.bg-bad {
+  background-color: #b91c1c;
+}
+[data-page-id] button[aria-label] {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.task-header {
+  position: relative;
+  justify-content: center;
+}
+.task-header .task-back {
+  position: absolute;
+  left: 12px;
+}
+input[type="color"] {
+  min-height: 44px;
+  min-width: 44px;
 }

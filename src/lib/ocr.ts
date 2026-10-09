@@ -76,7 +76,10 @@ export async function recognizeFile(
             },
           ];
     signal.throwIfAborted();
+    onProgress("Starting local OCR engine…");
     worker = await createWorker(language, 1, {
+      workerBlobURL: false,
+      errorHandler: () => {},
       workerPath: root() + "worker.min.js",
       corePath: root() + "core",
       langPath: root() + "lang",
@@ -112,6 +115,16 @@ export async function recognizeFile(
   })();
   try {
     return await Promise.race([job, aborted]);
+  } catch (error) {
+    if (signal.aborted)
+      throw new Error("OCR cancelled. Original file is unchanged.");
+    throw error instanceof Error
+      ? error
+      : new Error(
+          typeof error === "string" && error.trim()
+            ? error
+            : "The OCR engine could not start. Reconnect, prepare OCR files for offline use, then try again.",
+        );
   } finally {
     signal.removeEventListener("abort", abort);
     await worker?.terminate();

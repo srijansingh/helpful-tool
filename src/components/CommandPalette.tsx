@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FolderOpen, Home, Search } from "lucide-react";
-import { TOOLS } from "../lib/tools";
+import { TOOLS, matchesTool } from "../lib/tools";
 import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
-import { useScrollLock } from "../hooks/useScrollLock";
+import { useDialogFocus } from "../hooks/useDialogFocus";
 
 interface PaletteItem {
   id: string;
@@ -14,9 +14,27 @@ interface PaletteItem {
 }
 
 const ITEMS: PaletteItem[] = [
-  { id: "home", label: "Home", description: "Overview of every tool", icon: Home, to: "/" },
-  ...TOOLS.map((t) => ({ id: t.to, label: t.label, description: t.description, icon: t.icon, to: t.to })),
-  { id: "scans", label: "Scan Library", description: "Your saved scanned documents", icon: FolderOpen, to: "/scans" },
+  {
+    id: "home",
+    label: "Home",
+    description: "Overview of every tool",
+    icon: Home,
+    to: "/",
+  },
+  ...TOOLS.map((t) => ({
+    id: t.to,
+    label: t.label,
+    description: t.description,
+    icon: t.icon,
+    to: t.to,
+  })),
+  {
+    id: "files",
+    label: "My files",
+    description: "Saved files, folders and backups",
+    icon: FolderOpen,
+    to: "/files",
+  },
 ];
 
 // A keyboard-first way to jump anywhere in the app — Cmd/Ctrl+K from any
@@ -32,14 +50,13 @@ export function CommandPalette() {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useScrollLock(open);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(dialogRef, open, () => setOpen(false));
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return ITEMS;
-    return ITEMS.filter(
-      (item) => item.label.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)
-    );
+    return ITEMS.filter((item) => matchesTool(item, q));
   }, [query]);
 
   // The global Cmd/Ctrl+K shortcut — lives here since this component is
@@ -62,12 +79,6 @@ export function CommandPalette() {
     // Let the dialog mount before focusing — otherwise the input isn't
     // in the DOM yet on the same tick the store flips `open`.
     requestAnimationFrame(() => inputRef.current?.focus());
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
   }, [open, setOpen]);
 
   useEffect(() => {
@@ -83,7 +94,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-bg/60 px-4 pt-[15vh] backdrop-blur-sm"
+      className="fixed inset-0 z-80 flex items-start justify-center bg-bg/60 px-4 pt-[15vh] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
@@ -91,7 +102,10 @@ export function CommandPalette() {
         if (e.target === e.currentTarget) setOpen(false);
       }}
     >
-      <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl">
+      <div
+        ref={dialogRef}
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl"
+      >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Search className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
           <input
@@ -100,11 +114,16 @@ export function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Jump to a tool…"
             aria-label="Search tools"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls="tool-results"
+            aria-activedescendant={
+              filtered[activeIndex] ? `tool-option-${activeIndex}` : undefined
+            }
             className="flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-muted"
             onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                setOpen(false);
-              } else if (e.key === "ArrowDown") {
+              if (e.key === "ArrowDown") {
                 e.preventDefault();
                 setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
               } else if (e.key === "ArrowUp") {
@@ -117,29 +136,49 @@ export function CommandPalette() {
               }
             }}
           />
+          <button
+            className="btn-secondary"
+            onClick={() => setOpen(false)}
+            aria-label="Close search"
+          >
+            ×
+          </button>
           <kbd className="hidden shrink-0 rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted sm:block">
             Esc
           </kbd>
         </div>
 
-        <ul role="listbox" className="max-h-80 overflow-y-auto p-2">
-          {filtered.length === 0 && <li className="p-4 text-center text-sm text-muted">No matches.</li>}
+        <ul
+          id="tool-results"
+          aria-label="Matching tools"
+          role="listbox"
+          className="max-h-80 overflow-y-auto p-2"
+        >
+          {filtered.length === 0 && (
+            <li className="p-4 text-center text-sm text-muted">No matches.</li>
+          )}
           {filtered.map((item, i) => (
             <li key={item.id}>
               <button
                 type="button"
                 role="option"
+                id={`tool-option-${i}`}
+                tabIndex={-1}
                 aria-selected={i === activeIndex}
                 onMouseEnter={() => setActiveIndex(i)}
                 onClick={() => select(item)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                  i === activeIndex ? "bg-accent text-bg" : "text-fg"
+                  i === activeIndex ? "bg-accent text-white" : "text-fg"
                 }`}
               >
                 <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-sm font-semibold">{item.label}</span>
-                  <span className={`block truncate text-xs ${i === activeIndex ? "text-bg/70" : "text-muted"}`}>
+                  <span className="block truncate font-display text-sm font-semibold">
+                    {item.label}
+                  </span>
+                  <span
+                    className={`block truncate text-xs ${i === activeIndex ? "text-white/70" : "text-muted"}`}
+                  >
                     {item.description}
                   </span>
                 </span>

@@ -1,3 +1,4 @@
+import { runPdfJob } from "../lib/pdfJobs";
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
@@ -115,6 +116,7 @@ export default function MergePage() {
 
             <div className="mt-5">
               <FileList
+                disabled={status.kind === "working"}
                 files={files}
                 onReorder={setFiles}
                 onRemove={handleRemoveFile}
@@ -154,7 +156,7 @@ export default function MergePage() {
               data-primary-action="true"
               disabled={status.kind === "working" || files.length < 2}
               onClick={handleMerge}
-              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
             >
               Merge &amp; Download
             </button>
@@ -175,7 +177,9 @@ export default function MergePage() {
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
               <LivePreviewPane
-                build={() => mergePdfs(files)}
+                build={(signal) =>
+                  runPdfJob<Uint8Array>("merge", [files], signal, false)
+                }
                 watch={files}
                 emptyMessage="Add PDFs to see a live preview of the merged result."
               />

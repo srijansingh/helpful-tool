@@ -30,8 +30,16 @@ Scan saves update the current document after an atomic library write. Saving an 
 
 Validated: 31 regression tests including independent form clearing/read-only preservation, option-list filling and pen boundaries; production/PWA build. Local image-preview and form browser checks supplement library tests. Physical camera, cross-platform share and printer validation remain release gates.
 
-## Remaining approved phases
+## Phase 4 — consistency and release qualification
 
-4. Consistent visual language, discovery and measured regression/release validation.
+Tool groups are shared between navigation and discovery. Task-language search supports phrases such as “combine pages” and “extract pages”; keyboard search exposes the active option and a focus-contained close action. Nested dialogs respond to Escape only at the top of the stack. Action fills and accent text use separate dark-theme tokens; foreground colors stay legible across themes. Organize tiles reserve room for 44px controls. Tablet document previews use the available width rather than squeezing beside a desktop inspector.
 
-Physical iOS/Android camera, installed share targets, printer fold tests, screen-reader assessment and moderated usability are release-validation tasks; automated/local-browser tests do not substitute for them.
+Stale preview workers are aborted when settings change. Image-to-PDF settings survive navigation, and file order is frozen during export. Route/chunk failures offer original-file download and return-to-tools recovery. OCR exceptions are normalized, the worker uses a direct same-origin URL, and extracted text survives output publication and navigation. Update guidance covers temporary drafts and distinguishes OCR preparation from PDF app caching.
+
+Validation evidence and remaining release gates: [QUALITY-RELEASE-CHECKS.md](./QUALITY-RELEASE-CHECKS.md).
+
+## Release scope and remaining qualification
+
+The four implementation milestones are delivered for the existing feature set. This does not certify every device, every PDF producer or enterprise readiness. Physical iOS/Android camera and installed share targets, screen-reader assessment, printed booklet folding and moderated usability remain required release qualification. Automated and desktop-browser checks do not substitute for those results.
+
+Page-copy operations still use the disclosed form-flattening/catalog-loss fallback rather than a new native form/bookmark/attachment preservation engine. Scans and raster transformations retain their documented quality/page/pixel budgets. Page grids are bounded windows, not continuous virtualized scrolling. Some scan filters, archive encoding and fit/insert operations still run on the main thread; very large work should continue to use the visible bounds, and further worker migration remains a performance follow-up. These limitations are tracked explicitly rather than hidden behind a full-coverage claim.

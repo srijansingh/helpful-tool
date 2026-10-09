@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useDialogFocus } from "../hooks/useDialogFocus";
 export function ToolSettings({
@@ -12,6 +12,14 @@ export function ToolSettings({
 }) {
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const close = () => {
+      if (media.matches) setOpen(false);
+    };
+    media.addEventListener("change", close);
+    return () => media.removeEventListener("change", close);
+  }, []);
   useDialogFocus(dialog, open, () => setOpen(false));
   return (
     <div className="tool-settings">

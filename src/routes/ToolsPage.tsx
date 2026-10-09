@@ -1,32 +1,11 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { TOOLS } from "../lib/tools";
+import { TOOLS, TOOL_GROUPS, matchesTool } from "../lib/tools";
 import { useSeo } from "../hooks/useSeo";
-const groups = [
-  {
-    name: "Create & convert",
-    paths: [
-      "/merge",
-      "/images-to-pdf",
-      "/pdf-to-images",
-      "/scan",
-      "/image",
-      "/ocr",
-    ],
-  },
-  {
-    name: "Organize",
-    paths: ["/split", "/organize", "/page-numbers", "/booklet"],
-  },
-  { name: "Edit & sign", paths: ["/watermark", "/edit"] },
-  { name: "Reduce & secure", paths: ["/compress", "/security", "/redact"] },
-];
 export default function ToolsPage() {
   useSeo("Tools — LocalPDF", "Find the right tool for your document.");
   const [query, setQuery] = useState("");
-  const visible = TOOLS.filter((t) =>
-    (t.label + " " + t.description).toLowerCase().includes(query.toLowerCase()),
-  );
+  const visible = TOOLS.filter((t) => matchesTool(t, query));
   return (
     <section>
       <h1 className="text-3xl font-bold">Tools</h1>
@@ -38,8 +17,10 @@ export default function ToolsPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      {groups.map((group) => {
-        const tools = visible.filter((t) => group.paths.includes(t.to));
+      {TOOL_GROUPS.map((group) => {
+        const tools = group.paths
+          .map((path) => visible.find((t) => t.to === path))
+          .filter((t): t is (typeof TOOLS)[number] => !!t);
         return tools.length ? (
           <div key={group.name}>
             <h2 className="mt-6 mb-3 text-lg font-bold">{group.name}</h2>

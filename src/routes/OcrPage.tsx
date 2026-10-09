@@ -18,7 +18,12 @@ export default function OcrPage() {
   );
   const [ranges, setRanges] = useSessionState("ocr", "ranges", "");
   const [status, setStatus] = useState("");
-  const [text, setText] = useState("");
+  const [text, setText] = useState(() =>
+    file ? (ocrTexts.get(file) ?? "") : "",
+  );
+  useEffect(() => {
+    setText(file ? (ocrTexts.get(file) ?? "") : "");
+  }, [file]);
   const [busy, setBusy] = useState(false);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -47,7 +52,13 @@ export default function OcrPage() {
         "Searchable PDF ready. Check the extracted text for errors before using it.",
       );
     } catch (e) {
-      setStatus((e as Error).message);
+      setStatus(
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : "OCR could not finish. Prepare the offline assets and try again.",
+      );
     } finally {
       setBusy(false);
     }
@@ -101,7 +112,13 @@ export default function OcrPage() {
           try {
             await prepareOcr(language, setStatus, controller.current.signal);
           } catch (e) {
-            setStatus((e as Error).message);
+            setStatus(
+              e instanceof Error
+                ? e.message
+                : typeof e === "string"
+                  ? e
+                  : "OCR could not finish. Prepare the offline assets and try again.",
+            );
           } finally {
             setBusy(false);
           }
@@ -145,7 +162,10 @@ export default function OcrPage() {
             className="field mt-3 min-h-48"
             aria-label="Extracted text"
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (file) ocrTexts.set(file, e.target.value);
+            }}
           />
           <div className="editor-options">
             <button

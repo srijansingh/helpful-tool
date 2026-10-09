@@ -1,3 +1,6 @@
+import { runPdfJob } from "../lib/pdfJobs";
+import { sourceKey } from "../lib/sourceKey";
+import { useSessionState } from "../hooks/useSessionState";
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
@@ -28,13 +31,25 @@ export default function ImagesToPdfPage() {
   const addFiles = useImagesToPdfStore((s) => s.addFiles);
   const outputName = useImagesToPdfStore((s) => s.outputName);
   const setOutputName = useImagesToPdfStore((s) => s.setOutputName);
-  const [paper, setPaper] = useState<"original" | "a4" | "letter">("a4");
-  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
-    "portrait",
+  const [paper, setPaper] = useSessionState<"original" | "a4" | "letter">(
+    "images-to-pdf",
+    "paper",
+    "a4",
   );
-  const [margin, setMargin] = useState(24);
-  const [fit, setFit] = useState<"contain" | "cover">("contain");
-  const [quality, setQuality] = useState(0.9);
+  const [orientation, setOrientation] = useSessionState<
+    "portrait" | "landscape"
+  >("images-to-pdf", "orientation", "portrait");
+  const [margin, setMargin] = useSessionState("images-to-pdf", "margin", 24);
+  const [fit, setFit] = useSessionState<"contain" | "cover">(
+    "images-to-pdf",
+    "fit",
+    "contain",
+  );
+  const [quality, setQuality] = useSessionState(
+    "images-to-pdf",
+    "quality",
+    0.9,
+  );
   const options = { paper, orientation, margin, fit, quality };
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
@@ -122,6 +137,7 @@ export default function ImagesToPdfPage() {
 
             <div className="mt-5">
               <FileList
+                disabled={status.kind === "working"}
                 files={files}
                 onReorder={setFiles}
                 onRemove={handleRemoveFile}
@@ -226,7 +242,7 @@ export default function ImagesToPdfPage() {
               data-primary-action="true"
               disabled={status.kind === "working" || files.length === 0}
               onClick={handleConvert}
-              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
             >
               Convert &amp; Download
             </button>
@@ -245,8 +261,15 @@ export default function ImagesToPdfPage() {
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
               <LivePreviewPane
-                build={() => imagesToPdf(files, options)}
-                watch={[files, paper, orientation, margin, fit, quality]}
+                build={(signal) =>
+                  runPdfJob<Uint8Array>(
+                    "images",
+                    [files, options],
+                    signal,
+                    false,
+                  )
+                }
+                watch={`${files.map(sourceKey).join(",")}:${paper}:${orientation}:${margin}:${fit}:${quality}`}
                 emptyMessage="Add images to see a live preview of the PDF."
               />
             ) : (

@@ -13,7 +13,7 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo } from "../lib/pdf/split";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
-import { applyPageNumbers } from "../lib/pdf/workerOperations";
+import { runPdfJob } from "../lib/pdfJobs";
 import type {
   PageNumberPosition,
   PageNumberFormat,
@@ -85,18 +85,26 @@ export default function PageNumbersPage() {
     }
   };
 
-  const build = () => {
+  const build = (signal?: AbortSignal) => {
     if (!current) throw new Error("No PDF loaded");
-    return applyPageNumbers(current.bytes, {
-      position,
-      format,
-      startAt,
-      fontSize,
-      ranges,
-      prefix,
-      margin,
-      skipCover,
-    });
+    return runPdfJob<Uint8Array>(
+      "numbers",
+      [
+        current.bytes,
+        {
+          position,
+          format,
+          startAt,
+          fontSize,
+          ranges,
+          prefix,
+          margin,
+          skipCover,
+        },
+      ],
+      signal,
+      !signal,
+    );
   };
 
   const handlePreview = async () => {

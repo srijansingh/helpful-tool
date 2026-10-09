@@ -1,0 +1,35 @@
+# Product-quality release checks — 10 October 2026
+
+Baseline: tag `pre-quality-roadmap-2026-10-10`, commit `72d5998`. All fixtures used in this audit are synthetic. Evidence is saved in the user's workspace folder `quality-implementation-evidence` outside the repository.
+
+## Executed
+
+| Check                                     | Result                         | Evidence / limits                                                                                                                                                                                                                                           |
+| ----------------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit and independent PDF regression suite | 31 passing, no failures        | Strict page selection, backup/schema limits, QPDF owner authentication, independent stamp transforms, form clearing/read-only/option lists, pen bounds, destructive redaction and booklet ordering                                                          |
+| Production TypeScript / Vite / PWA build  | Passing                        | Local PDF fonts, CMaps and decoders emitted by Vite; about 9 MB precache. Existing large-chunk and QPDF browser-externalization warnings remain                                                                                                             |
+| Lint and whitespace                       | Passing with warnings          | No lint errors; existing React effect/ref warnings remain. Not a warning-free or accessibility certification                                                                                                                                                |
+| Encrypted PDF import                      | Passing                        | Incorrect-password retry without re-upload, restricted owner-password retry, retained original and no synthetic password found in browser console                                                                                                           |
+| Page-copy fidelity                        | Passing for fallback           | Consent before form flattening; independently reopened visible field value. Native catalog/form preservation is not implemented                                                                                                                             |
+| Bounded 500-page selection                | Passing                        | 36 page controls mounted; lazy thumbnails rather than rendering 500 pages at once                                                                                                                                                                           |
+| Scan recovery                             | Passing                        | Crop retained across route navigation; atomic PDF/source-page save; editable scan-source action visible in Files                                                                                                                                            |
+| Live form preview                         | Passing                        | A changed field value rendered on the page before export                                                                                                                                                                                                    |
+| Image preview                             | Passing                        | 800×1100 source, 10% each-edge crop and 90° rotation produced an 880×640 preview                                                                                                                                                                            |
+| Existing tool entry routes                | Passing at 390px               | All 15 tool screens loaded; no horizontal document overflow observed. Entry smoke is not full end-to-end coverage of every option                                                                                                                           |
+| Loaded workspace widths                   | Passing                        | 320px preview 288px; 768px preview 496px; 1440px preview 800px and inspector 320px; no horizontal overflow                                                                                                                                                  |
+| Keyboard search and nested dialogs        | Passing                        | “combine pages” resolved Merge and Enter opened it; Escape closed the command palette while keeping underlying settings open; another Escape restored workspace focus                                                                                       |
+| Selected palette contrasts                | Passing                        | White/primary 6.29:1; dark muted/raised 5.20:1; dark accent/raised 8.23:1; light muted/raised 4.77:1; white/danger 6.47:1. These measured pairs do not certify all UI states                                                                                |
+| Cached app, PDF and OCR                   | Passing in server-stopped test | Fresh tab loaded from cache; ordinary PDF parsed and watermarked preview rendered; English OCR produced a searchable PDF while the local origin server was stopped. The computer still had a network connection: this was not a physical airplane-mode test |
+
+## Required before broad release
+
+- Real Safari on iPhone/iPad and Chrome on Android: camera denial/retry, orientation, keyboard/safe area, large images, low-memory cancellation and installed file share target.
+- Full offline/airplane-mode run after fresh install, storage eviction/recovery, incomplete OCR language downloads and service-worker update during every dirty workspace.
+- Screen-reader and keyboard assessment beyond the checked focus paths, plus WCAG contrast and touch-target review of every state.
+- Print and fold sample A4/Letter booklets with both binding directions and varied printer duplex behavior.
+- PDF producer corpus including XFA, signed documents, attachments/outlines, unusual fonts, annotations, huge dimensions and damaged cross-reference structures. The disclosed fallback remains the supported page-copy path.
+- The proposed first-time-user study and measured low-memory/large-library performance thresholds. No moderated user study was conducted in this session.
+
+## Operational notes
+
+Files remain client-side. Temporary drafts are memory-only and clear on reload; Save on device or Download is still required for durability. OCR preparation is separate from the app precache. Page-copy, OCR, raster compression and redaction disclose their fidelity limits. Vercel development deployment is triggered by the requested main-branch pushes; this local report does not claim that remote deployment health or a production rollout was verified.

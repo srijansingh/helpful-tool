@@ -1,3 +1,4 @@
+import { WorkspaceErrorBoundary } from "./components/WorkspaceErrorBoundary";
 import {
   leavePdfWorkspace,
   cancelPdfJobs,
@@ -40,7 +41,7 @@ export default function App() {
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar />
       <div className="min-w-0 flex-1">
-        <header className="mobile-header">
+        <header className={`mobile-header ${focused ? "task-header" : ""}`}>
           {focused ? (
             <>
               <NavLink
@@ -69,11 +70,13 @@ export default function App() {
           tabIndex={-1}
           className={`workspace ${focused ? "focused" : ""}`}
         >
-          <Suspense fallback={<PageLoading />}>
-            <DocumentGate>
-              <Outlet />
-            </DocumentGate>
-          </Suspense>
+          <WorkspaceErrorBoundary key={path}>
+            <Suspense fallback={<PageLoading />}>
+              <DocumentGate>
+                <Outlet />
+              </DocumentGate>
+            </Suspense>
+          </WorkspaceErrorBoundary>
         </main>
       </div>
       {!focused && <BottomTabBar />}

@@ -207,7 +207,7 @@ export function CameraCapture({
           type="button"
           onClick={capture}
           disabled={!ready}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] disabled:opacity-40"
+          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] disabled:opacity-40"
         >
           <Camera className="h-5 w-5" aria-hidden="true" />
           Capture

@@ -55,7 +55,7 @@ export function PageRangePicker({
                 {i + 1}
               </span>
               {isSelected && (
-                <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-bg">
+                <span className="absolute bottom-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-white">
                   <Check className="h-2.5 w-2.5" strokeWidth={3} />
                 </span>
               )}

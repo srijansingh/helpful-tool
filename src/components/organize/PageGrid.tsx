@@ -86,7 +86,7 @@ export function PageGrid({
   return (
     <>
       <PageWindow count={pages.length} offset={start} onOffset={setOffset} />
-      <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {pages.slice(start, start + 36).map((page, local) => {
           const i = start + local;
           const isSelected = selected.has(page.id);
@@ -123,7 +123,7 @@ export function PageGrid({
                   onToggleSelect(page.id, i, e.shiftKey)
                 }
                 className={`absolute left-2.5 top-2.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-display text-[10px] font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
-                  isSelected ? "bg-accent text-bg" : "bg-bg/80 text-fg"
+                  isSelected ? "bg-accent text-white" : "bg-bg/80 text-fg"
                 }`}
               >
                 {isSelected ? (

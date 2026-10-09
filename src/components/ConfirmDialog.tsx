@@ -55,10 +55,16 @@ export function ConfirmDialog({
       }}
     >
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-2xl">
-        <h2 id="confirm-dialog-title" className="font-display text-base font-bold text-fg">
+        <h2
+          id="confirm-dialog-title"
+          className="font-display text-base font-bold text-fg"
+        >
           {title}
         </h2>
-        <p id="confirm-dialog-description" className="mt-1.5 text-sm leading-relaxed text-muted">
+        <p
+          id="confirm-dialog-description"
+          className="mt-1.5 text-sm leading-relaxed text-muted"
+        >
           {description}
         </p>
         <div className="mt-5 flex justify-end gap-2">
@@ -74,7 +80,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={`rounded-xl px-4 py-2 font-display text-sm font-semibold focus-visible:ring-2 focus-visible:ring-accent ${
-              danger ? "bg-bad text-white" : "bg-accent text-bg"
+              danger ? "bg-bad text-white" : "bg-accent text-white"
             }`}
           >
             {confirmLabel}

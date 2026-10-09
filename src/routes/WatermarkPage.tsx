@@ -14,7 +14,7 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo } from "../lib/pdf/split";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
-import { applyWatermark } from "../lib/pdf/workerOperations";
+import { runPdfJob } from "../lib/pdfJobs";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { useWatermarkStore } from "../store/useWatermarkStore";
@@ -76,19 +76,27 @@ export default function WatermarkPage() {
     }
   };
 
-  const build = () => {
+  const build = (signal?: AbortSignal) => {
     if (!current) throw new Error("No PDF loaded");
-    return applyWatermark(current.bytes, {
-      text: text || "WATERMARK",
-      opacity,
-      fontSize,
-      rotation,
-      position,
-      color,
-      ranges,
-      repeat,
-      logo,
-    });
+    return runPdfJob<Uint8Array>(
+      "watermark",
+      [
+        current.bytes,
+        {
+          text: text || "WATERMARK",
+          opacity,
+          fontSize,
+          rotation,
+          position,
+          color,
+          ranges,
+          repeat,
+          logo,
+        },
+      ],
+      signal,
+      !signal,
+    );
   };
 
   const handlePreview = async () => {

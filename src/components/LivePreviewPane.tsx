@@ -4,7 +4,7 @@ import { PdfReader } from "./PdfReader";
 
 interface LivePreviewPaneProps {
   // Builds the PDF to preview. Re-run (debounced) whenever `watch` changes.
-  build: () => Promise<Uint8Array>;
+  build: (signal: AbortSignal) => Promise<Uint8Array>;
   watch: unknown;
   emptyMessage: string;
   title?: string;
@@ -27,6 +27,7 @@ export function LivePreviewPane({
   const generationRef = useRef(0);
 
   useEffect(() => {
+    const controller = new AbortController();
     const generation = ++generationRef.current;
     setBytes(null);
     setLoading(true);
@@ -35,7 +36,7 @@ export function LivePreviewPane({
       setLoading(true);
       setError(null);
       try {
-        const bytes = await build();
+        const bytes = await build(controller.signal);
 
         if (generationRef.current === generation) {
           setBytes(bytes);
@@ -51,6 +52,7 @@ export function LivePreviewPane({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, 500);
     return () => {
+      controller.abort();
       clearTimeout(timer);
       ++generationRef.current;
     };

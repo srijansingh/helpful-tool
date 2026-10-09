@@ -379,7 +379,7 @@ export default function ScanPage() {
                 <button
                   type="button"
                   onClick={handleAddPage}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
                 >
                   <Plus className="h-5 w-5" aria-hidden="true" />
                   {editingId ? "Save page changes" : "Add Page & Scan Another"}
@@ -481,7 +481,7 @@ export default function ScanPage() {
                   pages.length === 0
                 }
                 onClick={handleExportPdf}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
               >
                 <FileCheck2 className="h-5 w-5" aria-hidden="true" />
                 Export PDF

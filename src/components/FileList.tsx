@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, GripVertical, X } from "lucide-react";
 import { formatSize } from "../lib/formatSize";
 
 interface FileListProps {
+  disabled?: boolean;
   files: File[];
   onReorder: (files: File[]) => void;
   onRemove?: (file: File, index: number) => void;
@@ -16,6 +17,7 @@ interface FileListProps {
 // touch everywhere in the app rather than only here on desktop with a
 // mouse. The Move up/down buttons stay as the keyboard-operable path.
 export function FileList({
+  disabled = false,
   files,
   onReorder,
   onRemove,
@@ -69,7 +71,7 @@ export function FileList({
   const endDrag = () => setDragIndex(null);
 
   return (
-    <ol className="flex flex-col gap-2">
+    <ol inert={disabled} aria-busy={disabled} className="flex flex-col gap-2">
       {files.map((file, i) => {
         const thumb = thumbnails?.get(file);
         return (

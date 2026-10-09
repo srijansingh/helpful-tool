@@ -263,7 +263,7 @@ export default function SplitPage() {
                 selectedPages.size === 0
               }
               onClick={handleExtract}
-              className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
+              className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
             >
               Extract Pages
             </button>

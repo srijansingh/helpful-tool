@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Search } from "lucide-react";
 import { DESTINATIONS } from "./BottomTabBar";
-import { TOOLS } from "../lib/tools";
+import { TOOLS, TOOL_GROUPS } from "../lib/tools";
 import { TrustBadge } from "./TrustBadge";
 import { ThemeToggle } from "./ThemeToggle";
 import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
@@ -53,24 +53,31 @@ export function Sidebar() {
         ))}
       </nav>
       <nav className="mt-4 flex flex-col gap-1" aria-label="Tools">
-        {TOOLS.filter((t) => t.to !== "/scan").map(
-          ({ to, label, icon: Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2.5 font-display text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "bg-accent text-white"
-                    : "text-muted hover:bg-surface-2 hover:text-fg"
-                }`
-              }
-            >
-              <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-              {label}
-            </NavLink>
-          ),
-        )}
+        {TOOL_GROUPS.map((group) => (
+          <div key={group.name}>
+            <h2 className="px-3 pt-4 pb-2 text-xs font-semibold text-muted">
+              {group.name}
+            </h2>
+            {group.paths
+              .filter((path) => path !== "/scan")
+              .map((path) => {
+                const tool = TOOLS.find((t) => t.to === path)!;
+                const Icon = tool.icon;
+                return (
+                  <NavLink
+                    key={path}
+                    to={path}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold ${isActive ? "bg-accent text-white" : "text-muted hover:bg-surface-2 hover:text-fg"}`
+                    }
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    {tool.label}
+                  </NavLink>
+                );
+              })}
+          </div>
+        ))}
       </nav>
 
       <div className="mt-auto flex flex-col gap-4 pt-8">

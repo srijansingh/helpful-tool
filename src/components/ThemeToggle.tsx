@@ -20,7 +20,9 @@ export function ThemeToggle() {
           aria-pressed={theme === value}
           onClick={() => setTheme(value)}
           className={`rounded-full min-h-11 min-w-11 p-2 transition-colors ${
-            theme === value ? "bg-accent text-bg" : "text-muted hover:text-fg"
+            theme === value
+              ? "bg-accent text-white"
+              : "text-muted hover:text-fg"
           }`}
         >
           <Icon className="h-3.5 w-3.5" />
