@@ -17,6 +17,8 @@ const SplitPage = lazy(() => import("./routes/SplitPage"));
 const OrganizePage = lazy(() => import("./routes/OrganizePage"));
 const ImagesToPdfPage = lazy(() => import("./routes/ImagesToPdfPage"));
 const PdfToImagesPage = lazy(() => import("./routes/PdfToImagesPage"));
+const WatermarkPage = lazy(() => import("./routes/WatermarkPage"));
+const PageNumbersPage = lazy(() => import("./routes/PageNumbersPage"));
 
 registerSW({ immediate: true });
 
@@ -33,6 +35,8 @@ createRoot(document.getElementById("root")!).render(
           <Route path="organize" element={<OrganizePage />} />
           <Route path="images-to-pdf" element={<ImagesToPdfPage />} />
           <Route path="pdf-to-images" element={<PdfToImagesPage />} />
+          <Route path="watermark" element={<WatermarkPage />} />
+          <Route path="page-numbers" element={<PageNumbersPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

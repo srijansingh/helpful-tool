@@ -1,4 +1,4 @@
-import { FileStack, Scissors, LayoutGrid, ImageIcon, Images, ScanLine } from "lucide-react";
+import { FileStack, Scissors, LayoutGrid, ImageIcon, Images, ScanLine, Droplets, Hash } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface ToolDef {
@@ -52,4 +52,23 @@ export const TOOLS: ToolDef[] = [
     icon: Images,
     description: "Export every page as a JPG or PNG.",
   },
+  {
+    to: "/watermark",
+    label: "Watermark PDF",
+    shortLabel: "Watermark",
+    icon: Droplets,
+    description: "Stamp text across every page.",
+  },
+  {
+    to: "/page-numbers",
+    label: "Page Numbers",
+    shortLabel: "Numbers",
+    icon: Hash,
+    description: "Number every page, your way.",
+  },
 ];
+
+// The bottom tab bar (mobile) can't fit all of TOOLS — capped at a native
+// app's usual 5 tabs, with the rest reachable via the command palette
+// ("More" opens the same Cmd/Ctrl+K search everyone else uses).
+export const PRIMARY_MOBILE_TOOLS = TOOLS.slice(0, 4);

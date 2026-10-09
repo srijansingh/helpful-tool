@@ -1,11 +1,11 @@
 # LocalPDF
 
 A free, no-login PDF toolkit: merge PDFs, split/extract pages, organize
-(reorder/delete/rotate) pages, convert images to PDF, export PDF pages as
-images, and scan physical documents with your camera — crop, flatten
-perspective, filter, and build a multi-page PDF. Everything runs in the
-browser — no file is ever uploaded to a server — and it installs as an
-offline-capable PWA.
+(reorder/delete/rotate) pages, watermark, add page numbers, convert
+images to PDF, export PDF pages as images, and scan physical documents
+with your camera — crop, flatten perspective, filter, and build a
+multi-page PDF. Everything runs in the browser — no file is ever
+uploaded to a server — and it installs as an offline-capable PWA.
 
 Unlike server-based competitors (Smallpdf, iLovePDF and similar), there's
 no daily-use cap and no account wall — every tool is fully usable, every
@@ -70,6 +70,20 @@ delta on top of each page's existing `/Rotate` value (read once at load,
 in `src/lib/pdf/organize.ts`) — not a replacement for it, so a PDF that
 already has rotated pages keeps that rotation and layers the new one on
 top.
+
+## Watermark PDF (`/watermark`) and Page Numbers (`/page-numbers`)
+
+Two more pdf-lib based tools, both with the live-preview-pane layout from
+above. Watermark (`src/lib/pdf/watermark.ts`) stamps centered, rotated,
+semi-transparent text across every page — getting that actually centered
+under rotation took real geometry: pdf-lib's `drawText` rotates around
+its unrotated baseline-left draw origin, not the text's visual center, so
+naively centering for 0° and then rotating swings the text off the page.
+The fix computes where the rotated center of the text lands relative to
+its draw origin and solves backward for the origin that puts that center
+at the page's actual center. Page Numbers (`src/lib/pdf/pageNumbers.ts`)
+places `n` or `n of total` at any of 6 corners/edges, with a configurable
+start number for documents that aren't paginated from 1.
 
 ## Document scanner (`/scan`, `/scans`)
 
@@ -158,8 +172,11 @@ shell:
   nav, trust badge and theme toggle all stay in view; `position: sticky`
   with its own scroll, so it never scrolls away even on a long page. On
   mobile, a **fixed bottom tab bar** (`BottomTabBar.tsx`) takes over —
-  native-app navigation, not a website's. Both share one source of truth
-  for the tool list (`src/lib/tools.ts`).
+  native-app navigation, not a website's. The bar caps itself at the 4
+  most-used tools (`PRIMARY_MOBILE_TOOLS`) plus a "More" tab that opens
+  the command palette, rather than cramming every tool in as the list
+  grows. Both share one source of truth for the tool list
+  (`src/lib/tools.ts`).
 - **Elevated workspace panels** (`Card.tsx`) — each tool's dropzone, file
   list, rename field and action button sit inside one bounded, shadowed
   panel, not loose on the page background. The trust note stays outside
@@ -185,7 +202,8 @@ shell:
   a module-level singleton that lives outside the route tree, so switching
   tabs — intentionally or by accident — doesn't unmount-and-lose whatever
   files/settings were in progress, which plain component `useState` did.
-- **pdf-lib** (MIT) — merge, split, organize, and images→PDF.
+- **pdf-lib** (MIT) — merge, split, organize, watermark, page numbers,
+  and images→PDF.
 - **pdf.js** (Apache-2.0) — PDF→images rendering.
 - **fflate** (MIT) — zipping multi-file outputs (split pages, exported
   images).
@@ -258,8 +276,10 @@ confirming the page loads.
 ## Known gaps / deliberately out of scope
 
 - **Compress PDF** — a real compressor (recompressing embedded images,
-  subsetting fonts) is a much bigger effort than the other four tools and
+  subsetting fonts) is a much bigger effort than the other tools here and
   was left out rather than shipping something that barely shrinks files.
+- **Protect/Unlock (password)** — pdf-lib has no built-in PDF encryption;
+  doing this properly needs its own scoping pass, not a bolt-on.
 - **Resuming an in-progress file across a reload** — see Persistence
   above.
 
