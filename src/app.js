@@ -1,162 +1,210 @@
-import { computePanchang } from "./panchang.js";
-import { CITIES } from "./cities.js";
-import { nextFestival } from "./festivals.js";
+import { mergePdfs } from "./merge.js";
+import { loadPdfInfo, extractPages, splitEveryPage } from "./split.js";
+import { imagesToPdf } from "./imagesToPdf.js";
+import { renderPdfToImages } from "./pdfToImages.js";
+import { downloadBytes, downloadBlob } from "./download.js";
+import { toZipBlob } from "./zip.js";
 
-const IST_FORMATTER = new Intl.DateTimeFormat("en-IN", {
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: true,
-  timeZone: "Asia/Kolkata",
+// ---------- Tabs ----------
+const tabButtons = document.querySelectorAll(".tab-btn");
+const panels = document.querySelectorAll(".tool-panel");
+
+tabButtons.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    tabButtons.forEach((b) => b.classList.remove("active"));
+    panels.forEach((p) => p.hidden = true);
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.target).hidden = false;
+  });
 });
 
-function fmtTime(date) {
-  return date ? IST_FORMATTER.format(date) : "—";
-}
-
-function fmtRange(range) {
-  if (!range) return "—";
-  return `${fmtTime(range.start)} – ${fmtTime(range.end)}`;
-}
-
-const cityInput = document.getElementById("city-input");
-const useLocationBtn = document.getElementById("use-location");
-const locationLabel = document.getElementById("location-label");
-const resultsEl = document.getElementById("results");
-const festivalBanner = document.getElementById("festival-banner");
-
-const CITY_BY_NAME = new Map(CITIES.map((c) => [c.name.toLowerCase(), c]));
-
-function populateCityOptions() {
-  const datalist = document.getElementById("city-options");
-  for (const city of CITIES) {
-    const opt = document.createElement("option");
-    opt.value = city.name;
-    datalist.appendChild(opt);
-  }
-}
-
-function renderFestivalBanner() {
-  const upcoming = nextFestival();
-  if (!upcoming) {
-    festivalBanner.hidden = true;
+// ---------- Shared: reorderable file list ----------
+function renderFileList(container, files, onChange) {
+  container.innerHTML = "";
+  if (files.length === 0) {
+    container.innerHTML = '<p class="empty-hint">No files added yet.</p>';
     return;
   }
-  const target = new Date(`${upcoming.date}T00:00:00+05:30`);
-  const now = new Date();
-  const daysLeft = Math.ceil((target - now) / 86400000);
-  festivalBanner.hidden = false;
-  festivalBanner.textContent = daysLeft > 0
-    ? `${upcoming.name} is in ${daysLeft} day${daysLeft === 1 ? "" : "s"} (${upcoming.date})`
-    : `${upcoming.name} is today!`;
+  const ol = document.createElement("ol");
+  ol.className = "file-list";
+  files.forEach((file, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <span class="file-name">${file.name}</span>
+      <span class="file-actions">
+        <button type="button" data-action="up" ${i === 0 ? "disabled" : ""}>↑</button>
+        <button type="button" data-action="down" ${i === files.length - 1 ? "disabled" : ""}>↓</button>
+        <button type="button" data-action="remove">Remove</button>
+      </span>
+    `;
+    li.querySelector('[data-action="up"]').addEventListener("click", () => {
+      [files[i - 1], files[i]] = [files[i], files[i - 1]];
+      onChange();
+    });
+    li.querySelector('[data-action="down"]').addEventListener("click", () => {
+      [files[i + 1], files[i]] = [files[i], files[i + 1]];
+      onChange();
+    });
+    li.querySelector('[data-action="remove"]').addEventListener("click", () => {
+      files.splice(i, 1);
+      onChange();
+    });
+    ol.appendChild(li);
+  });
+  container.appendChild(ol);
 }
 
-function renderResults(panchang, locationName) {
-  resultsEl.hidden = false;
-  resultsEl.innerHTML = `
-    <div class="card-grid">
-      <div class="card"><h3>Location</h3><p>${locationName}</p></div>
-      <div class="card"><h3>Tithi</h3><p>${panchang.tithi.paksha} ${panchang.tithi.name}</p></div>
-      <div class="card"><h3>Nakshatra</h3><p>${panchang.nakshatra.name} (Pada ${panchang.nakshatra.pada})</p></div>
-      <div class="card"><h3>Yoga</h3><p>${panchang.yoga.name}</p></div>
-      <div class="card"><h3>Karana</h3><p>${panchang.karana.name}</p></div>
-      <div class="card"><h3>Ritu (Season)</h3><p>${panchang.ritu}</p></div>
-      <div class="card"><h3>Ayana</h3><p>${panchang.ayana}</p></div>
-      <div class="card"><h3>Sunrise</h3><p>${fmtTime(panchang.sunrise)}</p></div>
-      <div class="card"><h3>Sunset</h3><p>${fmtTime(panchang.sunset)}</p></div>
-      <div class="card"><h3>Moonrise</h3><p>${fmtTime(panchang.moonrise)}</p></div>
-      <div class="card"><h3>Moonset</h3><p>${fmtTime(panchang.moonset)}</p></div>
-      <div class="card warn"><h3>Disha Shool</h3><p>Avoid ${panchang.dishaShool}</p></div>
-    </div>
-
-    <h3 class="section-title">Auspicious &amp; Inauspicious Timings</h3>
-    <div class="card-grid">
-      <div class="card good"><h3>Abhijit Muhurat</h3><p>${fmtRange(panchang.abhijit)}</p></div>
-      <div class="card warn"><h3>Rahu Kaal</h3><p>${fmtRange(panchang.rahuKaal)}</p></div>
-      <div class="card warn"><h3>Gulika Kaal</h3><p>${fmtRange(panchang.gulikaKaal)}</p></div>
-      <div class="card warn"><h3>Yamaganda</h3><p>${fmtRange(panchang.yamaganda)}</p></div>
-    </div>
-
-    <h3 class="section-title">Choghadiya — Day</h3>
-    <div class="choghadiya-row">
-      ${panchang.choghadiyaDay.map(renderChoghadiyaCell).join("")}
-    </div>
-
-    <h3 class="section-title">Choghadiya — Night</h3>
-    <div class="choghadiya-row">
-      ${panchang.choghadiyaNight.map(renderChoghadiyaCell).join("")}
-    </div>
-
-    <p class="disclaimer">
-      Computed from Sun/Moon positions using the Lahiri ayanamsa (approximate).
-      Cross-check with a trusted panchang before relying on these timings for rituals.
-    </p>
-  `;
+function setStatus(el, message, isError = false) {
+  el.textContent = message;
+  el.className = isError ? "status error" : "status";
 }
 
-function renderChoghadiyaCell(seg) {
-  return `
-    <div class="chog-cell ${seg.type}">
-      <strong>${seg.name}</strong>
-      <span>${fmtTime(seg.start)} – ${fmtTime(seg.end)}</span>
-    </div>
-  `;
-}
+// ---------- Merge ----------
+(() => {
+  const input = document.getElementById("merge-input");
+  const listEl = document.getElementById("merge-list");
+  const btn = document.getElementById("merge-btn");
+  const status = document.getElementById("merge-status");
+  let files = [];
 
-function update(lat, lon, locationName) {
-  const panchang = computePanchang(new Date(), lat, lon);
-  renderResults(panchang, locationName);
-}
+  const refresh = () => renderFileList(listEl, files, refresh);
 
-function useCityByName(name) {
-  const city = CITY_BY_NAME.get(name.trim().toLowerCase());
-  if (!city) return false;
-  cityInput.value = city.name;
-  locationLabel.textContent = city.name;
-  update(city.lat, city.lon, city.name);
-  return true;
-}
+  input.addEventListener("change", () => {
+    files.push(...input.files);
+    input.value = "";
+    refresh();
+  });
 
-cityInput.addEventListener("change", () => {
-  useCityByName(cityInput.value);
-});
+  btn.addEventListener("click", async () => {
+    if (files.length < 2) {
+      setStatus(status, "Add at least two PDFs to merge.", true);
+      return;
+    }
+    setStatus(status, "Merging…");
+    try {
+      const bytes = await mergePdfs(files);
+      downloadBytes(bytes, "merged.pdf", "application/pdf");
+      setStatus(status, "Done — merged.pdf downloaded.");
+    } catch (e) {
+      setStatus(status, `Couldn't merge: ${e.message}`, true);
+    }
+  });
 
-useLocationBtn.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    useCityByName(cityInput.value) || useCityByName("Delhi");
-    return;
-  }
-  useLocationBtn.textContent = "Locating…";
+  refresh();
+})();
 
-  // navigator.geolocation's own `timeout` option only bounds how long
-  // position acquisition takes *after* the permission prompt is answered —
-  // if the prompt itself is never answered (ignored, or silently blocked by
-  // the browser), neither callback fires and the button would hang on
-  // "Locating…" forever. This timer forces a fallback regardless.
-  let settled = false;
-  const fallback = () => {
-    if (settled) return;
-    settled = true;
-    useLocationBtn.textContent = "Use my location";
-    useCityByName(cityInput.value) || useCityByName("Delhi");
-  };
-  const fallbackTimer = setTimeout(fallback, 8000);
+// ---------- Split ----------
+(() => {
+  const input = document.getElementById("split-input");
+  const info = document.getElementById("split-info");
+  const rangeInput = document.getElementById("split-range");
+  const extractBtn = document.getElementById("split-extract-btn");
+  const everyPageBtn = document.getElementById("split-every-btn");
+  const status = document.getElementById("split-status");
+  let current = null; // { bytes, pageCount, name }
 
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(fallbackTimer);
-      useLocationBtn.textContent = "Use my location";
-      cityInput.value = "";
-      locationLabel.textContent = "Your location";
-      update(pos.coords.latitude, pos.coords.longitude, "Your location");
-    },
-    fallback,
-    { timeout: 8000 }
-  );
-});
+  input.addEventListener("change", async () => {
+    const file = input.files[0];
+    if (!file) return;
+    setStatus(status, "Reading PDF…");
+    try {
+      const { bytes, pageCount } = await loadPdfInfo(file);
+      current = { bytes, pageCount, name: file.name.replace(/\.pdf$/i, "") };
+      info.textContent = `${file.name} — ${pageCount} page${pageCount === 1 ? "" : "s"}`;
+      rangeInput.disabled = false;
+      extractBtn.disabled = false;
+      everyPageBtn.disabled = false;
+      setStatus(status, "");
+    } catch (e) {
+      setStatus(status, `Couldn't read that PDF: ${e.message}`, true);
+    }
+  });
 
-populateCityOptions();
-renderFestivalBanner();
-cityInput.value = "Delhi";
-useCityByName("Delhi");
+  extractBtn.addEventListener("click", async () => {
+    if (!current) return;
+    setStatus(status, "Extracting…");
+    try {
+      const out = await extractPages(current.bytes, rangeInput.value, current.pageCount);
+      downloadBytes(out, `${current.name}-pages.pdf`, "application/pdf");
+      setStatus(status, "Done — extracted pages downloaded.");
+    } catch (e) {
+      setStatus(status, e.message, true);
+    }
+  });
+
+  everyPageBtn.addEventListener("click", async () => {
+    if (!current) return;
+    setStatus(status, "Splitting every page…");
+    try {
+      const pages = await splitEveryPage(current.bytes, current.pageCount);
+      downloadBlob(toZipBlob(pages), `${current.name}-pages.zip`);
+      setStatus(status, `Done — ${pages.length} pages zipped and downloaded.`);
+    } catch (e) {
+      setStatus(status, e.message, true);
+    }
+  });
+})();
+
+// ---------- Images to PDF ----------
+(() => {
+  const input = document.getElementById("img2pdf-input");
+  const listEl = document.getElementById("img2pdf-list");
+  const btn = document.getElementById("img2pdf-btn");
+  const status = document.getElementById("img2pdf-status");
+  let files = [];
+
+  const refresh = () => renderFileList(listEl, files, refresh);
+
+  input.addEventListener("change", () => {
+    files.push(...input.files);
+    input.value = "";
+    refresh();
+  });
+
+  btn.addEventListener("click", async () => {
+    if (files.length === 0) {
+      setStatus(status, "Add at least one image.", true);
+      return;
+    }
+    setStatus(status, "Converting…");
+    try {
+      const bytes = await imagesToPdf(files);
+      downloadBytes(bytes, "images.pdf", "application/pdf");
+      setStatus(status, "Done — images.pdf downloaded.");
+    } catch (e) {
+      setStatus(status, `Couldn't convert: ${e.message}`, true);
+    }
+  });
+
+  refresh();
+})();
+
+// ---------- PDF to Images ----------
+(() => {
+  const input = document.getElementById("pdf2img-input");
+  const formatSelect = document.getElementById("pdf2img-format");
+  const btn = document.getElementById("pdf2img-btn");
+  const status = document.getElementById("pdf2img-status");
+
+  btn.addEventListener("click", async () => {
+    const file = input.files[0];
+    if (!file) {
+      setStatus(status, "Choose a PDF first.", true);
+      return;
+    }
+    setStatus(status, "Rendering pages…");
+    try {
+      const format = formatSelect.value;
+      const images = await renderPdfToImages(file, { format });
+      const base = file.name.replace(/\.pdf$/i, "");
+      if (images.length === 1) {
+        downloadBlob(new Blob([images[0].bytes], { type: format }), images[0].name);
+      } else {
+        downloadBlob(toZipBlob(images), `${base}-images.zip`);
+      }
+      setStatus(status, `Done — ${images.length} page${images.length === 1 ? "" : "s"} exported.`);
+    } catch (e) {
+      setStatus(status, `Couldn't render that PDF: ${e.message}`, true);
+    }
+  });
+})();

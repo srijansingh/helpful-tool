@@ -1,86 +1,56 @@
-# Aaj Ka Panchang
+# PDF Toolkit
 
-A daily Panchang / Shubh Muhurat checker for Indian users: Tithi, Nakshatra,
-Yoga, Karana, Ritu, Ayana, Disha Shool, sunrise/sunset, moonrise/moonset,
-Rahu Kaal, Gulika Kaal, Yamaganda, Abhijit Muhurat, and a full day+night
-Choghadiya table — for your city (searchable, ~140 towns) or current
-location. No login, no account, no backend.
+A free, no-login PDF toolkit: merge PDFs, split/extract pages, convert
+images to PDF, and export PDF pages as images. Everything runs in the
+browser — no file is ever uploaded to a server.
 
 ## Why this exists
 
-Panchang/muhurat checking is a daily habit for a large Indian audience (not
-just during festivals), which makes it a good fit for a simple, ad-supported,
-no-auth site: people reopen it every day rather than once.
+Most free PDF tools (iLovePDF, Smallpdf, etc.) work by uploading your file
+to a server for processing. That's a real privacy cost for documents with
+personal details (IDs, forms, contracts), and it also means the tool is
+only as fast as your upload speed. Doing the same operations client-side
+removes both problems, and it's a genuinely "boring but useful" tool
+people reopen constantly — exactly the kind of site that works well
+ad-supported with no account system.
 
-## How the data works
+## How it works
 
-Everything is **computed, not fetched**:
+Everything runs in the browser via vendored, locally-hosted open-source
+libraries — no CDN dependency, no runtime network calls:
 
-- Sun and Moon ecliptic longitudes come from [Astronomy Engine](https://github.com/cosinekitty/astronomy)
-  (MIT licensed), loaded from a CDN as an ES module (`src/panchang.js`).
-- Sidereal positions use the **Lahiri (Chitrapaksha) ayanamsa**, approximated
-  with a linear formula anchored at J2000.0. This is the convention most
-  Indian panchang publishers use, but it's an approximation — see
-  "Known limitations" below.
-- Tithi, Nakshatra, Yoga, and Karana are derived from those positions using
-  the standard classical formulas (12°/tithi, 13°20′/nakshatra, etc).
-- Rahu Kaal, Gulika Kaal, Yamaganda, and the Choghadiya table all come from
-  dividing the sunrise–sunset (and sunset–next-sunrise) window into 8
-  segments, assigned by weekday using standard published tables (the
-  planetary-hour/Chaldean sequence for Choghadiya; separate weekday tables
-  for the three inauspicious kaal periods).
-- Ritu (season) and Ayana (Uttarayana/Dakshinayana) are both derived
-  directly from the Sun's sidereal longitude — no extra lookups needed.
-- Disha Shool (the direction considered inauspicious to travel in today) is
-  a fixed weekday lookup table, independent of location.
-- Moonrise/moonset use the same Astronomy Engine rise/set search as
-  sunrise/sunset. These can legitimately be blank on some days — the Moon
-  rises about 50 minutes later each day, so it doesn't always cross the
-  horizon within a given calendar day.
-- Location is either the browser's geolocation API (used only in-browser,
-  never sent anywhere) or a searchable bundled list of ~140 Indian cities
-  and towns (`src/cities.js`), weighted toward Tier-2/3 coverage rather than
-  just the usual eight metros — no geocoding API or key required.
-- Festival dates for the full year are hardcoded in `src/festivals.js`,
-  sourced from several 2026 Hindu calendar publishers (cross-checked for
-  agreement), and need a manual update each year (deriving them
-  astronomically would require a full luni-solar calendar with regional
-  Amanta/Purnimanta rules, which is out of scope for v1). A couple of dates
-  (Janmashtami, Ganesh Chaturthi) vary by a day between publishers — the
-  most commonly cited date was used in each case.
-- **Not included on purpose: daily horoscope/rashifal predictions.** Every
-  major panchang site has these, but they're either written by an
-  astrologer or sourced from a paid content API — generating "today's
-  prediction" algorithmically would just be fabricated content, so it's
-  left out rather than faked.
+- **[pdf-lib](https://github.com/Hopding/pdf-lib)** (MIT) — creating,
+  merging, and splitting PDF documents. Used for Merge, Split, and
+  Images → PDF.
+- **[pdf.js](https://github.com/mozilla/pdf.js)** (Apache-2.0) — rendering
+  PDF pages to a canvas. Used for PDF → Images.
+- **[fflate](https://github.com/101arrowz/fflate)** (MIT) — zipping
+  multiple output files (split pages, exported images) into one download.
 
-**No user data is collected, stored, or transmitted.** There is no backend,
-no database, and no account system.
+All three are vendored as their browser ESM builds in `vendor/` — see
+`src/merge.js`, `src/split.js`, `src/imagesToPdf.js`, and
+`src/pdfToImages.js` for how each is used.
 
-## Text content
+### Tools
 
-A widget alone doesn't rank in search or give first-time visitors context,
-so the page also carries static, non-JS-dependent text: a "What is
-Panchang?" intro, a glossary explaining each term (Tithi, Nakshatra, Rahu
-Kaal, Choghadiya, etc.), and an FAQ section with matching FAQPage JSON-LD
-structured data. All of it explains established, factual/cultural concepts
-— it's not predictive content, so there's no fabrication risk the way there
-would be with, say, daily horoscope text.
+- **Merge PDFs** — pick multiple PDFs, reorder them, combine into one.
+- **Split PDF** — either extract a page range (e.g. `1-3,5,8`) into one
+  PDF, or split every page into its own file (downloaded as a zip).
+- **Images → PDF** — combine JPG/PNG/WebP/etc. images into a single PDF,
+  one image per page.
+- **PDF → Images** — export every page of a PDF as a JPG or PNG
+  (downloaded as a zip when there's more than one page).
 
-## Known limitations (read before treating this as authoritative)
+### Not included (yet)
 
-- The ayanamsa formula is a linear approximation, not the full Swiss
-  Ephemeris nutation-aware model — expect boundary times to be off by at most
-  a few minutes versus a reference panchang.
-- Sunrise/sunset use geometric astronomical rise/set, not necessarily the
-  exact convention (atmospheric refraction, observer altitude) that a given
-  regional panchang uses — this can shift every downstream timing slightly.
-- The Choghadiya, Gulika Kaal, Yamaganda, and Disha Shool tables are all
-  commonly published methods but haven't been cross-validated against a
-  reference site for this project yet.
-- **Before relying on this for an actual ritual/ceremony, cross-check the
-  output against a trusted panchang (e.g. Drik Panchang) for your date and
-  city.** The in-app disclaimer says the same thing.
+- **Compress PDF** — genuinely compressing a PDF (recompressing embedded
+  images, subsetting fonts) well is a much bigger effort than the other
+  four tools and was left out of v1 rather than shipping something that
+  barely shrinks files.
+- A page-reorder/delete tool for a *single* PDF (distinct from Split) —
+  Split's "extract pages" can emulate reordering by listing pages in the
+  wanted order, but a dedicated drag-to-reorder editor is a reasonable
+  v2 addition.
 
 ## Running locally
 
@@ -90,15 +60,16 @@ No build step. Serve the folder as static files:
 npm run dev
 ```
 
-or simply open `index.html` in a browser (geolocation requires `https://` or
-`localhost`, so prefer serving it over opening the file directly).
+or open `index.html` directly (file inputs and canvas rendering work fine
+without a server, unlike the geolocation-dependent tools in some other
+projects).
 
 ## Deploying
 
 Static site — deploys as-is to Vercel, Netlify, GitHub Pages, etc. No
-environment variables or secrets needed.
+environment variables, secrets, or backend needed.
 
 ## Monetization
 
-Two ad slot placeholders (`.ad-slot` divs in `index.html`) are left empty for
-an AdSense (or similar) unit — intentionally no ad script wired in yet.
+Two ad slot placeholders (`.ad-slot` divs in `index.html`) are left empty
+for an AdSense (or similar) unit — intentionally no ad script wired in yet.
