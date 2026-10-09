@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import { PdfPreview } from "../components/PdfPreview";
+import { ToolSettings } from "../components/ToolSettings";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { redactPdf, type RedactionBox } from "../lib/pdf/redact";
 import { downloadBytes } from "../lib/download";
@@ -107,7 +108,7 @@ export default function RedactPage() {
     }
   };
   return (
-    <section>
+    <section className="editor">
       <h1 className="text-2xl font-bold">Redact to a photo PDF</h1>
       <p className="text-muted mt-2">
         Black out areas and rebuild every page from pixels. Marked pixels,
@@ -133,158 +134,171 @@ export default function RedactPage() {
             Redaction marks below are a preview; export rebuilds the actual
             file.
           </p>
-          <PdfReader
-            bytes={bytes}
-            page={page}
-            onPage={setPage}
-            overlay={
-              <svg
-                className="pdf-overlay"
-                viewBox="0 0 1000 1000"
-                preserveAspectRatio="none"
-                aria-label="Redaction canvas"
-                onPointerDown={(e) => {
-                  if (busy) return;
-                  e.currentTarget.setPointerCapture(e.pointerId);
-                  start.current = point(e);
-                  setDragBox(null);
-                }}
-                onPointerMove={(e) => {
-                  if (!start.current) return;
-                  const [x, y] = point(e),
-                    [sx, sy] = start.current;
-                  setDragBox({
-                    id: "drag",
-                    page,
-                    x: Math.min(x, sx),
-                    y: Math.min(y, sy),
-                    width: Math.abs(x - sx),
-                    height: Math.abs(y - sy),
-                  });
-                }}
-                onPointerCancel={() => {
-                  start.current = null;
-                  setDragBox(null);
-                }}
-                onPointerUp={up}
-              >
-                {dragBox && (
-                  <rect
-                    x={dragBox.x * 1000}
-                    y={dragBox.y * 1000}
-                    width={dragBox.width * 1000}
-                    height={dragBox.height * 1000}
-                    fill="black"
-                    opacity="0.6"
-                  />
-                )}
-                {boxes
-                  .filter((b) => b.page === page)
-                  .map((b) => (
-                    <rect
-                      key={b.id}
-                      x={b.x * 1000}
-                      y={b.y * 1000}
-                      width={b.width * 1000}
-                      height={b.height * 1000}
-                      fill="black"
-                    />
-                  ))}
-              </svg>
-            }
-          />
-          <div className="editor-options">
-            <button
-              className="btn-secondary"
-              disabled={!boxes.length || busy}
-              onClick={() => setBoxes(boxes.slice(0, -1))}
-            >
-              Undo last area
-            </button>
-            <button
-              className="btn-secondary"
-              disabled={!boxes.length || busy}
-              onClick={() => setBoxes([])}
-            >
-              Clear marked areas
-            </button>
+          <div className="editor-workspace">
+            <div className="editor-document mt-3">
+              <PdfReader
+                bytes={bytes}
+                page={page}
+                onPage={setPage}
+                overlay={
+                  <svg
+                    className="pdf-overlay"
+                    viewBox="0 0 1000 1000"
+                    preserveAspectRatio="none"
+                    aria-label="Redaction canvas"
+                    onPointerDown={(e) => {
+                      if (busy) return;
+                      e.currentTarget.setPointerCapture(e.pointerId);
+                      start.current = point(e);
+                      setDragBox(null);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!start.current) return;
+                      const [x, y] = point(e),
+                        [sx, sy] = start.current;
+                      setDragBox({
+                        id: "drag",
+                        page,
+                        x: Math.min(x, sx),
+                        y: Math.min(y, sy),
+                        width: Math.abs(x - sx),
+                        height: Math.abs(y - sy),
+                      });
+                    }}
+                    onPointerCancel={() => {
+                      start.current = null;
+                      setDragBox(null);
+                    }}
+                    onPointerUp={up}
+                  >
+                    {dragBox && (
+                      <rect
+                        x={dragBox.x * 1000}
+                        y={dragBox.y * 1000}
+                        width={dragBox.width * 1000}
+                        height={dragBox.height * 1000}
+                        fill="black"
+                        opacity="0.6"
+                      />
+                    )}
+                    {boxes
+                      .filter((b) => b.page === page)
+                      .map((b) => (
+                        <rect
+                          key={b.id}
+                          x={b.x * 1000}
+                          y={b.y * 1000}
+                          width={b.width * 1000}
+                          height={b.height * 1000}
+                          fill="black"
+                        />
+                      ))}
+                  </svg>
+                }
+              />
+            </div>
+            <ToolSettings enabled title="Redaction settings">
+              <div className="editor-options">
+                <button
+                  className="btn-secondary"
+                  disabled={!boxes.length || busy}
+                  onClick={() => setBoxes(boxes.slice(0, -1))}
+                >
+                  Undo last area
+                </button>
+                <button
+                  className="btn-secondary"
+                  disabled={!boxes.length || busy}
+                  onClick={() => setBoxes([])}
+                >
+                  Clear marked areas
+                </button>
+              </div>
+              {boxes.length > 0 && (
+                <details className="panel mt-3">
+                  <summary>
+                    Marked areas ({boxes.length}) · review each page
+                  </summary>
+                  <ul>
+                    {boxes.map((b, i) => (
+                      <li key={b.id} className="flex flex-wrap gap-2 mt-2">
+                        <button
+                          className="btn-secondary"
+                          onClick={() => setPage(b.page)}
+                        >
+                          Area {i + 1} · page {b.page}
+                        </button>
+                        <button
+                          className="btn-secondary"
+                          disabled={busy}
+                          aria-label={`Remove area ${i + 1}`}
+                          onClick={() =>
+                            setBoxes(boxes.filter((a) => a.id !== b.id))
+                          }
+                        >
+                          Remove
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+              <details className="panel mt-3">
+                <summary>Mark area by percentage (keyboard alternative)</summary>
+                <NumericArea
+                  page={page}
+                  onAdd={(b) => setBoxes([...boxes, b])}
+                />
+              </details>
+              <label className="panel flex gap-2 mt-3">
+                <input
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                />
+                I accept a photo PDF with no selectable text or interactive
+                features. I have checked the areas to remove.
+              </label>
+              <p className="text-sm text-muted mt-3">
+                The original and any older saved copies remain on your
+                device. This tool does not delete them. Output is limited to
+                144 dpi or 2600 pixels per edge; redacting tiny text may
+                require a larger marked area.
+              </p>
+            </ToolSettings>
           </div>
-          {boxes.length > 0 && (
-            <details className="panel mt-3">
-              <summary>
-                Marked areas ({boxes.length}) · review each page
-              </summary>
-              <ul>
-                {boxes.map((b, i) => (
-                  <li key={b.id} className="flex flex-wrap gap-2 mt-2">
-                    <button
-                      className="btn-secondary"
-                      onClick={() => setPage(b.page)}
-                    >
-                      Area {i + 1} · page {b.page}
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      disabled={busy}
-                      aria-label={`Remove area ${i + 1}`}
-                      onClick={() =>
-                        setBoxes(boxes.filter((a) => a.id !== b.id))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
-          <details className="panel">
-            <summary>Mark area by percentage (keyboard alternative)</summary>
-            <NumericArea page={page} onAdd={(b) => setBoxes([...boxes, b])} />
-          </details>
-          <label className="panel flex gap-2 mt-4">
-            <input
-              type="checkbox"
-              checked={accepted}
-              onChange={(e) => setAccepted(e.target.checked)}
-            />
-            I accept a photo PDF with no selectable text or interactive
-            features. I have checked the areas to remove.
-          </label>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button
+              className="btn-secondary"
+              disabled={!boxes.length || !accepted || busy}
+              onClick={() => void build(false)}
+            >
+              Preview rebuilt PDF
+            </button>
+            {busy && (
+              <button
+                className="btn-secondary"
+                onClick={() => controller.current?.abort()}
+              >
+                Cancel
+              </button>
+            )}
+          </div>
           <button
-            className="btn-secondary mt-4"
-            disabled={!boxes.length || !accepted || busy}
-            onClick={() => void build(false)}
-          >
-            Preview rebuilt PDF
-          </button>
-          <button
-            className="btn mt-4"
+            className="btn mt-3"
             data-primary-action
             disabled={!boxes.length || !accepted || busy}
             onClick={() => void build(true)}
           >
             {busy ? "Rebuilding…" : "Export redacted PDF"}
           </button>
-          {busy && (
-            <button
-              className="btn-secondary mt-3"
-              onClick={() => controller.current?.abort()}
-            >
-              Cancel
-            </button>
-          )}
-          <p className="text-sm text-muted mt-3">
-            The original and any older saved copies remain on your device. This
-            tool does not delete them. Output is limited to 144 dpi or 2600
-            pixels per edge; redacting tiny text may require a larger marked
-            area.
-          </p>
         </>
       )}
-      <p role="status" className="mt-3">
-        {status}
-      </p>
+      {status && (
+        <p role="status" className="mt-3">
+          {status}
+        </p>
+      )}
       {preview && (
         <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
       )}
