@@ -13,6 +13,7 @@ import { useImageThumbnails } from "../hooks/useImageThumbnails";
 import { imagesToPdf } from "../lib/pdf/imagesToPdf";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
+import { useImagesToPdfStore } from "../store/useImagesToPdfStore";
 
 export default function ImagesToPdfPage() {
   useSeo(
@@ -20,13 +21,15 @@ export default function ImagesToPdfPage() {
     "Combine JPG, PNG, WebP and other images into a single PDF, right in your browser. Preview and reorder first, no upload, no login."
   );
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [outputName, setOutputName] = useState("images");
+  const files = useImagesToPdfStore((s) => s.files);
+  const setFiles = useImagesToPdfStore((s) => s.setFiles);
+  const addFiles = useImagesToPdfStore((s) => s.addFiles);
+  const outputName = useImagesToPdfStore((s) => s.outputName);
+  const setOutputName = useImagesToPdfStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = useImageThumbnails(files);
 
-  const addFiles = (newFiles: File[]) => setFiles((prev) => [...prev, ...newFiles]);
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const handleConvert = async () => {

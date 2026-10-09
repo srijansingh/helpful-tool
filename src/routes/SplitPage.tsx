@@ -13,6 +13,7 @@ import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
 import { downloadBytes, downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
 import { formatSize } from "../lib/formatSize";
+import { useSplitStore } from "../store/useSplitStore";
 
 export default function SplitPage() {
   useSeo(
@@ -20,10 +21,14 @@ export default function SplitPage() {
     "Extract specific pages from a PDF or split every page into its own file, right in your browser. No upload, no login."
   );
 
-  const [current, setCurrent] = useState<{ bytes: ArrayBuffer; pageCount: number; name: string; size: number } | null>(null);
-  const [thumb, setThumb] = useState<string | null>(null);
-  const [range, setRange] = useState("");
-  const [outputName, setOutputName] = useState("pages");
+  const current = useSplitStore((s) => s.current);
+  const setCurrent = useSplitStore((s) => s.setCurrent);
+  const thumb = useSplitStore((s) => s.thumb);
+  const setThumb = useSplitStore((s) => s.setThumb);
+  const range = useSplitStore((s) => s.range);
+  const setRange = useSplitStore((s) => s.setRange);
+  const outputName = useSplitStore((s) => s.outputName);
+  const setOutputName = useSplitStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
 

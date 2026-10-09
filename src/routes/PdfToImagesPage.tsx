@@ -13,6 +13,7 @@ import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
 import { downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
 import { formatSize } from "../lib/formatSize";
+import { usePdfToImagesStore } from "../store/usePdfToImagesStore";
 
 export default function PdfToImagesPage() {
   useSeo(
@@ -20,10 +21,14 @@ export default function PdfToImagesPage() {
     "Export every page of a PDF as a JPG or PNG image, right in your browser. No upload, no login."
   );
 
-  const [file, setFile] = useState<File | null>(null);
-  const [thumb, setThumb] = useState<string | null>(null);
-  const [format, setFormat] = useState<"image/jpeg" | "image/png">("image/jpeg");
-  const [outputName, setOutputName] = useState("images");
+  const file = usePdfToImagesStore((s) => s.file);
+  const setFile = usePdfToImagesStore((s) => s.setFile);
+  const thumb = usePdfToImagesStore((s) => s.thumb);
+  const setThumb = usePdfToImagesStore((s) => s.setThumb);
+  const format = usePdfToImagesStore((s) => s.format);
+  const setFormat = usePdfToImagesStore((s) => s.setFormat);
+  const outputName = usePdfToImagesStore((s) => s.outputName);
+  const setOutputName = usePdfToImagesStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
 

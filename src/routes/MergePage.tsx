@@ -13,6 +13,7 @@ import { usePdfThumbnails } from "../hooks/usePdfThumbnails";
 import { mergePdfs } from "../lib/pdf/merge";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
+import { useMergeStore } from "../store/useMergeStore";
 
 export default function MergePage() {
   useSeo(
@@ -20,13 +21,15 @@ export default function MergePage() {
     "Combine multiple PDF files into one, in your browser. See page previews, rename the result, no upload, no login."
   );
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [outputName, setOutputName] = useState("merged");
+  const files = useMergeStore((s) => s.files);
+  const setFiles = useMergeStore((s) => s.setFiles);
+  const addFiles = useMergeStore((s) => s.addFiles);
+  const outputName = useMergeStore((s) => s.outputName);
+  const setOutputName = useMergeStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = usePdfThumbnails(files);
 
-  const addFiles = (newFiles: File[]) => setFiles((prev) => [...prev, ...newFiles]);
   const totalSize = files.reduce((sum, f) => sum + f.size, 0);
 
   const handleMerge = async () => {
