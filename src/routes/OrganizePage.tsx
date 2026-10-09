@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { PDFDocument } from "pdf-lib";
 import { Eye, FileCheck2, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { PageGrid } from "../components/organize/PageGrid";
@@ -40,6 +41,7 @@ export default function OrganizePage() {
   const resetStore = useOrganizeStore((s) => s.reset);
   const pushToast = useToastStore((s) => s.push);
 
+  const [crop,setCrop]=useState(5);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
@@ -66,6 +68,8 @@ export default function OrganizePage() {
       setLoading(false);
     }
   };
+
+  const insertFile=async(file?:File,replace=false,resize?:"a4"|"letter")=>{if(!bytes||loading)return;setLoading(true);setStatus({kind:"working",message:"Updating pages…"});const previous={bytes,rotations,thumbs,pages,fileName,outputName};try{const built=await buildOrganizedPdf(bytes,rotations,pages);const doc=await PDFDocument.load(built);const selected=pages.map((p,i)=>selectedIds.has(p.id)?i:-1).filter(i=>i!==-1);if(resize){const out=await PDFDocument.create();const embedded=await out.embedPages(doc.getPages());for(let i=0;i<embedded.length;i++){if(selected.length&&!selected.includes(i)){const [copy]=await out.copyPages(doc,[i]);out.addPage(copy);continue;}const image=embedded[i];const [w,h]=resize==="a4"?[595.28,841.89]:[612,792];const scale=Math.min(w/image.width,h/image.height);out.addPage([w,h]).drawPage(image,{x:(w-image.width*scale)/2,y:(h-image.height*scale)/2,width:image.width*scale,height:image.height*scale});}await handleFile([new File([new Uint8Array(await out.save())],fileName||"organized.pdf",{type:"application/pdf"})]);}else{const at=selected.length?selected[0]:doc.getPageCount();if(file){const source=await PDFDocument.load(await file.arrayBuffer());const copied=await doc.copyPages(source,source.getPageIndices());if(replace){if(selected.length!==1)throw new Error("Select exactly one page to replace.");doc.removePage(at);}copied.forEach((page,i)=>doc.insertPage(at+i,page));}else doc.insertPage(at,[595.28,841.89]);await handleFile([new File([new Uint8Array(await doc.save())],fileName||"organized.pdf",{type:"application/pdf"})]);}setOutputName(outputName);clearSelection();setStatus({kind:"idle"});pushToast({message:"Pages updated",actionLabel:"Undo",onAction:()=>{setLoaded(previous.fileName||"organized.pdf",previous.bytes,previous.rotations,previous.thumbs);setPages(previous.pages);setOutputName(previous.outputName);}});}catch(e){setStatus({kind:"error",message:(e as Error).message});}finally{setLoading(false);}};
 
   const handleToggleSelect = (id: string, index: number, shiftKey: boolean) => {
     // Capture the anchor before updating the ref — setSelectedIds's
@@ -238,6 +242,7 @@ export default function OrganizePage() {
                   />
                 </div>
 
+                <div className="panel mt-4"><h3 className="font-bold">Page actions</h3><p className="text-sm text-muted">Select pages for duplicate and crop. Insert before the first selected page, or append when none is selected. Crop hides edges; it does not remove hidden content.</p><div className="editor-options"><button className="btn-secondary" disabled={loading||!selectedIds.size} onClick={()=>{const next=pages.flatMap(p=>selectedIds.has(p.id)?[p,{...p,id:crypto.randomUUID()}]:[p]);setPages(next);pushToast({message:"Pages duplicated",actionLabel:"Undo",onAction:()=>setPages(pages)});}}>Duplicate selected</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile()}>Insert blank page</button><label className="btn-secondary">Insert PDF<input className="sr-only" type="file" accept="application/pdf" disabled={loading} onChange={e=>{const f=e.target.files?.[0];if(f)void insertFile(f);e.target.value="";}}/></label><label className="btn-secondary">Replace selected page<input className="sr-only" type="file" accept="application/pdf" disabled={loading||selectedIds.size!==1} onChange={e=>{const f=e.target.files?.[0];if(f)void insertFile(f,true);e.target.value="";}}/></label><label className="field-label">Crop each edge (%)<input className="field" type="number" min="0" max="40" value={crop} onChange={e=>setCrop(Math.max(0,Math.min(40,Number(e.target.value))))}/></label><button className="btn-secondary" disabled={!selectedIds.size||loading} onClick={()=>{setPages(pages.map(p=>selectedIds.has(p.id)?{...p,crop}:p));pushToast({message:"Crop set for export",actionLabel:"Undo",onAction:()=>setPages(pages)});}}>Crop selected</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile(undefined,false,"a4")}>Fit to A4</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile(undefined,false,"letter")}>Fit to Letter</button></div><p className="text-sm text-muted">Paper fitting flattens page content and does not retain interactive forms, links or annotations. Selection applies to paper fitting; with no selection, all pages are fitted.</p></div>
                 <div className="mt-5 sm:max-w-xs">
                   <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
                 </div>

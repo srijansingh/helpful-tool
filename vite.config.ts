@@ -9,7 +9,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg','fonts/*.ttf','fonts/OFL.txt'],
       manifest: {
         name: 'LocalPDF — Merge, Split, Convert PDFs',
         short_name: 'LocalPDF',
@@ -31,7 +31,7 @@ export default defineConfig({
         // pdf.js ships its worker as .mjs, not .js — without it here the
         // service worker silently skips caching it and PDF -> Images
         // breaks offline after the first visit.
-        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2,ttf}'],
       },
     }),
   ],

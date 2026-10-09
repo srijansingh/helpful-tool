@@ -15,31 +15,35 @@ export interface PageNumberOptions {
   format: PageNumberFormat;
   startAt: number;
   fontSize: number;
+  ranges?:string;prefix?:string;margin?:number;skipCover?:boolean;
 }
 
+import { selectedPages } from "./pageRanges.ts";
 const MARGIN = 24;
 
 export async function applyPageNumbers(bytes: ArrayBuffer, options: PageNumberOptions): Promise<Uint8Array> {
   const doc = await PDFDocument.load(bytes);
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const pages = doc.getPages();
-  const lastNumber = options.startAt + pages.length - 1;
+  const selected=options.ranges?.trim()?selectedPages(options.ranges,pages.length):pages.map((_,i)=>i);const indices=selected.filter(i=>!options.skipCover||i!==0);const margin=options.margin??MARGIN;
+  const lastNumber = options.startAt + indices.length - 1;
   const color = rgb(0.25, 0.25, 0.25);
 
   pages.forEach((page, i) => {
-    const n = options.startAt + i;
-    const text = options.format === "page-of-total" ? `${n} of ${lastNumber}` : `${n}`;
+    const index=indices.indexOf(i);if(index===-1)return;
+    const n = options.startAt + index;
+    const text = (options.prefix||"") + (options.format === "page-of-total" ? `${n} of ${lastNumber}` : `${n}`);
     const { width, height } = page.getSize();
     const textWidth = font.widthOfTextAtSize(text, options.fontSize);
 
     const x = options.position.endsWith("center")
       ? (width - textWidth) / 2
       : options.position.endsWith("right")
-        ? width - MARGIN - textWidth
-        : MARGIN;
+        ? width - margin - textWidth
+        : margin;
     const y = options.position.startsWith("top")
-      ? height - MARGIN
-      : Math.max(4, MARGIN - options.fontSize * 0.3);
+      ? height - margin
+      : Math.max(4, margin - options.fontSize * 0.3);
 
     page.drawText(text, { x, y, size: options.fontSize, font, color });
   });

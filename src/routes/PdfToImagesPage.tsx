@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
@@ -30,6 +30,7 @@ export default function PdfToImagesPage() {
   const setFormat = usePdfToImagesStore((s) => s.setFormat);
   const outputName = usePdfToImagesStore((s) => s.outputName);
   const setOutputName = usePdfToImagesStore((s) => s.setOutputName);
+  const [ranges,setRanges]=useState("");const [scale,setScale]=useState(2);const [quality,setQuality]=useState(0.9);const cancel=useRef<AbortController|null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
 
@@ -51,7 +52,8 @@ export default function PdfToImagesPage() {
     }
     setStatus({ kind: "working", message: "Rendering pages…" });
     try {
-      const images = await renderPdfToImages(file, { format });
+      cancel.current=new AbortController();
+      const images = await renderPdfToImages(file, { format,ranges,scale,quality,signal:cancel.current.signal,onProgress:(done,total)=>setStatus({kind:"working",message:`Rendering ${done} of ${total} pages…`}) });
       const base = outputName.trim() || "images";
       if (images.length === 1) {
         const blob = new Blob([new Uint8Array(images[0].bytes)], { type: format });
@@ -71,7 +73,7 @@ export default function PdfToImagesPage() {
       }
       logActivity({ tool: "pdf-to-images", label: `Exported ${images.length} images as ${base}` });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't render that PDF: ${(e as Error).message}` });
+      setStatus({ kind: "error", message: cancel.current?.signal.aborted?"Export cancelled. Original file is unchanged.":`Couldn't render that PDF: ${(e as Error).message}` });
     }
   };
 
@@ -122,6 +124,7 @@ export default function PdfToImagesPage() {
           </div>
         </div>
 
+        <div className="editor-options"><label className="field-label">Pages (blank = all)<input className="field" placeholder="1, 3-5" value={ranges} onChange={e=>setRanges(e.target.value)}/></label><label className="field-label">Resolution<select className="field" value={scale} onChange={e=>setScale(Number(e.target.value))}><option value="1">72 dpi · small</option><option value="2">144 dpi · balanced</option><option value="3">216 dpi · detailed</option></select></label><label className="field-label">JPEG quality<input type="range" min="0.3" max="1" step="0.1" value={quality} onChange={e=>setQuality(Number(e.target.value))}/></label>{status.kind==="working"&&<button className="btn-secondary" onClick={()=>cancel.current?.abort()}>Cancel export</button>}</div>
         {file && (
           <div className="mt-5">
             <p className="mb-2 text-sm text-muted">

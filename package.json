@@ -2,7 +2,7 @@
   "name": "pdf-toolkit",
   "private": true,
   "version": "0.1.0",
-  "description": "Merge, split and convert PDFs entirely in the browser \u2014 no upload, no login, installable as a PWA.",
+  "description": "Merge, split and convert PDFs entirely in the browser — no upload, no login, installable as a PWA.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,6 +12,7 @@
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
     "@tailwindcss/vite": "^4.3.3",
     "fflate": "^0.8.3",
     "idb-keyval": "^6.3.0",

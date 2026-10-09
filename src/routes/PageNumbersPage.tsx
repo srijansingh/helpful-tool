@@ -46,6 +46,7 @@ export default function PageNumbersPage() {
   const setFontSize = usePageNumbersStore((s) => s.setFontSize);
   const outputName = usePageNumbersStore((s) => s.outputName);
   const setOutputName = usePageNumbersStore((s) => s.setOutputName);
+  const [ranges,setRanges]=useState("");const [prefix,setPrefix]=useState("");const [margin,setMargin]=useState(24);const [skipCover,setSkipCover]=useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -69,7 +70,7 @@ export default function PageNumbersPage() {
 
   const build = () => {
     if (!current) throw new Error("No PDF loaded");
-    return applyPageNumbers(current.bytes, { position, format, startAt, fontSize });
+    return applyPageNumbers(current.bytes, { position, format, startAt, fontSize,ranges,prefix,margin,skipCover });
   };
 
   const handlePreview = async () => {
@@ -136,7 +137,7 @@ export default function PageNumbersPage() {
             )}
 
             {current && (
-              <div className="mt-5 flex flex-col gap-4">
+              <div className="mt-5 flex flex-col gap-4"><label className="field-label">Pages (blank = all)<input className="field" placeholder="1, 3-5" value={ranges} onChange={e=>setRanges(e.target.value)}/></label><label className="field-label">Prefix<input className="field" placeholder="Page " value={prefix} onChange={e=>setPrefix(e.target.value)}/></label><label className="field-label">Margin (pt)<input className="field" type="number" min="6" max="100" value={margin} onChange={e=>setMargin(Math.max(6,Math.min(100,Number(e.target.value)||24)))}/></label><label className="flex gap-2"><input type="checkbox" checked={skipCover} onChange={e=>setSkipCover(e.target.checked)}/>Skip cover page</label>
                 <label className="flex flex-col gap-1.5">
                   <span className="text-sm text-muted">Position</span>
                   <select
@@ -228,7 +229,7 @@ export default function PageNumbersPage() {
             {current ? (
               <LivePreviewPane
                 build={build}
-                watch={`${current.name}-${current.size}-${position}-${format}-${startAt}-${fontSize}`}
+                watch={`${current.name}-${current.size}-${position}-${format}-${startAt}-${fontSize}-${ranges}-${prefix}-${margin}-${skipCover}`}
                 emptyMessage="Add a PDF to see a live preview of the page numbers."
               />
             ) : (

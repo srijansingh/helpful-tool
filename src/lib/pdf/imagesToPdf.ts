@@ -1,43 +1,4 @@
 import { PDFDocument, type PDFImage } from "pdf-lib";
-
-// Caps the PDF page size (in points) so one huge photo doesn't produce an
-// absurdly large page; images are scaled down to fit, never upscaled.
-const MAX_PAGE_PT = 1600;
-
-async function toPngBytes(file: File): Promise<Uint8Array> {
-  const bitmap = await createImageBitmap(file);
-  const canvas = document.createElement("canvas");
-  canvas.width = bitmap.width;
-  canvas.height = bitmap.height;
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0);
-  const blob: Blob = await new Promise((resolve) =>
-    canvas.toBlob((b) => resolve(b!), "image/png")
-  );
-  return new Uint8Array(await blob.arrayBuffer());
-}
-
-async function embedImage(doc: PDFDocument, file: File): Promise<PDFImage> {
-  // JPEG/PNG embed natively (and stay compact); anything else (webp, gif,
-  // bmp, ...) is normalized to PNG via canvas first.
-  if (file.type === "image/jpeg") {
-    return doc.embedJpg(new Uint8Array(await file.arrayBuffer()));
-  }
-  if (file.type === "image/png") {
-    return doc.embedPng(new Uint8Array(await file.arrayBuffer()));
-  }
-  return doc.embedPng(await toPngBytes(file));
-}
-
-// Builds one PDF with one page per image, in the given order.
-export async function imagesToPdf(files: File[]): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  for (const file of files) {
-    const img = await embedImage(doc, file);
-    const scale = Math.min(1, MAX_PAGE_PT / Math.max(img.width, img.height));
-    const w = img.width * scale;
-    const h = img.height * scale;
-    const page = doc.addPage([w, h]);
-    page.drawImage(img, { x: 0, y: 0, width: w, height: h });
-  }
-  return doc.save();
-}
+export interface ImagePdfOptions{paper?:"original"|"a4"|"letter";orientation?:"portrait"|"landscape";margin?:number;fit?:"contain"|"cover";quality?:number}
+export async function imageBytes(file:File,quality=1):Promise<{bytes:Uint8Array;jpeg:boolean}>{if(quality===1&&(file.type==="image/jpeg"||file.type==="image/png"))return {bytes:new Uint8Array(await file.arrayBuffer()),jpeg:file.type==="image/jpeg"};const bitmap=await createImageBitmap(file);const c=document.createElement("canvas");const s=Math.min(1,2600/Math.max(bitmap.width,bitmap.height));c.width=Math.round(bitmap.width*s);c.height=Math.round(bitmap.height*s);const ctx=c.getContext("2d")!;ctx.fillStyle="white";ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(bitmap,0,0,c.width,c.height);bitmap.close();const blob=await new Promise<Blob>((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(new Error("Image encoding failed")),quality<1?"image/jpeg":"image/png",quality));c.width=c.height=0;return {bytes:new Uint8Array(await blob.arrayBuffer()),jpeg:quality<1};}
+export async function imagesToPdf(files:File[],{paper="original",orientation="portrait",margin=0,fit="contain",quality=1}:ImagePdfOptions={}):Promise<Uint8Array>{const doc=await PDFDocument.create();for(const file of files){const data=await imageBytes(file,quality);const img:PDFImage=data.jpeg?await doc.embedJpg(data.bytes):await doc.embedPng(data.bytes);const s=Math.min(1,1600/Math.max(img.width,img.height));let w=paper==="a4"?595.28:paper==="letter"?612:img.width*s;let h=paper==="a4"?841.89:paper==="letter"?792:img.height*s;if(paper!=="original"&&orientation==="landscape")[w,h]=[h,w];const m=Math.min(Math.max(0,margin),Math.min(w,h)/4);const page=doc.addPage([w,h]);const scale=(fit==="contain"?Math.min:Math.max)((w-2*m)/img.width,(h-2*m)/img.height);page.drawImage(img,{x:(w-img.width*scale)/2,y:(h-img.height*scale)/2,width:img.width*scale,height:img.height*scale});}return doc.save();}

@@ -36,6 +36,7 @@ export default function WatermarkPage() {
   const setRotation = useWatermarkStore((s) => s.setRotation);
   const outputName = useWatermarkStore((s) => s.outputName);
   const setOutputName = useWatermarkStore((s) => s.setOutputName);
+  const [position,setPosition]=useState<"center"|"top-left"|"top-right"|"bottom-left"|"bottom-right">("center");const [color,setColor]=useState("#808080");const [ranges,setRanges]=useState("");const [repeat,setRepeat]=useState(false);const [logo,setLogo]=useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -59,7 +60,7 @@ export default function WatermarkPage() {
 
   const build = () => {
     if (!current) throw new Error("No PDF loaded");
-    return applyWatermark(current.bytes, { text: text || "WATERMARK", opacity, fontSize, rotation });
+    return applyWatermark(current.bytes, { text: text || "WATERMARK", opacity, fontSize, rotation,position,color,ranges,repeat,logo });
   };
 
   const handlePreview = async () => {
@@ -126,7 +127,7 @@ export default function WatermarkPage() {
             )}
 
             {current && (
-              <div className="mt-5 flex flex-col gap-4">
+              <div className="mt-5 flex flex-col gap-4"><div className="editor-options"><label className="field-label">Placement<select className="field" value={position} onChange={e=>setPosition(e.target.value as typeof position)}>{["center","top-left","top-right","bottom-left","bottom-right"].map(p=><option key={p}>{p}</option>)}</select></label><label className="field-label">Pages (blank = all)<input className="field" placeholder="1, 3-5" value={ranges} onChange={e=>setRanges(e.target.value)}/></label><label>Color<input aria-label="Watermark color" type="color" value={color} onChange={e=>setColor(e.target.value)}/></label><label className="flex gap-2"><input type="checkbox" checked={repeat} onChange={e=>setRepeat(e.target.checked)}/>Repeat in a grid</label><label className="btn-secondary">Import logo<input className="sr-only" type="file" accept="image/*" onChange={async e=>{try{const f=e.target.files?.[0];if(!f)return;const b=await createImageBitmap(f);const c=document.createElement("canvas");c.width=b.width;c.height=b.height;c.getContext("2d")!.drawImage(b,0,0);b.close();setLogo(c.toDataURL("image/png"));}catch(e){setStatus({kind:"error",message:(e as Error).message});}}}/></label>{logo&&<button className="btn-secondary" onClick={()=>setLogo("")}>Use text instead</button>}</div>
                 <label className="flex flex-col gap-1.5">
                   <span className="text-sm text-muted">Watermark text</span>
                   <input
@@ -226,7 +227,7 @@ export default function WatermarkPage() {
             {current ? (
               <LivePreviewPane
                 build={build}
-                watch={`${current.name}-${current.size}-${text}-${opacity}-${fontSize}-${rotation}`}
+                watch={`${current.name}-${current.size}-${text}-${opacity}-${fontSize}-${rotation}-${position}-${color}-${ranges}-${repeat}-${logo}`}
                 emptyMessage="Add a PDF to see a live preview of the watermark."
               />
             ) : (

@@ -28,6 +28,9 @@ export default function ImagesToPdfPage() {
   const addFiles = useImagesToPdfStore((s) => s.addFiles);
   const outputName = useImagesToPdfStore((s) => s.outputName);
   const setOutputName = useImagesToPdfStore((s) => s.setOutputName);
+  const [paper,setPaper]=useState<"original"|"a4"|"letter">("a4");
+  const [orientation,setOrientation]=useState<"portrait"|"landscape">("portrait");
+  const [margin,setMargin]=useState(24);const [fit,setFit]=useState<"contain"|"cover">("contain");const [quality,setQuality]=useState(0.9);const options={paper,orientation,margin,fit,quality};
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -54,7 +57,7 @@ export default function ImagesToPdfPage() {
     if (files.length === 0 || previewing) return;
     setPreviewing(true);
     try {
-      setPreviewBytes(await imagesToPdf(files));
+      setPreviewBytes(await imagesToPdf(files,options));
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
     } finally {
@@ -70,7 +73,7 @@ export default function ImagesToPdfPage() {
     }
     setStatus({ kind: "working", message: "Converting…" });
     try {
-      const bytes = await imagesToPdf(files);
+      const bytes = await imagesToPdf(files,options);
       const filename = `${outputName.trim() || "images"}.pdf`;
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
@@ -113,6 +116,7 @@ export default function ImagesToPdfPage() {
               <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
             </div>
 
+            <div className="editor-options"><label className="field-label">Paper size<select className="field" value={paper} onChange={e=>setPaper(e.target.value as typeof paper)}><option value="a4">A4</option><option value="letter">Letter</option><option value="original">Original image size</option></select></label><label className="field-label">Orientation<select className="field" value={orientation} onChange={e=>setOrientation(e.target.value as typeof orientation)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label className="field-label">Margin (pt)<input className="field" type="number" min="0" max="100" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(100,Number(e.target.value))))}/></label><label className="field-label">Image fit<select className="field" value={fit} onChange={e=>setFit(e.target.value as typeof fit)}><option value="contain">Fit whole image</option><option value="cover">Fill page (crops edges)</option></select></label><label className="field-label">JPEG quality<input aria-label="JPEG quality" type="range" min="0.3" max="1" step="0.1" value={quality} onChange={e=>setQuality(Number(e.target.value))}/></label></div>
             {files.length > 0 && (
               <button
                 type="button"
@@ -147,8 +151,8 @@ export default function ImagesToPdfPage() {
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
               <LivePreviewPane
-                build={() => imagesToPdf(files)}
-                watch={files}
+                build={() => imagesToPdf(files,options)}
+                watch={[files,paper,orientation,margin,fit,quality]}
                 emptyMessage="Add images to see a live preview of the PDF."
               />
             ) : (

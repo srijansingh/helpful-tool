@@ -65,7 +65,7 @@ export default function MergePage() {
   const handleMerge = async () => {
     if (status.kind === "working") return;
     if (files.length < 2) {
-      setStatus({ kind: "error", message: "Add at least two PDFs to merge." });
+      setStatus({ kind: "error", message: "Add at least two PDFs or images to merge." });
       return;
     }
     setStatus({ kind: "working", message: "Merging…" });
@@ -86,15 +86,15 @@ export default function MergePage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Merge PDFs</h1>
-      <p className="mt-1 text-muted">Add a few PDFs, drag them into order, merge.</p>
+      <p className="mt-1 text-muted">Combine PDFs and photos in any order.</p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
         <div>
           <Card>
             <Dropzone
-              accept="application/pdf"
+              accept="application/pdf,image/*"
               multiple
-              label="Drop PDFs here or click to browse"
+              label="Drop PDFs or images here or click to browse"
               hint="You can add more files any time before merging"
               onFiles={addFiles}
             />

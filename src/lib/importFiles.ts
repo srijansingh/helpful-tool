@@ -8,7 +8,7 @@ export async function validateFiles(files: File[], accept: string, multiple = tr
   const pdf = new TextDecoder().decode(bytes).includes("%PDF-");
   const image = (bytes[0]===0xff && bytes[1]===0xd8) || (bytes[0]===0x89 && bytes[1]===0x50) || new TextDecoder().decode(bytes.slice(0,6)).startsWith("GIF8") || (new TextDecoder().decode(bytes.slice(0,4))==="RIFF" && new TextDecoder().decode(bytes.slice(8,12))==="WEBP") || (bytes[0]===0x42 && bytes[1]===0x4d);
   if (accept.includes("pdf") && pdf) valid.push(new File([file],file.name,{type:"application/pdf",lastModified:file.lastModified}));
-  else if (accept.includes("image") && image) valid.push(file);
+  else if (accept.includes("image") && image) {const type=bytes[0]===0xff?"image/jpeg":bytes[0]===0x89?"image/png":bytes[0]===0x42?"image/bmp":bytes[0]===0x47?"image/gif":"image/webp";valid.push(new File([file],file.name,{type,lastModified:file.lastModified}));}
   else throw new Error(`${file.name}: choose ${accept.includes("pdf") && !accept.includes("image") ? "a PDF" : "a supported PDF or JPG, PNG, WebP, GIF or BMP image"}.`);
  }
  return valid;

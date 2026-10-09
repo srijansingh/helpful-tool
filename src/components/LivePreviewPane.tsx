@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FileStack } from "lucide-react";
-import { renderPdfPages } from "../lib/pdf/renderPdfPages";
+import { PdfReader } from "./PdfReader";
 
 interface LivePreviewPaneProps {
   // Builds the PDF to preview. Re-run (debounced) whenever `watch` changes.
@@ -16,7 +16,7 @@ interface LivePreviewPaneProps {
 // shows a live preview instead of making you build-then-check. Debounced
 // so rapid file-list edits don't trigger a render per keystroke/drop.
 export function LivePreviewPane({ build, watch, emptyMessage, title = "Preview" }: LivePreviewPaneProps) {
-  const [pages, setPages] = useState<string[] | null>(null);
+  const [bytes,setBytes]=useState<Uint8Array|null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const generationRef = useRef(0);
@@ -28,14 +28,14 @@ export function LivePreviewPane({ build, watch, emptyMessage, title = "Preview" 
       setError(null);
       try {
         const bytes = await build();
-        const urls = await renderPdfPages(bytes, 1);
+
         if (generationRef.current === generation) {
-          setPages(urls);
+          setBytes(bytes);
         }
       } catch (e) {
         if (generationRef.current === generation) {
           setError((e as Error).message);
-          setPages(null);
+          setBytes(null);
         }
       } finally {
         if (generationRef.current === generation) setLoading(false);
@@ -54,25 +54,14 @@ export function LivePreviewPane({ build, watch, emptyMessage, title = "Preview" 
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {!pages && !loading && !error && (
+        {!bytes && !loading && !error && (
           <div className="flex h-full flex-col items-center justify-center gap-2 py-16 text-center">
             <FileStack className="h-8 w-8 text-muted" aria-hidden="true" />
             <p className="max-w-[16rem] text-sm text-muted">{emptyMessage}</p>
           </div>
         )}
         {error && <p className="p-4 text-sm text-bad">Couldn't build preview: {error}</p>}
-        {pages && (
-          <div className="flex flex-col gap-3">
-            {pages.map((src, i) => (
-              <div key={i} className="relative">
-                <img src={src} alt={`Page ${i + 1}`} className="w-full rounded-lg border border-border shadow-sm" />
-                <span className="absolute left-2 top-2 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[10px] font-bold text-fg">
-                  {i + 1}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        {bytes && <PdfReader bytes={bytes}/>}
       </div>
     </div>
   );

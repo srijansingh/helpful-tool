@@ -40,3 +40,6 @@ export function parsePageRanges(input: string, pageCount: number): number[] {
   }
   return [...indices].sort((a, b) => a - b);
 }
+
+// Export controls reject malformed or out-of-range selections instead of silently producing an unchanged file.
+export function selectedPages(input:string,pageCount:number):number[]{if(!input.trim())return Array.from({length:pageCount},(_,i)=>i);for(const part of input.split(",")){const m=part.trim().match(/^(\d+)(?:-(\d+))?$/);if(!m)throw new Error("Use page numbers like 1, 3-5.");const values=[Number(m[1]),Number(m[2]||m[1])];if(values.some(n=>!Number.isSafeInteger(n)||n<1||n>pageCount))throw new Error(`Choose pages between 1 and ${pageCount}.`);}return parsePageRanges(input,pageCount);}

@@ -1,43 +1,5 @@
-import { PDFDocument, StandardFonts, rgb, degrees } from "pdf-lib";
-
-export interface WatermarkOptions {
-  text: string;
-  opacity: number; // 0-1
-  fontSize: number;
-  rotation: number; // degrees, counter-clockwise
-}
-
-// Stamps the same text watermark across every page — centered, rotated,
-// and semi-transparent so it doesn't obscure the underlying content.
-export async function applyWatermark(bytes: ArrayBuffer, options: WatermarkOptions): Promise<Uint8Array> {
-  const doc = await PDFDocument.load(bytes);
-  const font = await doc.embedFont(StandardFonts.HelveticaBold);
-  const color = rgb(0.5, 0.5, 0.5);
-
-  // drawText rotates around its (x, y) draw origin (the text's unrotated
-  // baseline-left corner), not its visual center — so to keep rotated
-  // text actually centered on the page, the origin has to be placed
-  // where the *rotated* center-offset lands you back on the page center,
-  // not just where the unrotated text would be centered.
-  const angle = (options.rotation * Math.PI) / 180;
-  for (const page of doc.getPages()) {
-    const { width, height } = page.getSize();
-    const textWidth = font.widthOfTextAtSize(options.text, options.fontSize);
-    const localCenterX = textWidth / 2;
-    const localCenterY = options.fontSize * 0.35;
-    const rotatedCenterX = localCenterX * Math.cos(angle) - localCenterY * Math.sin(angle);
-    const rotatedCenterY = localCenterX * Math.sin(angle) + localCenterY * Math.cos(angle);
-
-    page.drawText(options.text, {
-      x: width / 2 - rotatedCenterX,
-      y: height / 2 - rotatedCenterY,
-      size: options.fontSize,
-      font,
-      color,
-      opacity: options.opacity,
-      rotate: degrees(options.rotation),
-    });
-  }
-
-  return doc.save();
-}
+import { PDFDocument, rgb, degrees } from "pdf-lib";
+import { selectedPages } from "./pageRanges.ts";
+import { textFont } from "./font.ts";
+export interface WatermarkOptions{text:string;opacity:number;fontSize:number;rotation:number;position?:"center"|"top-left"|"top-right"|"bottom-left"|"bottom-right";color?:string;ranges?:string;repeat?:boolean;logo?:string}
+export async function applyWatermark(bytes:ArrayBuffer,options:WatermarkOptions){const doc=await PDFDocument.load(bytes);const font=await textFont(doc,options.text);const c=(options.color||"#808080").match(/\w\w/g)!.map(v=>parseInt(v,16)/255);const color=rgb(c[0],c[1],c[2]);const pages=options.ranges?.trim()?selectedPages(options.ranges,doc.getPageCount()):doc.getPageIndices();const logo=options.logo?await doc.embedPng(options.logo):null;for(const i of pages){const page=doc.getPage(i);const {x:bx,y:by,width,height}=page.getCropBox();const textWidth=logo?Math.min(120,width/3):font.widthOfTextAtSize(options.text,options.fontSize);const textHeight=logo?textWidth*logo.height/logo.width:options.fontSize;const angle=options.rotation*Math.PI/180;const pos=options.position||"center";const cx=pos.endsWith("left")?24+textWidth/2:pos.endsWith("right")?width-24-textWidth/2:width/2;const cy=pos.startsWith("top")?height-24-textHeight/2:pos.startsWith("bottom")?24+textHeight/2:height/2;const centers=options.repeat?Array.from({length:9},(_,n)=>[(n%3+0.5)*width/3,(Math.floor(n/3)+0.5)*height/3]):[[cx,cy]];for(const [mx,my] of centers){const x=bx+mx-(textWidth/2*Math.cos(angle)-textHeight*0.35*Math.sin(angle));const y=by+my-(textWidth/2*Math.sin(angle)+textHeight*0.35*Math.cos(angle));if(logo)page.drawImage(logo,{x,y,width:textWidth,height:textHeight,opacity:options.opacity,rotate:degrees(options.rotation)});else page.drawText(options.text,{x,y,font,size:options.fontSize,color,opacity:options.opacity,rotate:degrees(options.rotation)});}}return doc.save();}
