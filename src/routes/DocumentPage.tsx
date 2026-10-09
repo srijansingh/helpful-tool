@@ -26,7 +26,7 @@ export default function DocumentPage() {
       <h1 className="text-2xl font-bold break-words">{file.name}</h1>
       {file.type.startsWith("image/") ? (
         <ImageView file={file} />
-      ) : (
+      ) : file.type === "application/pdf" ? (
         <button
           className="btn mt-4"
           onClick={async () =>
@@ -35,6 +35,10 @@ export default function DocumentPage() {
         >
           Read PDF
         </button>
+      ) : (
+        <p className="mt-4 text-muted">
+          Download or share this file to open it in a compatible app.
+        </p>
       )}
       <ResultActions file={file} />
       <h2 className="mt-6 text-lg font-bold">Continue with a tool</h2>
@@ -42,7 +46,10 @@ export default function DocumentPage() {
         {TOOLS.filter((t) =>
           file.type === "application/pdf"
             ? t.to !== "/images-to-pdf" && t.to !== "/scan" && t.to !== "/image"
-            : t.to === "/images-to-pdf" || t.to === "/image" || t.to === "/ocr",
+            : file.type.startsWith("image/") &&
+              (t.to === "/images-to-pdf" ||
+                t.to === "/image" ||
+                t.to === "/ocr"),
         ).map(({ to, label, icon: Icon }) => (
           <button
             className="tool-tile"
@@ -64,8 +71,12 @@ export default function DocumentPage() {
   );
 }
 function ImageView({ file }: { file: File }) {
-  const [url] = useState(() => URL.createObjectURL(file));
-  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    const u = URL.createObjectURL(file);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [file]);
   return (
     <img
       className="mt-4 max-h-[50vh] rounded-xl object-contain"

@@ -14,9 +14,12 @@ const groups = [
       "/ocr",
     ],
   },
-  { name: "Organize", paths: ["/split", "/organize", "/page-numbers"] },
+  {
+    name: "Organize",
+    paths: ["/split", "/organize", "/page-numbers", "/booklet"],
+  },
   { name: "Edit & sign", paths: ["/watermark", "/edit"] },
-  { name: "Reduce & secure", paths: ["/compress", "/security"] },
+  { name: "Reduce & secure", paths: ["/compress", "/security", "/redact"] },
 ];
 export default function ToolsPage() {
   useSeo("Tools — LocalPDF", "Find the right tool for your document.");

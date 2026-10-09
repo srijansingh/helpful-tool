@@ -163,6 +163,35 @@ export default function EditPage() {
     const p = point(e);
     let next = marks;
     if (!next.some((m) => m.id === g.mark.id)) next = [...g.original, g.mark];
+    const added = next.find((m) => m.id === g.mark.id);
+    if (!g.move && added) {
+      if (
+        (added.kind === "pen" && (added.points?.length || 0) < 2) ||
+        ((added.kind === "highlight" || added.kind === "rectangle") &&
+          (!added.w || !added.h))
+      ) {
+        setHistory((h) => h.map((v, i) => (i === cursor ? g.original : v)));
+        gesture.current = null;
+        setError("Drag on the page to draw this mark.");
+        return;
+      }
+      if (added.kind === "pen") {
+        const pts = added.points!;
+        const xs = pts.map((p) => p[0]),
+          ys = pts.map((p) => p[1]);
+        next = next.map((m) =>
+          m.id === added.id
+            ? {
+                ...m,
+                x: Math.min(...xs),
+                y: Math.min(...ys),
+                w: Math.max(...xs) - Math.min(...xs),
+                h: Math.max(...ys) - Math.min(...ys),
+              }
+            : m,
+        );
+      }
+    }
     if (g.move && p[0] === g.start[0] && p[1] === g.start[1]) {
       gesture.current = null;
       return;
@@ -195,14 +224,15 @@ export default function EditPage() {
         Add text, drawings and visual signatures. Original text stays in place.
         Drafts stay in this session until exported.
       </p>
-      <div className="mt-4">
+      <details className="panel mt-4" open={!bytes}>
+        <summary>{bytes ? `Change PDF · ${file?.name}` : "Open a PDF"}</summary>
         <Dropzone
           accept="application/pdf"
           label="Open a PDF to edit"
           hint={file?.name || "Choose a PDF"}
           onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
         />
-      </div>
+      </details>
       {bytes && (
         <>
           <div
@@ -254,68 +284,70 @@ export default function EditPage() {
               Redo
             </button>
           </div>
-          <div className="editor-options">
-            <label className="field-label">
-              Text or typed signature
-              <input
-                className="field"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-              />
-            </label>
-            <label className="field-label">
-              Text size
-              <input
-                className="field"
-                type="number"
-                min="6"
-                max="120"
-                value={fontSize}
-                onChange={(e) =>
-                  setFontSize(
-                    Math.max(6, Math.min(120, Number(e.target.value) || 20)),
-                  )
-                }
-              />
-            </label>
-            <label>
-              Ink color
-              <input
-                aria-label="Ink color"
-                type="color"
-                value={color}
-                onChange={(e) => setColor(e.target.value)}
-              />
-            </label>
-            <label className="btn-secondary">
-              Import image / signature
-              <input
-                type="file"
-                accept="image/png,image/jpeg"
-                className="sr-only"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (!f) return;
-                  try {
-                    const b = await createImageBitmap(f);
-                    const c = document.createElement("canvas");
-                    c.width = Math.min(1200, b.width);
-                    c.height = (b.height * c.width) / b.width;
-                    c.getContext("2d")!.drawImage(b, 0, 0, c.width, c.height);
-                    b.close();
-                    setImage(c.toDataURL("image/png"));
-                    setMode("image");
-                  } catch (e) {
-                    setError(friendlyError(e));
+          <details className="panel" open={mode === "text" || mode === "image"}>
+            <summary>Text, color & signature options</summary>
+            <div className="editor-options">
+              <label className="field-label">
+                Text or typed signature
+                <input
+                  className="field"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              </label>
+              <label className="field-label">
+                Text size
+                <input
+                  className="field"
+                  type="number"
+                  min="6"
+                  max="120"
+                  value={fontSize}
+                  onChange={(e) =>
+                    setFontSize(
+                      Math.max(6, Math.min(120, Number(e.target.value) || 20)),
+                    )
                   }
-                }}
-              />
-            </label>
-          </div>
+                />
+              </label>
+              <label>
+                Ink color
+                <input
+                  aria-label="Ink color"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                />
+              </label>
+              <label className="btn-secondary">
+                Import image / signature
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    try {
+                      const b = await createImageBitmap(f);
+                      const c = document.createElement("canvas");
+                      c.width = Math.min(1200, b.width);
+                      c.height = (b.height * c.width) / b.width;
+                      c.getContext("2d")!.drawImage(b, 0, 0, c.width, c.height);
+                      b.close();
+                      setImage(c.toDataURL("image/png"));
+                      setMode("image");
+                    } catch (e) {
+                      setError(friendlyError(e));
+                    }
+                  }}
+                />
+              </label>
+            </div>
+          </details>
           <p className="text-sm text-muted mt-2">
-            Select a tool, then tap or draw on the page. Select an annotation to
-            move it or change its size. Draw signature is a visual mark, not a
-            certificate signature.
+            Tap or draw on the page. Use Select to move a mark. Signatures are
+            visual marks, not certificate signatures.
           </p>
           <div className="mt-3">
             <PdfReader
@@ -462,6 +494,18 @@ export default function EditPage() {
                               w: Math.min(1 - m.x, m.w * factor),
                               h: Math.min(1 - m.y, m.h * factor),
                               size: m.size * factor,
+                              points: m.points?.map(([x, y]) => [
+                                m.x +
+                                  (x - m.x) *
+                                    (m.w
+                                      ? Math.min(1 - m.x, m.w * factor) / m.w
+                                      : 1),
+                                m.y +
+                                  (y - m.y) *
+                                    (m.h
+                                      ? Math.min(1 - m.y, m.h * factor) / m.h
+                                      : 1),
+                              ]),
                             }
                           : m,
                       ),

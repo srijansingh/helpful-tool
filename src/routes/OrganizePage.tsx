@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, degrees } from "pdf-lib";
 import { Eye, FileCheck2, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { PageGrid } from "../components/organize/PageGrid";
@@ -21,7 +21,7 @@ import { formatSize } from "../lib/formatSize";
 export default function OrganizePage() {
   useSeo(
     "Organize PDF Online Free — Reorder, Delete, Rotate Pages | LocalPDF",
-    "Drag pages into a new order, delete the ones you don't need, and rotate pages — right in your browser, no upload."
+    "Drag pages into a new order, delete the ones you don't need, and rotate pages — right in your browser, no upload.",
   );
 
   const fileName = useOrganizeStore((s) => s.fileName);
@@ -41,7 +41,7 @@ export default function OrganizePage() {
   const resetStore = useOrganizeStore((s) => s.reset);
   const pushToast = useToastStore((s) => s.push);
 
-  const [crop,setCrop]=useState(5);
+  const [crop, setCrop] = useState(5);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [loading, setLoading] = useState(false);
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
@@ -57,19 +57,127 @@ export default function OrganizePage() {
     setLoading(true);
     setStatus({ kind: "idle" });
     try {
-      const [{ bytes: pdfBytes, rotations: pageRotations }, pageThumbs] = await Promise.all([
-        loadOrganizeSource(file),
-        renderAllPageThumbnails(file),
-      ]);
+      const [{ bytes: pdfBytes, rotations: pageRotations }, pageThumbs] =
+        await Promise.all([
+          loadOrganizeSource(file),
+          renderAllPageThumbnails(file),
+        ]);
       setLoaded(file.name, pdfBytes, pageRotations, pageThumbs);
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't read that PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't read that PDF: ${(e as Error).message}`,
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const insertFile=async(file?:File,replace=false,resize?:"a4"|"letter")=>{if(!bytes||loading)return;setLoading(true);setStatus({kind:"working",message:"Updating pages…"});const previous={bytes,rotations,thumbs,pages,fileName,outputName};try{const built=await buildOrganizedPdf(bytes,rotations,pages);const doc=await PDFDocument.load(built);const selected=pages.map((p,i)=>selectedIds.has(p.id)?i:-1).filter(i=>i!==-1);if(resize){const out=await PDFDocument.create();const embedded=await out.embedPages(doc.getPages());for(let i=0;i<embedded.length;i++){if(selected.length&&!selected.includes(i)){const [copy]=await out.copyPages(doc,[i]);out.addPage(copy);continue;}const image=embedded[i];const [w,h]=resize==="a4"?[595.28,841.89]:[612,792];const scale=Math.min(w/image.width,h/image.height);out.addPage([w,h]).drawPage(image,{x:(w-image.width*scale)/2,y:(h-image.height*scale)/2,width:image.width*scale,height:image.height*scale});}await handleFile([new File([new Uint8Array(await out.save())],fileName||"organized.pdf",{type:"application/pdf"})]);}else{const at=selected.length?selected[0]:doc.getPageCount();if(file){const source=await PDFDocument.load(await file.arrayBuffer());const copied=await doc.copyPages(source,source.getPageIndices());if(replace){if(selected.length!==1)throw new Error("Select exactly one page to replace.");doc.removePage(at);}copied.forEach((page,i)=>doc.insertPage(at+i,page));}else doc.insertPage(at,[595.28,841.89]);await handleFile([new File([new Uint8Array(await doc.save())],fileName||"organized.pdf",{type:"application/pdf"})]);}setOutputName(outputName);clearSelection();setStatus({kind:"idle"});pushToast({message:"Pages updated",actionLabel:"Undo",onAction:()=>{setLoaded(previous.fileName||"organized.pdf",previous.bytes,previous.rotations,previous.thumbs);setPages(previous.pages);setOutputName(previous.outputName);}});}catch(e){setStatus({kind:"error",message:(e as Error).message});}finally{setLoading(false);}};
+  const insertFile = async (
+    file?: File,
+    replace = false,
+    resize?: "a4" | "letter",
+  ) => {
+    if (!bytes || loading) return;
+    setLoading(true);
+    setStatus({ kind: "working", message: "Updating pages…" });
+    const previous = { bytes, rotations, thumbs, pages, fileName, outputName };
+    try {
+      const built = await buildOrganizedPdf(bytes, rotations, pages);
+      const doc = await PDFDocument.load(built);
+      const selected = pages
+        .map((p, i) => (selectedIds.has(p.id) ? i : -1))
+        .filter((i) => i !== -1);
+      if (resize) {
+        const out = await PDFDocument.create();
+        for (let i = 0; i < doc.getPageCount(); i++) {
+          if (selected.length && !selected.includes(i)) {
+            const [copy] = await out.copyPages(doc, [i]);
+            out.addPage(copy);
+            continue;
+          }
+          const page = doc.getPage(i),
+            box = page.getCropBox();
+          const image = await out.embedPage(page, {
+            left: box.x,
+            bottom: box.y,
+            right: box.x + box.width,
+            top: box.y + box.height,
+          });
+          const rotation = ((page.getRotation().angle % 360) + 360) % 360;
+          const vw = rotation % 180 ? image.height : image.width,
+            vh = rotation % 180 ? image.width : image.height;
+          const [w, h] = resize === "a4" ? [595.28, 841.89] : [612, 792];
+          const scale = Math.min(w / vw, h / vh),
+            dw = vw * scale,
+            dh = vh * scale;
+          let x = (w - dw) / 2,
+            y = (h - dh) / 2;
+          if (rotation === 90) y += dh;
+          else if (rotation === 180) {
+            x += dw;
+            y += dh;
+          } else if (rotation === 270) x += dw;
+          out
+            .addPage([w, h])
+            .drawPage(image, {
+              x,
+              y,
+              width: image.width * scale,
+              height: image.height * scale,
+              rotate: degrees(-rotation),
+            });
+        }
+        await handleFile([
+          new File(
+            [new Uint8Array(await out.save())],
+            fileName || "organized.pdf",
+            { type: "application/pdf" },
+          ),
+        ]);
+      } else {
+        const at = selected.length ? selected[0] : doc.getPageCount();
+        if (file) {
+          const source = await PDFDocument.load(await file.arrayBuffer());
+          const copied = await doc.copyPages(source, source.getPageIndices());
+          if (replace) {
+            if (selected.length !== 1)
+              throw new Error("Select exactly one page to replace.");
+            doc.removePage(at);
+          }
+          copied.forEach((page, i) => doc.insertPage(at + i, page));
+        } else doc.insertPage(at, [595.28, 841.89]);
+        await handleFile([
+          new File(
+            [new Uint8Array(await doc.save())],
+            fileName || "organized.pdf",
+            { type: "application/pdf" },
+          ),
+        ]);
+      }
+      setOutputName(outputName);
+      clearSelection();
+      setStatus({ kind: "idle" });
+      pushToast({
+        message: "Pages updated",
+        actionLabel: "Undo",
+        onAction: () => {
+          setLoaded(
+            previous.fileName || "organized.pdf",
+            previous.bytes,
+            previous.rotations,
+            previous.thumbs,
+          );
+          setPages(previous.pages);
+          setOutputName(previous.outputName);
+        },
+      });
+    } catch (e) {
+      setStatus({ kind: "error", message: (e as Error).message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleSelect = (id: string, index: number, shiftKey: boolean) => {
     // Capture the anchor before updating the ref — setSelectedIds's
@@ -103,7 +211,9 @@ export default function OrganizePage() {
 
   const handleBulkDelete = () => {
     removeMany(selectedIds);
-    pushToast({ message: `${selectedIds.size} page${selectedIds.size === 1 ? "" : "s"} removed` });
+    pushToast({
+      message: `${selectedIds.size} page${selectedIds.size === 1 ? "" : "s"} removed`,
+    });
     clearSelection();
     setConfirmBulkDelete(false);
   };
@@ -132,7 +242,10 @@ export default function OrganizePage() {
       const built = await build();
       if (built) setPreviewBytes(built);
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -141,7 +254,10 @@ export default function OrganizePage() {
   const handleExport = async () => {
     if (status.kind === "working") return;
     if (pages.length === 0) {
-      setStatus({ kind: "error", message: "At least one page needs to stay in the document." });
+      setStatus({
+        kind: "error",
+        message: "At least one page needs to stay in the document.",
+      });
       return;
     }
     setStatus({ kind: "working", message: "Building PDF…" });
@@ -154,22 +270,34 @@ export default function OrganizePage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "organize", label: `Organized ${fileName} into ${filename}` });
+      logActivity({
+        tool: "organize",
+        label: `Organized ${fileName} into ${filename}`,
+      });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build PDF: ${(e as Error).message}`,
+      });
     }
   };
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Organize PDF</h1>
-      <p className="mt-1 text-muted">Drag pages into order, delete the ones you don't need, rotate the rest.</p>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+        Organize PDF
+      </h1>
+      <p className="mt-1 text-muted">
+        Drag pages into order, delete the ones you don't need, rotate the rest.
+      </p>
 
       <Card className="mt-6">
         {!bytes && (
           <Dropzone
             accept="application/pdf"
-            label={loading ? "Reading PDF…" : "Drop a PDF here or click to browse"}
+            label={
+              loading ? "Reading PDF…" : "Drop a PDF here or click to browse"
+            }
             hint="One file at a time"
             onFiles={handleFile}
           />
@@ -200,7 +328,8 @@ export default function OrganizePage() {
                 {selectedIds.size > 0 && (
                   <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
                     <span className="font-display text-sm font-semibold text-fg">
-                      {selectedIds.size} page{selectedIds.size === 1 ? "" : "s"} selected
+                      {selectedIds.size} page{selectedIds.size === 1 ? "" : "s"}{" "}
+                      selected
                     </span>
                     <span className="flex-1" />
                     <button
@@ -242,9 +371,130 @@ export default function OrganizePage() {
                   />
                 </div>
 
-                <div className="panel mt-4"><h3 className="font-bold">Page actions</h3><p className="text-sm text-muted">Select pages for duplicate and crop. Insert before the first selected page, or append when none is selected. Crop hides edges; it does not remove hidden content.</p><div className="editor-options"><button className="btn-secondary" disabled={loading||!selectedIds.size} onClick={()=>{const next=pages.flatMap(p=>selectedIds.has(p.id)?[p,{...p,id:crypto.randomUUID()}]:[p]);setPages(next);pushToast({message:"Pages duplicated",actionLabel:"Undo",onAction:()=>setPages(pages)});}}>Duplicate selected</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile()}>Insert blank page</button><label className="btn-secondary">Insert PDF<input className="sr-only" type="file" accept="application/pdf" disabled={loading} onChange={e=>{const f=e.target.files?.[0];if(f)void insertFile(f);e.target.value="";}}/></label><label className="btn-secondary">Replace selected page<input className="sr-only" type="file" accept="application/pdf" disabled={loading||selectedIds.size!==1} onChange={e=>{const f=e.target.files?.[0];if(f)void insertFile(f,true);e.target.value="";}}/></label><label className="field-label">Crop each edge (%)<input className="field" type="number" min="0" max="40" value={crop} onChange={e=>setCrop(Math.max(0,Math.min(40,Number(e.target.value))))}/></label><button className="btn-secondary" disabled={!selectedIds.size||loading} onClick={()=>{setPages(pages.map(p=>selectedIds.has(p.id)?{...p,crop}:p));pushToast({message:"Crop set for export",actionLabel:"Undo",onAction:()=>setPages(pages)});}}>Crop selected</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile(undefined,false,"a4")}>Fit to A4</button><button className="btn-secondary" disabled={loading} onClick={()=>void insertFile(undefined,false,"letter")}>Fit to Letter</button></div><p className="text-sm text-muted">Paper fitting flattens page content and does not retain interactive forms, links or annotations. Selection applies to paper fitting; with no selection, all pages are fitted.</p></div>
+                <div className="panel mt-4">
+                  <h3 className="font-bold">Page actions</h3>
+                  <p className="text-sm text-muted">
+                    Select pages for duplicate and crop. Insert before the first
+                    selected page, or append when none is selected. Crop hides
+                    edges; it does not remove hidden content.
+                  </p>
+                  <div className="editor-options">
+                    <button
+                      className="btn-secondary"
+                      disabled={loading || !selectedIds.size}
+                      onClick={() => {
+                        const next = pages.flatMap((p) =>
+                          selectedIds.has(p.id)
+                            ? [p, { ...p, id: crypto.randomUUID() }]
+                            : [p],
+                        );
+                        setPages(next);
+                        pushToast({
+                          message: "Pages duplicated",
+                          actionLabel: "Undo",
+                          onAction: () => setPages(pages),
+                        });
+                      }}
+                    >
+                      Duplicate selected
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      disabled={loading}
+                      onClick={() => void insertFile()}
+                    >
+                      Insert blank page
+                    </button>
+                    <label className="btn-secondary">
+                      Insert PDF
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept="application/pdf"
+                        disabled={loading}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void insertFile(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <label className="btn-secondary">
+                      Replace selected page
+                      <input
+                        className="sr-only"
+                        type="file"
+                        accept="application/pdf"
+                        disabled={loading || selectedIds.size !== 1}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void insertFile(f, true);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <label className="field-label">
+                      Crop each edge (%)
+                      <input
+                        className="field"
+                        type="number"
+                        min="0"
+                        max="40"
+                        value={crop}
+                        onChange={(e) =>
+                          setCrop(
+                            Math.max(0, Math.min(40, Number(e.target.value))),
+                          )
+                        }
+                      />
+                    </label>
+                    <button
+                      className="btn-secondary"
+                      disabled={!selectedIds.size || loading}
+                      onClick={() => {
+                        setPages(
+                          pages.map((p) =>
+                            selectedIds.has(p.id) ? { ...p, crop } : p,
+                          ),
+                        );
+                        pushToast({
+                          message: "Crop set for export",
+                          actionLabel: "Undo",
+                          onAction: () => setPages(pages),
+                        });
+                      }}
+                    >
+                      Crop selected
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      disabled={loading}
+                      onClick={() => void insertFile(undefined, false, "a4")}
+                    >
+                      Fit to A4
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      disabled={loading}
+                      onClick={() =>
+                        void insertFile(undefined, false, "letter")
+                      }
+                    >
+                      Fit to Letter
+                    </button>
+                  </div>
+                  <p className="text-sm text-muted">
+                    Paper fitting flattens page content and does not retain
+                    interactive forms, links or annotations. Selection applies
+                    to paper fitting; with no selection, all pages are fitted.
+                  </p>
+                </div>
                 <div className="mt-5 sm:max-w-xs">
-                  <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+                  <FilenameInput
+                    value={outputName}
+                    onChange={setOutputName}
+                    extension="pdf"
+                  />
                 </div>
 
                 <button
@@ -260,7 +510,9 @@ export default function OrganizePage() {
                 <button
                   type="button"
                   data-primary-action="true"
-                  disabled={status.kind === "working" || !bytes || pages.length === 0}
+                  disabled={
+                    status.kind === "working" || !bytes || pages.length === 0
+                  }
                   onClick={handleExport}
                   className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
                 >
@@ -277,7 +529,12 @@ export default function OrganizePage() {
 
       <RecentActivity entries={entries.filter((e) => e.tool === "organize")} />
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmStartOver}

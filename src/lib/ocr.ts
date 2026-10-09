@@ -57,6 +57,7 @@ export async function recognizeFile(
       file.type === "application/pdf"
         ? await renderPdfToImages(file, {
             ranges,
+            maxPages: 20,
             scale: 2,
             quality: 1,
             format: "image/png",
@@ -78,6 +79,7 @@ export async function recognizeFile(
       legacyCore: false,
       legacyLang: false,
       logger: (m) =>
+        !signal.aborted &&
         onProgress(`${m.status} · ${Math.round(m.progress * 100)}%`),
     });
     if (signal.aborted) {

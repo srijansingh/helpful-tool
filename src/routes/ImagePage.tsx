@@ -5,7 +5,8 @@ import { downloadBlob } from "../lib/download";
 import { friendlyError } from "../lib/importFiles";
 import { formatSize } from "../lib/formatSize";
 export default function ImagePage() {
-  const file = useDocumentStore((s) => s.current);
+  const initial = useDocumentStore((s) => s.current);
+  const [file, setFile] = useState<File | null>(initial);
   const [url, setUrl] = useState("");
   const [rotation, setRotation] = useState(0);
   const [width, setWidth] = useState(1600);
@@ -92,7 +93,10 @@ export default function ImagePage() {
               ? file.name
               : "JPG, PNG, WebP, GIF or BMP"
           }
-          onFiles={(f) => useDocumentStore.getState().setCurrent(f[0])}
+          onFiles={(f) => {
+            setFile(f[0]);
+            useDocumentStore.getState().setCurrent(f[0]);
+          }}
         />
       </div>
       {url && file?.type.startsWith("image/") && (

@@ -7,7 +7,8 @@ import { imagesToPdf } from "../lib/pdf/imagesToPdf";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 export default function CompressPage() {
-  const file = useDocumentStore((s) => s.current);
+  const initial = useDocumentStore((s) => s.current);
+  const [file, setFile] = useState<File | null>(initial);
   const [quality, setQuality] = useState(0.7);
   const [scale, setScale] = useState(1.5);
   const [accepted, setAccepted] = useState(false);
@@ -91,7 +92,10 @@ export default function CompressPage() {
               ? file.name
               : "Photo or scanned PDFs work best"
           }
-          onFiles={(f) => useDocumentStore.getState().setCurrent(f[0])}
+          onFiles={(f) => {
+            setFile(f[0]);
+            useDocumentStore.getState().setCurrent(f[0]);
+          }}
         />
       </div>
       <div className="editor-options">

@@ -50,7 +50,7 @@ export default defineConfig({
         // pdf.js ships its worker as .mjs, not .js — without it here the
         // service worker silently skips caching it and PDF -> Images
         // breaks offline after the first visit.
-        globPatterns: ["**/*.{js,mjs,css,html,svg,png,ico,woff2,ttf}"],
+        globPatterns: ["**/*.{js,mjs,css,html,svg,png,ico,woff2,ttf,wasm}"],
         importScripts: ["share-target.js"],
         globIgnores: ["**/ocr/**", "**/._*"],
         runtimeCaching: [

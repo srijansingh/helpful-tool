@@ -11,38 +11,74 @@ export interface RenderOptions {
   format?: "image/jpeg" | "image/png";
   quality?: number;
   scale?: number;
-  ranges?:string;
-  signal?:AbortSignal;
-  onProgress?:(done:number,total:number)=>void;
+  maxPages?: number;
+  ranges?: string;
+  signal?: AbortSignal;
+  onProgress?: (done: number, total: number) => void;
 }
 
 // Renders every page of a PDF to an image, entirely client-side via pdf.js.
 export async function renderPdfToImages(
   file: File,
-  { format = "image/jpeg", quality = 0.9, scale = 2, ranges="", signal, onProgress }: RenderOptions = {}
+  {
+    format = "image/jpeg",
+    quality = 0.9,
+    scale = 2,
+    maxPages = 50,
+    ranges = "",
+    signal,
+    onProgress,
+  }: RenderOptions = {},
 ): Promise<NamedBytes[]> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const pdf = await getDocument({ data: bytes }).promise;
   const ext = format === "image/png" ? "png" : "jpg";
   const results: NamedBytes[] = [];
-  const pages=ranges.trim()?selectedPages(ranges,pdf.numPages):Array.from({length:pdf.numPages},(_,i)=>i);
-  try {for (const index of pages) {
-    signal?.throwIfAborted();
-    const i=index+1;
-    const page = await pdf.getPage(i);
-    const viewport = page.getViewport({ scale });
-    const canvas = document.createElement("canvas");
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    const ctx = canvas.getContext("2d")!;
-    const task=page.render({ canvasContext: ctx, viewport, canvas });
-    const cancel=()=>task.cancel();signal?.addEventListener("abort",cancel,{once:true});
-    try{await task.promise;}finally{signal?.removeEventListener("abort",cancel);}
-    signal?.throwIfAborted();
-    const blob: Blob = await new Promise((resolve) =>
-      canvas.toBlob((b) => resolve(b!), format, quality)
-    );
-    results.push({ name: `page-${i}.${ext}`, bytes: new Uint8Array(await blob.arrayBuffer()) });
-    canvas.width=canvas.height=0;page.cleanup();onProgress?.(results.length,pages.length);
-  }return results;}finally{await pdf.destroy();}
+  const pages = ranges.trim()
+    ? selectedPages(ranges, pdf.numPages)
+    : Array.from({ length: pdf.numPages }, (_, i) => i);
+  try {
+    if (pages.length > maxPages)
+      throw new Error(
+        `Choose at most ${maxPages} pages at a time for this export.`,
+      );
+    for (const index of pages) {
+      signal?.throwIfAborted();
+      const i = index + 1;
+      const page = await pdf.getPage(i);
+      const base = page.getViewport({ scale: 1 });
+      const safeScale = Math.min(
+        scale,
+        4000 / Math.max(base.width, base.height),
+        Math.sqrt(12000000 / (base.width * base.height)),
+      );
+      const viewport = page.getViewport({ scale: safeScale });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d")!;
+      const task = page.render({ canvasContext: ctx, viewport, canvas });
+      const cancel = () => task.cancel();
+      signal?.addEventListener("abort", cancel, { once: true });
+      try {
+        await task.promise;
+      } finally {
+        signal?.removeEventListener("abort", cancel);
+      }
+      signal?.throwIfAborted();
+      const blob: Blob = await new Promise((resolve) =>
+        canvas.toBlob((b) => resolve(b!), format, quality),
+      );
+      results.push({
+        name: `page-${i}.${ext}`,
+        bytes: new Uint8Array(await blob.arrayBuffer()),
+      });
+      canvas.width = canvas.height = 0;
+      page.cleanup();
+      onProgress?.(results.length, pages.length);
+    }
+    return results;
+  } finally {
+    await pdf.destroy();
+  }
 }

@@ -10,6 +10,8 @@ import {
   PenLine,
   Minimize2,
   ScanText,
+  ShieldCheck,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -22,6 +24,29 @@ export interface ToolDef {
 }
 
 export const TOOLS: ToolDef[] = [
+  {
+    to: "/booklet",
+    label: "Print a booklet",
+    shortLabel: "Booklet",
+    icon: BookOpen,
+    description: "Arrange pages on A4 or Letter sheets for folding.",
+  },
+  {
+    to: "/redact",
+    label: "Redact to photo PDF",
+    shortLabel: "Redact",
+    icon: ShieldCheck,
+    description:
+      "Remove marked pixels and rebuild without original text or attachments.",
+  },
+  {
+    to: "/security",
+    label: "Protect & optimize PDF",
+    shortLabel: "Protect",
+    icon: ShieldCheck,
+    description:
+      "Password protection, known-password unlock and structural optimization.",
+  },
   {
     to: "/ocr",
     label: "Read text from scans",

@@ -76,7 +76,7 @@ export default function OcrPage() {
           </select>
         </label>
         <label className="field-label">
-          PDF pages (blank = all)
+          PDF pages (up to 20; blank = all)
           <input
             className="field"
             placeholder="1, 3-5"
