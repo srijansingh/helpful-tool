@@ -2,7 +2,6 @@ import { runPdfJob } from "../lib/pdfJobs";
 import { sourceKey } from "../lib/sourceKey";
 import { useSessionState } from "../hooks/useSessionState";
 import { useState } from "react";
-import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FileList } from "../components/FileList";
 import { FilenameInput } from "../components/FilenameInput";
@@ -10,7 +9,6 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
 import { LivePreviewPane } from "../components/LivePreviewPane";
-import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useImageThumbnails } from "../hooks/useImageThumbnails";
@@ -52,8 +50,6 @@ export default function ImagesToPdfPage() {
   );
   const options = { paper, orientation, margin, fit, quality };
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
-  const [previewing, setPreviewing] = useState(false);
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = useImageThumbnails(files);
   const pushToast = useToastStore((s) => s.push);
@@ -71,21 +67,6 @@ export default function ImagesToPdfPage() {
         setFiles(next);
       },
     });
-  };
-
-  const handlePreview = async () => {
-    if (files.length === 0 || previewing) return;
-    setPreviewing(true);
-    try {
-      setPreviewBytes(await imagesToPdf(files, options));
-    } catch (e) {
-      setStatus({
-        kind: "error",
-        message: `Couldn't build preview: ${(e as Error).message}`,
-      });
-    } finally {
-      setPreviewing(false);
-    }
   };
 
   const handleConvert = async () => {
@@ -225,18 +206,6 @@ export default function ImagesToPdfPage() {
                 />
               </label>
             </div>
-            {files.length > 0 && (
-              <button
-                type="button"
-                onClick={handlePreview}
-                disabled={previewing}
-                className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50 lg:hidden"
-              >
-                <Eye className="h-4 w-4" aria-hidden="true" />
-                {previewing ? "Building preview…" : "Preview PDF"}
-              </button>
-            )}
-
             <button
               type="button"
               data-primary-action="true"
@@ -286,13 +255,6 @@ export default function ImagesToPdfPage() {
           />
         </div>
       </div>
-
-      {previewBytes && (
-        <PdfPreview
-          bytes={previewBytes}
-          onClose={() => setPreviewBytes(null)}
-        />
-      )}
     </section>
   );
 }

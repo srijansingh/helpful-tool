@@ -1,6 +1,5 @@
 import { runPdfJob } from "../lib/pdfJobs";
 import { useState } from "react";
-import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FileList } from "../components/FileList";
 import { FilenameInput } from "../components/FilenameInput";
@@ -8,7 +7,6 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
 import { LivePreviewPane } from "../components/LivePreviewPane";
-import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { usePdfThumbnails } from "../hooks/usePdfThumbnails";
@@ -30,8 +28,6 @@ export default function MergePage() {
   const outputName = useMergeStore((s) => s.outputName);
   const setOutputName = useMergeStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
-  const [previewing, setPreviewing] = useState(false);
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = usePdfThumbnails(files);
   const pushToast = useToastStore((s) => s.push);
@@ -49,21 +45,6 @@ export default function MergePage() {
         setFiles(next);
       },
     });
-  };
-
-  const handlePreview = async () => {
-    if (files.length === 0 || previewing) return;
-    setPreviewing(true);
-    try {
-      setPreviewBytes(await mergePdfs(files));
-    } catch (e) {
-      setStatus({
-        kind: "error",
-        message: `Couldn't build preview: ${(e as Error).message}`,
-      });
-    } finally {
-      setPreviewing(false);
-    }
   };
 
   const handleMerge = async () => {
@@ -139,18 +120,6 @@ export default function MergePage() {
               />
             </div>
 
-            {files.length > 0 && (
-              <button
-                type="button"
-                onClick={handlePreview}
-                disabled={previewing}
-                className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50 lg:hidden"
-              >
-                <Eye className="h-4 w-4" aria-hidden="true" />
-                {previewing ? "Building preview…" : "Preview PDF"}
-              </button>
-            )}
-
             <button
               type="button"
               data-primary-action="true"
@@ -171,8 +140,6 @@ export default function MergePage() {
           </div>
         </div>
 
-        {/* Desktop only — a live-updating preview of the merged result, not
-            a modal you have to ask for, since there's width to spare here. */}
         <div className="file-workspace-preview">
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
@@ -197,13 +164,6 @@ export default function MergePage() {
           />
         </div>
       </div>
-
-      {previewBytes && (
-        <PdfPreview
-          bytes={previewBytes}
-          onClose={() => setPreviewBytes(null)}
-        />
-      )}
     </section>
   );
 }
