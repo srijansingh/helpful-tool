@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { DragEvent } from "react";
+import { useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { ArrowDown, ArrowUp, GripVertical, X } from "lucide-react";
 import { formatSize } from "../lib/formatSize";
 
@@ -10,13 +10,21 @@ interface FileListProps {
   thumbnails?: Map<File, string>;
 }
 
+// Drag-to-reorder via Pointer Events (not HTML5 drag-and-drop, which this
+// used previously) — the same mechanism as the scan filmstrip and
+// Organize's page grid, so dragging behaves identically, and works, on
+// touch everywhere in the app rather than only here on desktop with a
+// mouse. The Move up/down buttons stay as the keyboard-operable path.
 export function FileList({ files, onReorder, onRemove, thumbnails }: FileListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const filesRef = useRef(files);
+  filesRef.current = files;
 
   if (files.length === 0) {
     return <p className="text-sm italic text-muted">No files added yet.</p>;
   }
+
+  const keyOf = (file: File, i: number) => `${file.name}-${file.lastModified}-${i}`;
 
   const move = (i: number, dir: -1 | 1) => {
     const next = [...files];
@@ -29,25 +37,27 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
     onReorder(files.filter((_, idx) => idx !== i));
   };
 
-  const reorderTo = (from: number, to: number) => {
-    if (from === to) return;
-    const next = [...files];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
+  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>, i: number) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragIndex(i);
+  };
+
+  const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragIndex === null) return;
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const li = el?.closest<HTMLElement>("[data-file-index]");
+    const overIndex = li ? Number(li.dataset.fileIndex) : null;
+    if (overIndex === null || overIndex === dragIndex) return;
+
+    const current = filesRef.current;
+    const next = [...current];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(overIndex, 0, moved);
     onReorder(next);
+    setDragIndex(overIndex);
   };
 
-  const handleDragOver = (i: number) => (e: DragEvent<HTMLLIElement>) => {
-    e.preventDefault();
-    if (dragIndex !== null) setOverIndex(i);
-  };
-
-  const handleDrop = (i: number) => (e: DragEvent<HTMLLIElement>) => {
-    e.preventDefault();
-    if (dragIndex !== null) reorderTo(dragIndex, i);
-    setDragIndex(null);
-    setOverIndex(null);
-  };
+  const endDrag = () => setDragIndex(null);
 
   return (
     <ol className="flex flex-col gap-2">
@@ -55,28 +65,22 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
         const thumb = thumbnails?.get(file);
         return (
           <li
-            key={`${file.name}-${file.lastModified}-${i}`}
-            onDragOver={handleDragOver(i)}
-            onDrop={handleDrop(i)}
-            className={`flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-colors ${
-              overIndex === i && dragIndex !== null && dragIndex !== i ? "ring-2 ring-accent" : ""
-            } ${dragIndex === i ? "opacity-50" : ""}`}
+            key={keyOf(file, i)}
+            data-file-index={i}
+            className={`flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-shadow ${
+              dragIndex === i ? "relative z-10 shadow-lg ring-2 ring-accent" : ""
+            }`}
           >
-            <span
-              draggable
-              onDragStart={(e) => {
-                setDragIndex(i);
-                e.dataTransfer.effectAllowed = "move";
-              }}
-              onDragEnd={() => {
-                setDragIndex(null);
-                setOverIndex(null);
-              }}
-              className="hidden shrink-0 cursor-grab touch-none items-center self-stretch text-muted active:cursor-grabbing sm:flex"
+            <div
+              onPointerDown={(e) => handlePointerDown(e, i)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={endDrag}
+              onPointerCancel={endDrag}
+              className="flex shrink-0 touch-none cursor-grab items-center self-stretch text-muted active:cursor-grabbing"
               aria-hidden="true"
             >
               <GripVertical className="h-4 w-4" />
-            </span>
+            </div>
 
             <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
               {thumb ? (
@@ -92,7 +96,7 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
             <span className="flex shrink-0 gap-1">
               <button
                 type="button"
-                aria-label="Move up"
+                aria-label={`Move ${file.name} up`}
                 disabled={i === 0}
                 onClick={() => move(i, -1)}
                 className="rounded-lg border border-border bg-surface p-1.5 text-fg disabled:opacity-30"
@@ -101,7 +105,7 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
               </button>
               <button
                 type="button"
-                aria-label="Move down"
+                aria-label={`Move ${file.name} down`}
                 disabled={i === files.length - 1}
                 onClick={() => move(i, 1)}
                 className="rounded-lg border border-border bg-surface p-1.5 text-fg disabled:opacity-30"
@@ -110,7 +114,7 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
               </button>
               <button
                 type="button"
-                aria-label="Remove"
+                aria-label={`Remove ${file.name}`}
                 onClick={() => remove(i)}
                 className="rounded-lg border border-border bg-surface p-1.5 text-bad"
               >
