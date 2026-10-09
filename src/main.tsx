@@ -9,6 +9,8 @@ import App from "./App";
 // needed on /pdf-to-images, so there's no reason every visitor downloads
 // it up front. The Suspense boundary for these lives inside App, around
 // just the <Outlet/>, so the header/nav don't flicker away on transitions.
+const ScanPage = lazy(() => import("./routes/ScanPage"));
+const ScanLibraryPage = lazy(() => import("./routes/ScanLibraryPage"));
 const MergePage = lazy(() => import("./routes/MergePage"));
 const SplitPage = lazy(() => import("./routes/SplitPage"));
 const ImagesToPdfPage = lazy(() => import("./routes/ImagesToPdfPage"));
@@ -21,7 +23,9 @@ createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route element={<App />}>
-          <Route index element={<Navigate to="/merge" replace />} />
+          <Route index element={<Navigate to="/scan" replace />} />
+          <Route path="scan" element={<ScanPage />} />
+          <Route path="scans" element={<ScanLibraryPage />} />
           <Route path="merge" element={<MergePage />} />
           <Route path="split" element={<SplitPage />} />
           <Route path="images-to-pdf" element={<ImagesToPdfPage />} />

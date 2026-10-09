@@ -1,4 +1,4 @@
-import { FileStack, Scissors, ImageIcon, Images } from "lucide-react";
+import { FileStack, Scissors, ImageIcon, Images, ScanLine } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface ToolDef {
@@ -9,6 +9,7 @@ export interface ToolDef {
 }
 
 export const TOOLS: ToolDef[] = [
+  { to: "/scan", label: "Scan Document", shortLabel: "Scan", icon: ScanLine },
   { to: "/merge", label: "Merge PDFs", shortLabel: "Merge", icon: FileStack },
   { to: "/split", label: "Split PDF", shortLabel: "Split", icon: Scissors },
   { to: "/images-to-pdf", label: "Images → PDF", shortLabel: "To PDF", icon: ImageIcon },
