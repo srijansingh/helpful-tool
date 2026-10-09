@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FileList } from "../components/FileList";
 import { FilenameInput } from "../components/FilenameInput";
@@ -6,6 +7,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
 import { LivePreviewPane } from "../components/LivePreviewPane";
+import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useImageThumbnails } from "../hooks/useImageThumbnails";
@@ -27,6 +29,8 @@ export default function ImagesToPdfPage() {
   const outputName = useImagesToPdfStore((s) => s.outputName);
   const setOutputName = useImagesToPdfStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const { entries, logActivity } = useRecentActivity();
   const thumbnails = useImageThumbnails(files);
   const pushToast = useToastStore((s) => s.push);
@@ -44,6 +48,18 @@ export default function ImagesToPdfPage() {
         setFiles(next);
       },
     });
+  };
+
+  const handlePreview = async () => {
+    if (files.length === 0 || previewing) return;
+    setPreviewing(true);
+    try {
+      setPreviewBytes(await imagesToPdf(files));
+    } catch (e) {
+      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+    } finally {
+      setPreviewing(false);
+    }
   };
 
   const handleConvert = async () => {
@@ -96,10 +112,22 @@ export default function ImagesToPdfPage() {
               <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
             </div>
 
+            {files.length > 0 && (
+              <button
+                type="button"
+                onClick={handlePreview}
+                disabled={previewing}
+                className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50 lg:hidden"
+              >
+                <Eye className="h-4 w-4" aria-hidden="true" />
+                {previewing ? "Building preview…" : "Preview PDF"}
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleConvert}
-              className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
             >
               Convert &amp; Download
             </button>
@@ -131,6 +159,8 @@ export default function ImagesToPdfPage() {
           <RecentActivity entries={entries.filter((e) => e.tool === "images-to-pdf")} className="shrink-0" />
         </div>
       </div>
+
+      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>
   );
 }

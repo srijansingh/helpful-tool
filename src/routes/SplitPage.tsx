@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
+import { PdfPreview } from "../components/PdfPreview";
 import { PageRangePicker } from "../components/split/PageRangePicker";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
@@ -33,6 +35,8 @@ export default function SplitPage() {
   const outputName = useSplitStore((s) => s.outputName);
   const setOutputName = useSplitStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const { entries, logActivity } = useRecentActivity();
 
   const handleFile = async (files: File[]) => {
@@ -60,6 +64,18 @@ export default function SplitPage() {
     if (next.has(index)) next.delete(index);
     else next.add(index);
     setRange(stringifyPageRanges([...next]));
+  };
+
+  const handlePreview = async () => {
+    if (!current || previewing) return;
+    setPreviewing(true);
+    try {
+      setPreviewBytes(await extractPages(current.bytes, range, current.pageCount));
+    } catch (e) {
+      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+    } finally {
+      setPreviewing(false);
+    }
   };
 
   const handleExtract = async () => {
@@ -161,6 +177,16 @@ export default function SplitPage() {
 
             <button
               type="button"
+              onClick={handlePreview}
+              disabled={previewing || selectedPages.size === 0}
+              className="flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+            >
+              <Eye className="h-4 w-4" aria-hidden="true" />
+              {previewing ? "Building preview…" : "Preview extracted pages"}
+            </button>
+
+            <button
+              type="button"
               onClick={handleExtract}
               className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
             >
@@ -180,6 +206,8 @@ export default function SplitPage() {
       </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "split")} />
+
+      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>
   );
 }

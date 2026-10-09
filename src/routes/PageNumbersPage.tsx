@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Hash } from "lucide-react";
+import { Eye, Hash } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
 import { LivePreviewPane } from "../components/LivePreviewPane";
+import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo } from "../lib/pdf/split";
@@ -46,6 +47,8 @@ export default function PageNumbersPage() {
   const outputName = usePageNumbersStore((s) => s.outputName);
   const setOutputName = usePageNumbersStore((s) => s.setOutputName);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
+  const [previewing, setPreviewing] = useState(false);
   const { entries, logActivity } = useRecentActivity();
 
   const handleFile = async (files: File[]) => {
@@ -69,6 +72,18 @@ export default function PageNumbersPage() {
     return applyPageNumbers(current.bytes, { position, format, startAt, fontSize });
   };
 
+  const handlePreview = async () => {
+    if (!current || previewing) return;
+    setPreviewing(true);
+    try {
+      setPreviewBytes(await build());
+    } catch (e) {
+      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+    } finally {
+      setPreviewing(false);
+    }
+  };
+
   const handleApply = async () => {
     if (!current) return;
     setStatus({ kind: "working", message: "Adding page numbers…" });
@@ -89,7 +104,7 @@ export default function PageNumbersPage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Page Numbers</h1>
-      <p className="mt-1 text-muted">Number every page — pick where and how, see it live, then download.</p>
+      <p className="mt-1 text-muted">Number every page — pick where and how, preview it, then download.</p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
         <div>
@@ -178,6 +193,16 @@ export default function PageNumbersPage() {
 
                 <button
                   type="button"
+                  onClick={handlePreview}
+                  disabled={previewing}
+                  className="flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50 lg:hidden"
+                >
+                  <Eye className="h-4 w-4" aria-hidden="true" />
+                  {previewing ? "Building preview…" : "Preview PDF"}
+                </button>
+
+                <button
+                  type="button"
                   onClick={handleApply}
                   className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
                 >
@@ -214,6 +239,8 @@ export default function PageNumbersPage() {
           <RecentActivity entries={entries.filter((e) => e.tool === "page-numbers")} className="shrink-0" />
         </div>
       </div>
+
+      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>
   );
 }
