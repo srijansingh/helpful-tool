@@ -1,9 +1,37 @@
 # LocalPDF
 
 A free, no-login PDF toolkit: merge PDFs, split/extract pages, convert
-images to PDF, and export PDF pages as images. Everything runs in the
-browser — no file is ever uploaded to a server — and it installs as an
-offline-capable PWA.
+images to PDF, export PDF pages as images, and scan physical documents
+with your camera — crop, flatten perspective, filter, and build a
+multi-page PDF. Everything runs in the browser — no file is ever
+uploaded to a server — and it installs as an offline-capable PWA.
+
+## Document scanner (`/scan`, `/scans`)
+
+Camera capture (with an upload-photo fallback for devices without a
+camera, or for testing) → drag-corner perspective crop → filter presets
+→ multi-page session → export to PDF or save to a local scan library.
+
+- **No OpenCV.js / jscanify.** Auto edge-detection needs real computer
+  vision, which means either an 8-10MB WASM dependency or `jscanify`
+  (which ships `canvas`/`jsdom` — Node-only packages — as hard
+  dependencies, a real risk for a browser bundle). Manual corner-dragging
+  ships instead, as the actual feature rather than a lesser fallback —
+  it's also how you'd fix CamScanner's own auto-detection when it's
+  wrong. Auto-detection is a documented, not abandoned, v2 addition.
+- **Perspective correction** (`src/lib/scan/perspective.ts`) is Heckbert's
+  square-to-quad projective mapping, implemented from scratch and
+  numerically verified against known corner/midpoint cases before it
+  touched any UI.
+- **The scan library persists real image bytes** in IndexedDB
+  (`src/hooks/useScanLibrary.ts`) — a deliberate exception to the
+  metadata-only rule the PDF tools' "recent activity" follows (see
+  Persistence below): there, keeping files would contradict the "nothing
+  is stored" pitch; here, persistence is the whole point of a document
+  library, and the UI says so explicitly.
+- **Global state**: scan session pages live in `useScanStore` (Zustand),
+  same pattern as the four PDF tools — switching tabs mid-scan doesn't
+  lose your pages.
 
 Named deliberately: "Local" is the whole pitch, not just a tagline — every
 operation runs in your browser's own JavaScript engine, and the UI
@@ -59,10 +87,14 @@ shell:
 - **Vite + React 19 + TypeScript** — app shell and build tooling.
 - **Tailwind CSS v4** — styling, via the CSS-first `@theme` config in
   `src/index.css` (no `tailwind.config.js` needed).
-- **React Router** — one real route per tool (`/merge`, `/split`,
-  `/images-to-pdf`, `/pdf-to-images`), each with its own `<title>`/meta
-  description via `useSeo`, which is better for search than a single
-  tabbed page.
+- **React Router** — one real route per tool (`/scan`, `/scans`, `/merge`,
+  `/split`, `/images-to-pdf`, `/pdf-to-images`), each with its own
+  `<title>`/meta description via `useSeo`, which is better for search than
+  a single tabbed page.
+- **Zustand** — one small store per tool (`src/store/`). A Zustand store is
+  a module-level singleton that lives outside the route tree, so switching
+  tabs — intentionally or by accident — doesn't unmount-and-lose whatever
+  files/settings were in progress, which plain component `useState` did.
 - **pdf-lib** (MIT) — merge, split, and images→PDF.
 - **pdf.js** (Apache-2.0) — PDF→images rendering.
 - **fflate** (MIT) — zipping multi-file outputs (split pages, exported
@@ -85,18 +117,26 @@ so that route (and `pdf-lib`-using routes) are lazy-loaded
 
 ## Persistence — scoped deliberately
 
-Two things are persisted on-device, and nothing else:
+On-device only, nothing sent anywhere, but two different rules apply
+depending on the tool:
 
 - **Theme choice** (`src/hooks/useTheme.ts`) — `localStorage`.
 - **Recent activity** (`src/hooks/useRecentActivity.ts`) — an IndexedDB
   log of *metadata only*: which tool was used, a short label, and a
   timestamp. The last 8 entries show under "Recent on this device" on
-  each tool page.
+  each PDF tool page.
+- **Scan library** (`src/hooks/useScanLibrary.ts`) — the one deliberate
+  exception: real image bytes, in IndexedDB. See Document scanner above
+  for why.
+- **In-memory tool state** (`src/store/`, Zustand) — files/settings
+  survive switching tabs within a session, but not a full page reload
+  (Zustand state is plain memory here, no persistence middleware).
 
-**The actual PDF/image bytes are never persisted.** Storing raw files
-would bloat browser storage and directly contradict the tool's own
-privacy pitch ("nothing about your files is kept anywhere"). If a
-"resume my last file across a reload" feature is wanted later, that's a
+**For the four PDF tools specifically, the actual PDF/image bytes are
+never persisted.** Storing raw files there would bloat browser storage
+and directly contradict those tools' privacy pitch ("nothing about your
+files is kept anywhere"). If a "resume my last file across a reload"
+feature is wanted for them too, that's a
 deliberately different, bigger tradeoff — flag it explicitly rather than
 assuming it's wanted.
 
