@@ -1,13 +1,18 @@
 import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
+import { Search } from "lucide-react";
 import { Sidebar } from "./components/Sidebar";
 import { BottomTabBar } from "./components/BottomTabBar";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { TrustBadge } from "./components/TrustBadge";
 import { PageLoading } from "./components/PageLoading";
 import { ToastViewport } from "./components/ToastViewport";
+import { CommandPalette } from "./components/CommandPalette";
+import { useCommandPaletteStore } from "./store/useCommandPaletteStore";
 
 export default function App() {
+  const openPalette = useCommandPaletteStore((s) => s.setOpen);
+
   return (
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar />
@@ -21,6 +26,14 @@ export default function App() {
             Local<span className="text-accent">PDF</span>
           </NavLink>
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openPalette(true)}
+              aria-label="Jump to a tool"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-muted"
+            >
+              <Search className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
             <TrustBadge compact />
             <ThemeToggle />
           </div>
@@ -35,6 +48,7 @@ export default function App() {
 
       <BottomTabBar />
       <ToastViewport />
+      <CommandPalette />
     </div>
   );
 }

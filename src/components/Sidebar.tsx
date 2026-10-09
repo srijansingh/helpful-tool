@@ -1,19 +1,37 @@
 import { NavLink } from "react-router-dom";
+import { Search } from "lucide-react";
 import { TOOLS } from "../lib/tools";
 import { TrustBadge } from "./TrustBadge";
 import { ThemeToggle } from "./ThemeToggle";
+import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
+
+const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform ?? navigator.userAgent);
 
 // Desktop/tablet app shell nav — a persistent rail, not a tab row that
 // scrolls off. This is the single biggest thing that makes the page read
 // as an application rather than a landing page with a tool embedded in it.
 export function Sidebar() {
+  const openPalette = useCommandPaletteStore((s) => s.setOpen);
+
   return (
     <aside className="hidden shrink-0 flex-col border-r border-border bg-surface px-4 py-6 sm:sticky sm:top-0 sm:flex sm:h-screen sm:w-56 sm:overflow-y-auto lg:w-64">
       <NavLink to="/" className="px-2 font-display text-lg font-extrabold tracking-tight">
         Local<span className="text-accent">PDF</span>
       </NavLink>
 
-      <nav className="mt-8 flex flex-col gap-1" aria-label="Tools">
+      <button
+        type="button"
+        onClick={() => openPalette(true)}
+        className="mt-5 flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-left text-sm text-muted transition-colors hover:border-accent/60 hover:text-fg"
+      >
+        <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span className="flex-1">Jump to…</span>
+        <kbd className="rounded border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px]">
+          {isMac ? "⌘K" : "Ctrl K"}
+        </kbd>
+      </button>
+
+      <nav className="mt-4 flex flex-col gap-1" aria-label="Tools">
         {TOOLS.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
