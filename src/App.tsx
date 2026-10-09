@@ -36,7 +36,7 @@ export default function App() {
     return () => window.removeEventListener("beforeunload", guard);
   }, []);
   const tool = TOOLS.find((t) => t.to === path);
-  const focused = !!tool || path === "/reader";
+  const focused = !!tool || path === "/document";
   return (
     <div className="flex min-h-screen bg-bg text-fg">
       <Sidebar />
