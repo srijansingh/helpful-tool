@@ -18,18 +18,20 @@ function fmtRange(range) {
   return `${fmtTime(range.start)} – ${fmtTime(range.end)}`;
 }
 
-const citySelect = document.getElementById("city-select");
+const cityInput = document.getElementById("city-input");
 const useLocationBtn = document.getElementById("use-location");
 const locationLabel = document.getElementById("location-label");
 const resultsEl = document.getElementById("results");
 const festivalBanner = document.getElementById("festival-banner");
 
-function populateCities() {
+const CITY_BY_NAME = new Map(CITIES.map((c) => [c.name.toLowerCase(), c]));
+
+function populateCityOptions() {
+  const datalist = document.getElementById("city-options");
   for (const city of CITIES) {
     const opt = document.createElement("option");
-    opt.value = `${city.lat},${city.lon}`;
-    opt.textContent = city.name;
-    citySelect.appendChild(opt);
+    opt.value = city.name;
+    datalist.appendChild(opt);
   }
 }
 
@@ -57,10 +59,21 @@ function renderResults(panchang, locationName) {
       <div class="card"><h3>Nakshatra</h3><p>${panchang.nakshatra.name} (Pada ${panchang.nakshatra.pada})</p></div>
       <div class="card"><h3>Yoga</h3><p>${panchang.yoga.name}</p></div>
       <div class="card"><h3>Karana</h3><p>${panchang.karana.name}</p></div>
+      <div class="card"><h3>Ritu (Season)</h3><p>${panchang.ritu}</p></div>
+      <div class="card"><h3>Ayana</h3><p>${panchang.ayana}</p></div>
       <div class="card"><h3>Sunrise</h3><p>${fmtTime(panchang.sunrise)}</p></div>
       <div class="card"><h3>Sunset</h3><p>${fmtTime(panchang.sunset)}</p></div>
-      <div class="card warn"><h3>Rahu Kaal</h3><p>${fmtRange(panchang.rahuKaal)}</p></div>
+      <div class="card"><h3>Moonrise</h3><p>${fmtTime(panchang.moonrise)}</p></div>
+      <div class="card"><h3>Moonset</h3><p>${fmtTime(panchang.moonset)}</p></div>
+      <div class="card warn"><h3>Disha Shool</h3><p>Avoid ${panchang.dishaShool}</p></div>
+    </div>
+
+    <h3 class="section-title">Auspicious &amp; Inauspicious Timings</h3>
+    <div class="card-grid">
       <div class="card good"><h3>Abhijit Muhurat</h3><p>${fmtRange(panchang.abhijit)}</p></div>
+      <div class="card warn"><h3>Rahu Kaal</h3><p>${fmtRange(panchang.rahuKaal)}</p></div>
+      <div class="card warn"><h3>Gulika Kaal</h3><p>${fmtRange(panchang.gulikaKaal)}</p></div>
+      <div class="card warn"><h3>Yamaganda</h3><p>${fmtRange(panchang.yamaganda)}</p></div>
     </div>
 
     <h3 class="section-title">Choghadiya — Day</h3>
@@ -94,16 +107,22 @@ function update(lat, lon, locationName) {
   renderResults(panchang, locationName);
 }
 
-function useCitySelection() {
-  const [lat, lon] = citySelect.value.split(",").map(Number);
-  const cityName = citySelect.options[citySelect.selectedIndex].textContent;
-  locationLabel.textContent = cityName;
-  update(lat, lon, cityName);
+function useCityByName(name) {
+  const city = CITY_BY_NAME.get(name.trim().toLowerCase());
+  if (!city) return false;
+  cityInput.value = city.name;
+  locationLabel.textContent = city.name;
+  update(city.lat, city.lon, city.name);
+  return true;
 }
+
+cityInput.addEventListener("change", () => {
+  useCityByName(cityInput.value);
+});
 
 useLocationBtn.addEventListener("click", () => {
   if (!navigator.geolocation) {
-    useCitySelection();
+    useCityByName(cityInput.value) || useCityByName("Delhi");
     return;
   }
   useLocationBtn.textContent = "Locating…";
@@ -114,12 +133,13 @@ useLocationBtn.addEventListener("click", () => {
   // the browser), neither callback fires and the button would hang on
   // "Locating…" forever. This timer forces a fallback regardless.
   let settled = false;
-  const fallbackTimer = setTimeout(() => {
+  const fallback = () => {
     if (settled) return;
     settled = true;
     useLocationBtn.textContent = "Use my location";
-    useCitySelection();
-  }, 8000);
+    useCityByName(cityInput.value) || useCityByName("Delhi");
+  };
+  const fallbackTimer = setTimeout(fallback, 8000);
 
   navigator.geolocation.getCurrentPosition(
     (pos) => {
@@ -127,22 +147,16 @@ useLocationBtn.addEventListener("click", () => {
       settled = true;
       clearTimeout(fallbackTimer);
       useLocationBtn.textContent = "Use my location";
+      cityInput.value = "";
       locationLabel.textContent = "Your location";
       update(pos.coords.latitude, pos.coords.longitude, "Your location");
     },
-    () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(fallbackTimer);
-      useLocationBtn.textContent = "Use my location";
-      useCitySelection();
-    },
+    fallback,
     { timeout: 8000 }
   );
 });
 
-citySelect.addEventListener("change", useCitySelection);
-
-populateCities();
+populateCityOptions();
 renderFestivalBanner();
-useCitySelection();
+cityInput.value = "Delhi";
+useCityByName("Delhi");

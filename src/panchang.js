@@ -44,6 +44,11 @@ const CHOGHADIYA_INFO = {
 // Date.getDay(): 0=Sunday ... 6=Saturday
 const WEEKDAY_DAY_LORD = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn"];
 const RAHU_KAAL_SEGMENT = [8, 2, 7, 5, 6, 4, 3]; // 1-indexed segment of the 8-part day, by weekday
+const GULIKA_KAAL_SEGMENT = [7, 6, 5, 4, 3, 2, 1];
+const YAMAGANDA_SEGMENT = [5, 4, 3, 2, 1, 7, 6];
+const DISHA_SHOOL = ["West", "East", "North", "North", "South", "West", "East"];
+
+const RITU_NAMES = ["Vasant", "Grishma", "Varsha", "Sharad", "Hemant", "Shishir"];
 
 function norm360(deg) {
   return ((deg % 360) + 360) % 360;
@@ -120,6 +125,22 @@ function computeKarana(elongation) {
   return { name: KARANA_MOVABLE[(index - 1) % 7] };
 }
 
+// Season (Ritu), derived purely from the Sun's sidereal longitude: each
+// ritu spans two sidereal rashis (60deg), starting with Vasant at the
+// Meena/Mesha (Pisces/Aries) boundary.
+function computeRitu(sunSid) {
+  const shifted = norm360(sunSid - 330);
+  return RITU_NAMES[Math.floor(shifted / 60) % 6];
+}
+
+// Ayana, using the sidereal (not tropical) solstice convention most Indian
+// panchang publishers use: Uttarayana runs from Makar Sankranti (Sun
+// entering sidereal Capricorn, ~270deg) to just before Karka Sankranti
+// (Sun entering sidereal Cancer, 90deg).
+function computeAyana(sunSid) {
+  return (sunSid >= 270 || sunSid < 90) ? "Uttarayana" : "Dakshinayana";
+}
+
 function buildChoghadiya(startTime, segmentMs, startLordIndex) {
   const segments = [];
   for (let i = 0; i < 8; i++) {
@@ -146,13 +167,25 @@ export function computePanchang(date, lat, lon) {
   const nakshatra = computeNakshatra(moonSid);
   const yoga = computeYoga(sunSid, moonSid);
   const karana = computeKarana(tithi.elongation);
+  const ritu = computeRitu(sunSid);
+  const ayana = computeAyana(sunSid);
 
   const observer = new Astronomy.Observer(lat, lon, 0);
   const dayAnchor = startOfDayIST(date);
   const sunrise = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, 1, dayAnchor, 1);
   const sunset = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, -1, dayAnchor, 1);
+  // The Moon rises ~50min later each day, so it doesn't always cross the
+  // horizon within a given calendar day — these can legitimately come back
+  // null (e.g. around the new moon, moonrise can land just past midnight).
+  const moonrise = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, 1, dayAnchor, 1);
+  const moonset = Astronomy.SearchRiseSet(Astronomy.Body.Moon, observer, -1, dayAnchor, 1);
+
+  const weekday = date.getDay();
+  const dishaShool = DISHA_SHOOL[weekday];
 
   let rahuKaal = null;
+  let gulikaKaal = null;
+  let yamaganda = null;
   let abhijit = null;
   let choghadiyaDay = [];
   let choghadiyaNight = [];
@@ -163,12 +196,16 @@ export function computePanchang(date, lat, lon) {
     const dayMs = dayEnd.getTime() - dayStart.getTime();
     const segLen = dayMs / 8;
 
-    const weekday = date.getDay();
-    const seg = RAHU_KAAL_SEGMENT[weekday];
-    rahuKaal = {
-      start: new Date(dayStart.getTime() + (seg - 1) * segLen),
-      end: new Date(dayStart.getTime() + seg * segLen),
+    const segmentWindow = (segmentTable) => {
+      const seg = segmentTable[weekday];
+      return {
+        start: new Date(dayStart.getTime() + (seg - 1) * segLen),
+        end: new Date(dayStart.getTime() + seg * segLen),
+      };
     };
+    rahuKaal = segmentWindow(RAHU_KAAL_SEGMENT);
+    gulikaKaal = segmentWindow(GULIKA_KAAL_SEGMENT);
+    yamaganda = segmentWindow(YAMAGANDA_SEGMENT);
 
     const muhurtaLen = dayMs / 15;
     abhijit = {
@@ -194,9 +231,16 @@ export function computePanchang(date, lat, lon) {
     nakshatra,
     yoga,
     karana,
+    ritu,
+    ayana,
+    dishaShool,
     sunrise: sunrise ? sunrise.date : null,
     sunset: sunset ? sunset.date : null,
+    moonrise: moonrise ? moonrise.date : null,
+    moonset: moonset ? moonset.date : null,
     rahuKaal,
+    gulikaKaal,
+    yamaganda,
     abhijit,
     choghadiyaDay,
     choghadiyaNight,

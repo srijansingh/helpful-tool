@@ -21,8 +21,9 @@
   <main class="container">
     <section class="controls">
       <button id="use-location">Use my location</button>
-      <label for="city-select">or pick a city:</label>
-      <select id="city-select"></select>
+      <label for="city-input">or type a city:</label>
+      <input id="city-input" type="text" list="city-options" placeholder="e.g. Nashik" autocomplete="off" />
+      <datalist id="city-options"></datalist>
       <span id="location-label" class="location-label"></span>
     </section>
 

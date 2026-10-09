@@ -1,8 +1,10 @@
 # Aaj Ka Panchang
 
 A daily Panchang / Shubh Muhurat checker for Indian users: Tithi, Nakshatra,
-Yoga, Karana, sunrise/sunset, Rahu Kaal, Abhijit Muhurat, and a Choghadiya
-table — for your city or current location. No login, no account, no backend.
+Yoga, Karana, Ritu, Ayana, Disha Shool, sunrise/sunset, moonrise/moonset,
+Rahu Kaal, Gulika Kaal, Yamaganda, Abhijit Muhurat, and a full day+night
+Choghadiya table — for your city (searchable, ~140 towns) or current
+location. No login, no account, no backend.
 
 ## Why this exists
 
@@ -22,15 +24,35 @@ Everything is **computed, not fetched**:
   "Known limitations" below.
 - Tithi, Nakshatra, Yoga, and Karana are derived from those positions using
   the standard classical formulas (12°/tithi, 13°20′/nakshatra, etc).
-- Rahu Kaal and the Choghadiya table come from dividing the sunrise–sunset
-  (and sunset–next-sunrise) window into 8 segments, assigned by weekday using
-  the standard planetary-hour (Chaldean) sequence.
+- Rahu Kaal, Gulika Kaal, Yamaganda, and the Choghadiya table all come from
+  dividing the sunrise–sunset (and sunset–next-sunrise) window into 8
+  segments, assigned by weekday using standard published tables (the
+  planetary-hour/Chaldean sequence for Choghadiya; separate weekday tables
+  for the three inauspicious kaal periods).
+- Ritu (season) and Ayana (Uttarayana/Dakshinayana) are both derived
+  directly from the Sun's sidereal longitude — no extra lookups needed.
+- Disha Shool (the direction considered inauspicious to travel in today) is
+  a fixed weekday lookup table, independent of location.
+- Moonrise/moonset use the same Astronomy Engine rise/set search as
+  sunrise/sunset. These can legitimately be blank on some days — the Moon
+  rises about 50 minutes later each day, so it doesn't always cross the
+  horizon within a given calendar day.
 - Location is either the browser's geolocation API (used only in-browser,
-  never sent anywhere) or a bundled static list of ~45 Indian cities
-  (`src/cities.js`) — no geocoding API or key required.
-- Festival dates for the current season are hardcoded in `src/festivals.js`
-  and need a manual update each year (deriving them astronomically would
-  require a full luni-solar calendar, which is out of scope for v1).
+  never sent anywhere) or a searchable bundled list of ~140 Indian cities
+  and towns (`src/cities.js`), weighted toward Tier-2/3 coverage rather than
+  just the usual eight metros — no geocoding API or key required.
+- Festival dates for the full year are hardcoded in `src/festivals.js`,
+  sourced from several 2026 Hindu calendar publishers (cross-checked for
+  agreement), and need a manual update each year (deriving them
+  astronomically would require a full luni-solar calendar with regional
+  Amanta/Purnimanta rules, which is out of scope for v1). A couple of dates
+  (Janmashtami, Ganesh Chaturthi) vary by a day between publishers — the
+  most commonly cited date was used in each case.
+- **Not included on purpose: daily horoscope/rashifal predictions.** Every
+  major panchang site has these, but they're either written by an
+  astrologer or sourced from a paid content API — generating "today's
+  prediction" algorithmically would just be fabricated content, so it's
+  left out rather than faked.
 
 **No user data is collected, stored, or transmitted.** There is no backend,
 no database, and no account system.
@@ -43,8 +65,9 @@ no database, and no account system.
 - Sunrise/sunset use geometric astronomical rise/set, not necessarily the
   exact convention (atmospheric refraction, observer altitude) that a given
   regional panchang uses — this can shift every downstream timing slightly.
-- The Choghadiya algorithm is a commonly published method but hasn't been
-  cross-validated against a reference site for this project yet.
+- The Choghadiya, Gulika Kaal, Yamaganda, and Disha Shool tables are all
+  commonly published methods but haven't been cross-validated against a
+  reference site for this project yet.
 - **Before relying on this for an actual ritual/ceremony, cross-check the
   output against a trusted panchang (e.g. Drik Panchang) for your date and
   city.** The in-app disclaimer says the same thing.
