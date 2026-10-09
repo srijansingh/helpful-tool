@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { FileCheck2, Plus, FolderOpen } from "lucide-react";
+import { Eye, FileCheck2, Plus, FolderOpen } from "lucide-react";
 import { CameraCapture } from "../components/scan/CameraCapture";
 import { CropEditor } from "../components/scan/CropEditor";
 import { FilterPicker } from "../components/scan/FilterPicker";
@@ -10,6 +10,7 @@ import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { AdSlot } from "../components/AdSlot";
 import { ToolContent } from "../components/ToolContent";
+import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useScanStore } from "../store/useScanStore";
 import { useScanLibrary } from "../hooks/useScanLibrary";
@@ -49,6 +50,8 @@ export default function ScanPage() {
   const [outputName, setOutputName] = useState("scan");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [processing, setProcessing] = useState(false);
+  const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   const resetEditor = () => {
     setStep("capture");
@@ -62,6 +65,21 @@ export default function ScanPage() {
   const handleCapture = (dataUrl: string) => {
     setRawImage(dataUrl);
     setStep("crop");
+  };
+
+  // A batch upload skips the per-image crop/filter editor — cropping each
+  // of several photos one at a time isn't what picking a batch is for.
+  // Pages land in the filmstrip below exactly as uploaded, ready to
+  // reorder and export.
+  const handleCaptureMultiple = (dataUrls: string[]) => {
+    for (const dataUrl of dataUrls) {
+      addPage({
+        id: crypto.randomUUID(),
+        warpedDataUrl: dataUrl,
+        dataUrl,
+        filter: "original",
+      });
+    }
   };
 
   const handleCropConfirm = async (quad: Quad) => {
@@ -105,14 +123,18 @@ export default function ScanPage() {
     resetEditor();
   };
 
+  const buildPdfBytes = async () => {
+    const files = await Promise.all(
+      pages.map((p, i) => dataUrlToFile(p.dataUrl, `page-${i + 1}.jpg`))
+    );
+    return imagesToPdf(files);
+  };
+
   const handleExportPdf = async () => {
     if (pages.length === 0) return;
     setStatus({ kind: "working", message: "Building PDF…" });
     try {
-      const files = await Promise.all(
-        pages.map((p, i) => dataUrlToFile(p.dataUrl, `page-${i + 1}.jpg`))
-      );
-      const bytes = await imagesToPdf(files);
+      const bytes = await buildPdfBytes();
       const filename = `${outputName.trim() || "scan"}.pdf`;
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
@@ -121,6 +143,18 @@ export default function ScanPage() {
       });
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't build PDF: ${(e as Error).message}` });
+    }
+  };
+
+  const handlePreview = async () => {
+    if (pages.length === 0 || previewing) return;
+    setPreviewing(true);
+    try {
+      setPreviewBytes(await buildPdfBytes());
+    } catch (e) {
+      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+    } finally {
+      setPreviewing(false);
     }
   };
 
@@ -143,9 +177,7 @@ export default function ScanPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold sm:text-3xl">Scan Document</h1>
-          <p className="mt-1 text-muted">
-            Capture a page, adjust the crop, pick a filter, and build a multi-page PDF — all on this device.
-          </p>
+          <p className="mt-1 text-muted">Camera or upload, crop, filter, export — all on this device.</p>
         </div>
         <Link
           to="/scans"
@@ -157,7 +189,9 @@ export default function ScanPage() {
       </div>
 
       <Card className="mt-6">
-        {step === "capture" && <CameraCapture onCapture={handleCapture} />}
+        {step === "capture" && (
+          <CameraCapture onCapture={handleCapture} onCaptureMultiple={handleCaptureMultiple} />
+        )}
 
         {step === "crop" && rawImage && (
           <CropEditor imageSrc={rawImage} onConfirm={handleCropConfirm} />
@@ -213,7 +247,17 @@ export default function ScanPage() {
             <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
           </div>
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={handlePreview}
+            disabled={previewing}
+            className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+          >
+            <Eye className="h-4 w-4" aria-hidden="true" />
+            {previewing ? "Building preview…" : "Preview PDF"}
+          </button>
+
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
               onClick={handleExportPdf}
@@ -237,15 +281,11 @@ export default function ScanPage() {
 
       <AdSlot label="Ad space — in-content" />
 
-      <ToolContent
-        intro="Document scanner apps usually upload your photos to a server for processing and storage. This one flattens perspective, applies filters, and builds the PDF entirely in your browser — the only thing stored anywhere is in this browser's own local storage, on this device, if you choose to save it to your library."
-        faqs={[
-          { q: "Does this auto-detect the document edges?", a: "Not yet — you drag the four corners to match your document, the same way you'd fix CamScanner's auto-detection when it gets it wrong. Automatic edge detection is a planned addition." },
-          { q: "Where are my saved scans stored?", a: "In this browser's local IndexedDB storage, on this device only. They're not uploaded anywhere, and they won't show up if you open this site in a different browser or device." },
-          { q: "What do the filters do?", a: "Original keeps the photo as captured. Enhance boosts contrast and brightness for a crisper page. Grayscale removes color. B&W applies a high-contrast threshold for a classic scanned-document look." },
-          { q: "Can I scan multiple pages into one PDF?", a: "Yes — after confirming a page, tap \"Add Page & Scan Another\" to keep going, then export everything as one PDF when you're done." },
-        ]}
-      />
+      <ToolContent>
+        Your photos and scans stay on this device — nothing is uploaded, even the ones you save to your library.
+      </ToolContent>
+
+      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>
   );
 }

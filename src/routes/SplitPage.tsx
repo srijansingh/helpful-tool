@@ -86,9 +86,7 @@ export default function SplitPage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Split PDF</h1>
-      <p className="mt-1 text-muted">
-        Pick a PDF, then either pull out specific pages or split every page into its own file.
-      </p>
+      <p className="mt-1 text-muted">Pull out specific pages, or split every page into its own file.</p>
 
       <Card className="mt-6">
         <Dropzone
@@ -161,15 +159,9 @@ export default function SplitPage() {
 
       <AdSlot label="Ad space — in-content" />
 
-      <ToolContent
-        intro="Most free PDF tools work by uploading your file to a server, processing it there, and sending the result back. That's fine for most documents, but it means your file — which might have personal details, ID numbers, or anything else you'd rather not hand to a third party — leaves your device. This tool splits your PDF entirely inside your browser using pdf-lib, an open-source library; your file never leaves your computer."
-        faqs={[
-          { q: "What page range formats are supported?", a: "Comma-separated numbers and ranges, e.g. 1-3,5,8 extracts pages 1, 2, 3, 5 and 8. Duplicate or out-of-range entries are ignored automatically." },
-          { q: "What's the difference between Extract Pages and Split Every Page?", a: "Extract Pages pulls your chosen pages into one new PDF. Split Every Page breaks the whole document into one PDF per page, zipped together." },
-          { q: "Is my file actually uploaded anywhere?", a: "No. Every operation on this page runs in your browser's own JavaScript engine. There's no server call, no account, and nothing is stored once you close the tab." },
-          { q: "Is there a file size or page limit?", a: "No hard limit is enforced, but very large PDFs are processed by your device's memory, not a server, so extremely large files may be slow on a low-end phone." },
-        ]}
-      />
+      <ToolContent>
+        Your PDF stays on this device the whole time — nothing is uploaded, nothing is stored.
+      </ToolContent>
     </section>
   );
 }

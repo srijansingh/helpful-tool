@@ -74,9 +74,7 @@ export default function PdfToImagesPage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">PDF to Images</h1>
-      <p className="mt-1 text-muted">
-        Pick a PDF — each page is exported as an image (zipped if there's more than one).
-      </p>
+      <p className="mt-1 text-muted">Export every page as an image — zipped if there's more than one.</p>
 
       <Card className="mt-6">
         <Dropzone
@@ -135,15 +133,9 @@ export default function PdfToImagesPage() {
 
       <AdSlot label="Ad space — in-content" />
 
-      <ToolContent
-        intro="Most free PDF-to-image tools work by uploading your file to a server, rendering it there, and sending images back. This tool renders every page entirely inside your browser using pdf.js, the same open-source engine Firefox uses to display PDFs; your file never leaves your computer."
-        faqs={[
-          { q: "What formats can I export to?", a: "JPG or PNG. JPG is smaller; PNG preserves transparency and sharp edges better for text-heavy pages." },
-          { q: "Will I get one file or a zip?", a: "A single-page PDF downloads as one image. Anything with more than one page downloads as a zip of images, one per page." },
-          { q: "Is my file actually uploaded anywhere?", a: "No. Every operation on this page runs in your browser's own JavaScript engine. There's no server call, no account, and nothing is stored once you close the tab." },
-          { q: "Is there a page limit?", a: "No hard limit is enforced, but rendering many pages at once uses your device's memory, not a server, so very long PDFs may be slow on a low-end phone." },
-        ]}
-      />
+      <ToolContent>
+        Your PDF is rendered right here in your browser — nothing gets uploaded.
+      </ToolContent>
     </section>
   );
 }

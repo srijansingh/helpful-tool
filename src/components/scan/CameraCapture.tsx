@@ -1,18 +1,38 @@
 import { useEffect, useRef, useState } from "react";
-import { Camera, Upload } from "lucide-react";
+import { Camera, Upload, X } from "lucide-react";
 
 interface CameraCaptureProps {
+  // A single photo (camera shot, or one uploaded file) goes through the
+  // crop + filter editor.
   onCapture: (dataUrl: string) => void;
+  // Multiple uploaded photos skip the per-image editor entirely and land
+  // straight in the page filmstrip, ready to reorder and export — cropping
+  // five photos one at a time isn't what someone picking a batch wants.
+  onCaptureMultiple: (dataUrls: string[]) => void;
 }
 
-export function CameraCapture({ onCapture }: CameraCaptureProps) {
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCaptureProps) {
+  const [mode, setMode] = useState<"choose" | "camera">("choose");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
+  // Camera permission is only requested once the user actively chooses
+  // "Use Camera" — never on mount, so opening this page doesn't throw up a
+  // permission prompt for someone who just wants to upload a photo.
   useEffect(() => {
+    if (mode !== "camera") return;
     let cancelled = false;
 
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -42,7 +62,7 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [mode]);
 
   const capture = () => {
     const video = videoRef.current;
@@ -54,11 +74,57 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
     onCapture(canvas.toDataURL("image/jpeg", 0.92));
   };
 
-  const handleFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => onCapture(reader.result as string);
-    reader.readAsDataURL(file);
+  const closeCamera = () => {
+    setReady(false);
+    setCameraError(null);
+    setMode("choose");
   };
+
+  const handleFiles = async (files: FileList) => {
+    const list = Array.from(files);
+    if (list.length === 0) return;
+    const dataUrls = await Promise.all(list.map(readAsDataUrl));
+    if (dataUrls.length === 1) onCapture(dataUrls[0]);
+    else onCaptureMultiple(dataUrls);
+  };
+
+  if (mode === "choose") {
+    return (
+      <div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={() => setMode("camera")}
+            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-5 py-8 transition-transform active:scale-[0.99]"
+          >
+            <Camera className="h-7 w-7 text-accent" aria-hidden="true" />
+            <span className="font-display text-base font-bold text-fg">Use Camera</span>
+            <span className="text-xs text-muted">Scan a page right now</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-5 py-8 transition-transform active:scale-[0.99]"
+          >
+            <Upload className="h-7 w-7 text-accent" aria-hidden="true" />
+            <span className="font-display text-base font-bold text-fg">Upload Photos</span>
+            <span className="text-xs text-muted">One or several at once</span>
+          </button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          className="sr-only"
+          onChange={(e) => {
+            if (e.target.files) handleFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -72,6 +138,14 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
             <p className="text-sm text-muted">{cameraError}</p>
           </div>
         )}
+        <button
+          type="button"
+          onClick={closeCamera}
+          aria-label="Close camera"
+          className="absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -86,23 +160,11 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
         </button>
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg transition-transform active:scale-[0.99]"
+          onClick={closeCamera}
+          className="rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg"
         >
-          <Upload className="h-5 w-5" aria-hidden="true" />
-          Upload Photo
+          Upload Instead
         </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="sr-only"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
-            e.target.value = "";
-          }}
-        />
       </div>
     </div>
   );

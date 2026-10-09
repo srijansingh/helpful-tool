@@ -8,10 +8,23 @@ uploaded to a server — and it installs as an offline-capable PWA.
 
 ## Document scanner (`/scan`, `/scans`)
 
-Camera capture (with an upload-photo fallback for devices without a
-camera, or for testing) → drag-corner perspective crop → filter presets
-→ multi-page session → export to PDF or save to a local scan library.
+Opens on a choice, not a camera permission prompt: **Use Camera** or
+**Upload Photos** (`src/components/scan/CameraCapture.tsx`), the latter
+accepting one file or a whole batch at once.
 
+- **Single photo** (camera shot, or one uploaded file) → drag-corner
+  perspective crop → filter presets → added as a page.
+- **Batch upload** (multiple files at once) skips the per-image editor
+  entirely — cropping five photos one at a time isn't what picking a
+  batch is for — and lands straight in the page filmstrip, ready to
+  reorder and export.
+- **Drag-to-reorder** (`src/components/scan/PageFilmstrip.tsx`) uses the
+  Pointer Events API, not HTML5 drag-and-drop — HTML5 DnD barely works on
+  touch, and this is a touch-first feature.
+- **PDF preview** (`src/components/PdfPreview.tsx`) renders the actual
+  built PDF, page by page, via pdf.js, in a vertically scrollable modal —
+  so you see what you're about to download, not just the last page you
+  edited.
 - **No OpenCV.js / jscanify.** Auto edge-detection needs real computer
   vision, which means either an 8-10MB WASM dependency or `jscanify`
   (which ships `canvas`/`jsdom` — Node-only packages — as hard
@@ -72,8 +85,8 @@ shell:
   for the tool list (`src/lib/tools.ts`).
 - **Elevated workspace panels** (`Card.tsx`) — each tool's dropzone, file
   list, rename field and action button sit inside one bounded, shadowed
-  panel, not loose on the page background. The explanatory/FAQ content
-  stays outside it, as ordinary page content below.
+  panel, not loose on the page background. The trust note stays outside
+  it, as ordinary page content below.
 - **Real drag-and-drop reordering** (`FileList.tsx`, native HTML5 DnD) via
   a grip handle, alongside the up/down buttons (kept for accessibility
   and because HTML5 drag-and-drop isn't usable on touch — the handle is
@@ -156,12 +169,12 @@ confirming the page loads.
 - Per-route `<title>` and meta description (`useSeo` hook).
 - `public/robots.txt` and `public/sitemap.xml` — **update the placeholder
   domain in both before deploying.**
-- Each tool page carries real explanatory content (`ToolContent`
-  component): a "why this instead of an upload-based converter" section
-  and tool-specific FAQs. This isn't filler — a bare tool widget has
-  nothing for search engines to match against and no context for a
-  first-time visitor; this was a real gap in an earlier iteration of this
-  project that got caught and fixed.
+- Each tool page carries a one-line trust note (`ToolContent` component)
+  under the tool itself, so there's some real text for search engines to
+  match against beyond the UI chrome — kept short deliberately; an
+  earlier version padded this out with a formal intro paragraph and a
+  full FAQ block per page, which read like a terms-of-service page and
+  made every tool a long scroll on mobile for no real benefit.
 - **Not done**: true prerendering (static HTML snapshots per route for
   crawlers that don't execute JS). Google renders JS-heavy pages fine
   today, so this is a reasonable phase-2 item, not a v1 blocker — noted
@@ -200,6 +213,6 @@ needed. Before going live:
 
 Two `AdSlot` placeholders per page (`src/components/AdSlot.tsx`) — one
 above the tool (in `App.tsx`, shared across all routes) and one
-in-content, between the tool and the explanatory/FAQ section. No ad
+in-content, between the tool and the trust note. No ad
 script is wired in yet; drop an AdSense (or similar) unit into
 `AdSlot` when ready.

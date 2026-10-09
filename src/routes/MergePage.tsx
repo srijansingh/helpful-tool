@@ -55,7 +55,7 @@ export default function MergePage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Merge PDFs</h1>
-      <p className="mt-1 text-muted">Pick two or more PDFs, preview and reorder them, then merge into one file.</p>
+      <p className="mt-1 text-muted">Add a few PDFs, drag them into order, merge.</p>
 
       <Card className="mt-6">
         <Dropzone
@@ -95,15 +95,9 @@ export default function MergePage() {
 
       <AdSlot label="Ad space — in-content" />
 
-      <ToolContent
-        intro="Most free PDF tools work by uploading your file to a server, processing it there, and sending the result back. That's fine for most documents, but it means your file — which might have personal details, ID numbers, or anything else you'd rather not hand to a third party — leaves your device. This tool merges your PDFs entirely inside your browser using pdf-lib, an open-source library; your files never leave your computer."
-        faqs={[
-          { q: "Is my file actually uploaded anywhere?", a: "No. Every operation on this page runs in your browser's own JavaScript engine. There's no server call, no account, and nothing is stored once you close the tab." },
-          { q: "Is there a limit on how many PDFs I can merge?", a: "No hard limit, but very large or numerous files are processed by your device's memory, not a server, so an extremely large merge may be slow on a low-end phone." },
-          { q: "Can I reorder the files before merging?", a: "Yes — use the up/down arrows next to each file to set the order pages will appear in the merged PDF." },
-          { q: "Does merging affect PDF quality?", a: "No. Pages are copied as-is; nothing is re-rendered or recompressed." },
-        ]}
-      />
+      <ToolContent>
+        Your PDFs never leave this device — merging happens right here in your browser.
+      </ToolContent>
     </section>
   );
 }

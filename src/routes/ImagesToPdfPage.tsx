@@ -55,9 +55,7 @@ export default function ImagesToPdfPage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Images to PDF</h1>
-      <p className="mt-1 text-muted">
-        Pick one or more images (JPG, PNG, WebP…), preview and reorder them, then combine into one PDF.
-      </p>
+      <p className="mt-1 text-muted">Add your images, drag them into order, combine into one PDF.</p>
 
       <Card className="mt-6">
         <Dropzone
@@ -97,15 +95,9 @@ export default function ImagesToPdfPage() {
 
       <AdSlot label="Ad space — in-content" />
 
-      <ToolContent
-        intro="Most free image-to-PDF tools work by uploading your photos to a server, processing them there, and sending the result back. This tool converts your images entirely inside your browser using pdf-lib, an open-source library; your files never leave your computer."
-        faqs={[
-          { q: "Which image formats are supported?", a: "Any format your browser can display — JPG and PNG are kept at their original quality; other formats (WebP, GIF, BMP) are converted losslessly before being placed on the page." },
-          { q: "Can I reorder images before converting?", a: "Yes — use the up/down arrows next to each image to set the page order in the final PDF." },
-          { q: "Is my file actually uploaded anywhere?", a: "No. Every operation on this page runs in your browser's own JavaScript engine. There's no server call, no account, and nothing is stored once you close the tab." },
-          { q: "Will large photos make a huge PDF?", a: "Each image is scaled to fit a reasonable page size, so you won't end up with an absurdly large page — though very high-resolution originals can still produce a sizeable file." },
-        ]}
-      />
+      <ToolContent>
+        Your photos stay on this device — conversion happens right here in your browser.
+      </ToolContent>
     </section>
   );
 }
