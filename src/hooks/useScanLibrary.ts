@@ -11,7 +11,12 @@ export interface ScanDocument {
   id: string;
   name: string;
   createdAt: number;
-  pages: { dataUrl: string; filter: string }[];
+  pages: {
+    dataUrl: string;
+    filter: string;
+    rawDataUrl?: string;
+    warpedDataUrl?: string;
+  }[];
 }
 
 const DB_KEY = "localpdf:scan-library";
@@ -45,7 +50,12 @@ export function useScanLibrary() {
       id: crypto.randomUUID(),
       name,
       createdAt: Date.now(),
-      pages: pages.map((p) => ({ dataUrl: p.dataUrl, filter: p.filter })),
+      pages: pages.map((p) => ({
+        dataUrl: p.dataUrl,
+        filter: p.filter,
+        rawDataUrl: p.rawDataUrl,
+        warpedDataUrl: p.warpedDataUrl,
+      })),
     };
     const next = [doc, ...documentsRef.current];
     await set(DB_KEY, next);
@@ -60,7 +70,9 @@ export function useScanLibrary() {
   }, []);
 
   const renameDocument = useCallback(async (id: string, name: string) => {
-    const next = documentsRef.current.map((d) => (d.id === id ? { ...d, name } : d));
+    const next = documentsRef.current.map((d) =>
+      d.id === id ? { ...d, name } : d,
+    );
     await set(DB_KEY, next);
     setDocuments(next);
   }, []);

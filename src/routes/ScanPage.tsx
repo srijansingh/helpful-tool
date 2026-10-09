@@ -12,7 +12,7 @@ import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useScanStore } from "../store/useScanStore";
 import { useToastStore } from "../store/useToastStore";
-import { useScanLibrary } from "../hooks/useScanLibrary";
+
 import { warpPerspective } from "../lib/scan/perspective";
 import type { Quad } from "../lib/scan/perspective";
 import { applyFilter, FILTERS } from "../lib/scan/filters";
@@ -20,6 +20,8 @@ import type { FilterType } from "../lib/scan/filters";
 import { downscale } from "../lib/scan/downscale";
 import { loadImage } from "../lib/scan/loadImage";
 import { dataUrlToFile } from "../lib/scan/dataUrlToFile";
+import { saveDocument as saveFile, updateDocument } from "../lib/library";
+import { detectImagePaper } from "../lib/scan/detect";
 import { imagesToPdf } from "../lib/pdf/imagesToPdf";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
@@ -29,7 +31,7 @@ type Step = "capture" | "crop" | "filter";
 export default function ScanPage() {
   useSeo(
     "Scan Documents Online Free — Camera to PDF | LocalPDF",
-    "Scan a document with your camera, crop and flatten the perspective, apply filters, and export to PDF — entirely in your browser."
+    "Scan a document with your camera, crop and flatten the perspective, apply filters, and export to PDF — entirely in your browser.",
   );
 
   const navigate = useNavigate();
@@ -40,14 +42,22 @@ export default function ScanPage() {
   const reorderPages = useScanStore((s) => s.reorderPages);
   const clearSession = useScanStore((s) => s.clear);
   const pushToast = useToastStore((s) => s.push);
-  const { saveDocument } = useScanLibrary();
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [mode, setMode] = useState<
+    "document" | "id" | "receipt" | "whiteboard"
+  >("document");
+  const [batchCrop, setBatchCrop] = useState(false);
   const [step, setStep] = useState<Step>("capture");
   const [rawImage, setRawImage] = useState<string | null>(null);
-  const [warpedCanvas, setWarpedCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [warpedCanvas, setWarpedCanvas] = useState<HTMLCanvasElement | null>(
+    null,
+  );
   const [selectedFilter, setSelectedFilter] = useState<FilterType>("enhance");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [filterThumbs, setFilterThumbs] = useState<Partial<Record<FilterType, string>>>({});
+  const [filterThumbs, setFilterThumbs] = useState<
+    Partial<Record<FilterType, string>>
+  >({});
   const [outputName, setOutputName] = useState("scan");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [processing, setProcessing] = useState(false);
@@ -55,6 +65,7 @@ export default function ScanPage() {
   const [previewing, setPreviewing] = useState(false);
 
   const resetEditor = () => {
+    setEditingId(null);
     setStep("capture");
     setRawImage(null);
     setWarpedCanvas(null);
@@ -64,6 +75,7 @@ export default function ScanPage() {
   };
 
   const handleCapture = (dataUrl: string) => {
+    setEditingId(null);
     setRawImage(dataUrl);
     setStep("crop");
   };
@@ -76,6 +88,7 @@ export default function ScanPage() {
     for (const dataUrl of dataUrls) {
       addPage({
         id: crypto.randomUUID(),
+        rawDataUrl: dataUrl,
         warpedDataUrl: dataUrl,
         dataUrl,
         filter: "original",
@@ -98,9 +111,14 @@ export default function ScanPage() {
       }
       setFilterThumbs(thumbs);
 
-      const filtered = applyFilter(warped, "enhance");
+      const filter =
+        mode === "receipt" ? "bw" : mode === "id" ? "original" : "enhance";
+      setSelectedFilter(filter);
+      const filtered = applyFilter(warped, filter);
       setPreviewUrl(filtered.toDataURL("image/jpeg", 0.9));
       setStep("filter");
+    } catch (e) {
+      setStatus({ kind: "error", message: (e as Error).message });
     } finally {
       setProcessing(false);
     }
@@ -115,12 +133,14 @@ export default function ScanPage() {
 
   const handleAddPage = () => {
     if (!warpedCanvas || !previewUrl) return;
-    addPage({
-      id: crypto.randomUUID(),
+    const patch = {
+      rawDataUrl: rawImage || undefined,
       warpedDataUrl: warpedCanvas.toDataURL("image/jpeg", 0.92),
       dataUrl: previewUrl,
       filter: selectedFilter,
-    });
+    };
+    if (editingId) useScanStore.getState().updatePage(editingId, patch);
+    else addPage({ id: crypto.randomUUID(), ...patch });
     resetEditor();
   };
 
@@ -138,9 +158,13 @@ export default function ScanPage() {
 
   const buildPdfBytes = async () => {
     const files = await Promise.all(
-      pages.map((p, i) => dataUrlToFile(p.dataUrl, `page-${i + 1}.jpg`))
+      pages.map((p, i) => dataUrlToFile(p.dataUrl, `page-${i + 1}.jpg`)),
     );
-    return imagesToPdf(files);
+    return imagesToPdf(files, {
+      paper: mode === "id" ? "a4" : "original",
+      margin: mode === "id" ? 24 : 0,
+      quality: 0.9,
+    });
   };
 
   const handleExportPdf = async () => {
@@ -156,7 +180,10 @@ export default function ScanPage() {
         message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build PDF: ${(e as Error).message}`,
+      });
     }
   };
 
@@ -166,7 +193,10 @@ export default function ScanPage() {
     try {
       setPreviewBytes(await buildPdfBytes());
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -179,20 +209,92 @@ export default function ScanPage() {
     try {
       // Wait for the IndexedDB write before navigating — otherwise the
       // library page can mount and load before this save actually lands.
-      await saveDocument(outputName.trim() || "scan", pages);
+      const bytes = await buildPdfBytes();
+      const file = new File(
+        [new Uint8Array(bytes)],
+        `${outputName.trim() || "scan"}.pdf`,
+        { type: "application/pdf" },
+      );
+      const saved = await saveFile(file);
+      try {
+        await updateDocument({ ...saved, scanPages: pages });
+      } catch (e) {
+        setStatus({
+          kind: "error",
+          message: `PDF saved, but editable scan sources could not be saved: ${(e as Error).message}`,
+        });
+        return;
+      }
       clearSession();
-      navigate("/scans");
+      navigate("/files");
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't save: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't save: ${(e as Error).message}`,
+      });
     }
   };
 
+  const batch = async () => {
+    if (processing) return;
+    setProcessing(true);
+    const before = pages;
+    try {
+      const next = [];
+      for (let i = 0; i < pages.length; i++) {
+        setStatus({
+          kind: "working",
+          message: `Enhancing page ${i + 1} of ${pages.length}…`,
+        });
+        const p = pages[i];
+        const img = await loadImage(
+          batchCrop ? p.rawDataUrl || p.warpedDataUrl : p.warpedDataUrl,
+        );
+        const detected = batchCrop ? detectImagePaper(img) : null;
+        const c = detected
+          ? warpPerspective(img, detected)
+          : document.createElement("canvas");
+        if (!detected) {
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext("2d")!.drawImage(img, 0, 0);
+        }
+        next.push({
+          ...p,
+          warpedDataUrl: c.toDataURL("image/jpeg", 0.92),
+          dataUrl: applyFilter(c, selectedFilter).toDataURL("image/jpeg", 0.9),
+          filter: selectedFilter,
+        });
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve()),
+        );
+      }
+      reorderPages(next);
+      setStatus({
+        kind: "done",
+        message: "Batch enhancement applied. Check every page before export.",
+      });
+      pushToast({
+        message: "Pages enhanced",
+        actionLabel: "Undo",
+        onAction: () => reorderPages(before),
+      });
+    } catch (e) {
+      setStatus({ kind: "error", message: (e as Error).message });
+    } finally {
+      setProcessing(false);
+    }
+  };
   return (
     <section>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">Scan Document</h1>
-          <p className="mt-1 text-muted">Camera or upload, crop, filter, export — all on this device.</p>
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">
+            Scan Document
+          </h1>
+          <p className="mt-1 text-muted">
+            Camera or upload, crop, filter, export — all on this device.
+          </p>
         </div>
         <Link
           to="/scans"
@@ -203,10 +305,32 @@ export default function ScanPage() {
         </Link>
       </div>
 
-      <div className={pages.length > 0 ? "mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6" : "mt-6 lg:max-w-2xl"}>
+      <label className="field-label mt-4">
+        Scan mode
+        <select
+          className="field"
+          value={mode}
+          onChange={(e) => setMode(e.target.value as typeof mode)}
+        >
+          <option value="document">Document · enhance</option>
+          <option value="id">ID · keep color, place on A4</option>
+          <option value="receipt">Receipt · black & white</option>
+          <option value="whiteboard">Whiteboard · enhance contrast</option>
+        </select>
+      </label>
+      <div
+        className={
+          pages.length > 0
+            ? "mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6"
+            : "mt-6 lg:max-w-2xl"
+        }
+      >
         <Card>
           {step === "capture" && (
-            <CameraCapture onCapture={handleCapture} onCaptureMultiple={handleCaptureMultiple} />
+            <CameraCapture
+              onCapture={handleCapture}
+              onCaptureMultiple={handleCaptureMultiple}
+            />
           )}
 
           {step === "crop" && rawImage && (
@@ -221,12 +345,20 @@ export default function ScanPage() {
                     <span className="h-10 w-10 animate-pulse rounded-full bg-border" />
                   </div>
                 ) : (
-                  <img src={previewUrl} alt="Scanned page preview" className="w-full" />
+                  <img
+                    src={previewUrl}
+                    alt="Scanned page preview"
+                    className="w-full"
+                  />
                 )}
               </div>
 
               <div className="mt-4">
-                <FilterPicker value={selectedFilter} onChange={handleFilterChange} thumbnails={filterThumbs} />
+                <FilterPicker
+                  value={selectedFilter}
+                  onChange={handleFilterChange}
+                  thumbnails={filterThumbs}
+                />
               </div>
 
               <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -236,7 +368,7 @@ export default function ScanPage() {
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
                 >
                   <Plus className="h-5 w-5" aria-hidden="true" />
-                  Add Page &amp; Scan Another
+                  {editingId ? "Save page changes" : "Add Page & Scan Another"}
                 </button>
                 <button
                   type="button"
@@ -256,17 +388,68 @@ export default function ScanPage() {
               {pages.length} page{pages.length === 1 ? "" : "s"} in this scan
             </h2>
             <div className="mt-3">
-              <PageFilmstrip pages={pages} onReorder={reorderPages} onRemove={handleRemovePage} />
+              <PageFilmstrip
+                pages={pages}
+                onReorder={reorderPages}
+                onRemove={handleRemovePage}
+                onEdit={(id) => {
+                  const p = pages.find((p) => p.id === id)!;
+                  setEditingId(id);
+                  setRawImage(p.rawDataUrl || p.warpedDataUrl);
+                  setStep("crop");
+                }}
+              />
             </div>
 
+            <div className="panel mt-3">
+              <label className="field-label">
+                Batch filter
+                <select
+                  className="field"
+                  value={selectedFilter}
+                  onChange={(e) =>
+                    setSelectedFilter(e.target.value as FilterType)
+                  }
+                >
+                  {FILTERS.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex gap-2 mt-3">
+                <input
+                  type="checkbox"
+                  checked={batchCrop}
+                  onChange={(e) => setBatchCrop(e.target.checked)}
+                />
+                Try automatic crop for all pages
+              </label>
+              <button
+                className="btn-secondary mt-3"
+                disabled={processing || step !== "capture"}
+                onClick={() => void batch()}
+              >
+                Enhance all pages
+              </button>
+              <p className="text-sm text-muted">
+                Low-contrast pages keep their full photo when edges cannot be
+                detected.
+              </p>
+            </div>
             <div className="mt-5 sm:max-w-xs lg:max-w-none">
-              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+              <FilenameInput
+                value={outputName}
+                onChange={setOutputName}
+                extension="pdf"
+              />
             </div>
 
             <button
               type="button"
               onClick={handlePreview}
-              disabled={previewing}
+              disabled={previewing || processing || step !== "capture"}
               className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
             >
               <Eye className="h-4 w-4" aria-hidden="true" />
@@ -277,8 +460,10 @@ export default function ScanPage() {
               <button
                 type="button"
                 data-primary-action="true"
-                  disabled={status.kind === "working" || pages.length === 0}
-                  onClick={handleExportPdf}
+                disabled={
+                  status.kind === "working" || processing || step !== "capture" || pages.length === 0
+                }
+                onClick={handleExportPdf}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
               >
                 <FileCheck2 className="h-5 w-5" aria-hidden="true" />
@@ -286,6 +471,9 @@ export default function ScanPage() {
               </button>
               <button
                 type="button"
+                disabled={
+                  status.kind === "working" || processing || step !== "capture"
+                }
                 onClick={handleSaveToLibrary}
                 className="flex-1 rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
               >
@@ -298,7 +486,22 @@ export default function ScanPage() {
         )}
       </div>
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {pages.length === 0 && <StatusMessage status={status} />}
+      {step !== "capture" && (
+        <button
+          className="btn-secondary mt-4"
+          disabled={processing}
+          onClick={resetEditor}
+        >
+          Back to capture
+        </button>
+      )}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

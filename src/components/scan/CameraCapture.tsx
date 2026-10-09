@@ -1,3 +1,5 @@
+import { useDocumentStore } from "../../store/useDocumentStore";
+import { validateFiles } from "../../lib/importFiles";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Upload, X } from "lucide-react";
 
@@ -20,7 +22,10 @@ function readAsDataUrl(file: File): Promise<string> {
   });
 }
 
-export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCaptureProps) {
+export function CameraCapture({
+  onCapture,
+  onCaptureMultiple,
+}: CameraCaptureProps) {
   const [mode, setMode] = useState<"choose" | "camera">("choose");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -54,7 +59,10 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
         }
       })
       .catch(() => {
-        if (!cancelled) setCameraError("Couldn't access the camera — check permissions, or upload a photo instead.");
+        if (!cancelled)
+          setCameraError(
+            "Couldn't access the camera — check permissions, or upload a photo instead.",
+          );
       });
 
     return () => {
@@ -81,16 +89,32 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
   };
 
   const handleFiles = async (files: FileList) => {
-    const list = Array.from(files);
+    const list = await validateFiles(Array.from(files), "image/*");
     if (list.length === 0) return;
     const dataUrls = await Promise.all(list.map(readAsDataUrl));
     if (dataUrls.length === 1) onCapture(dataUrls[0]);
     else onCaptureMultiple(dataUrls);
   };
 
+  const current = useDocumentStore((s) => s.current);
   if (mode === "choose") {
     return (
       <div>
+        {current?.type.startsWith("image/") && (
+          <button
+            className="btn-secondary mb-3 w-full"
+            onClick={async () => {
+              try {
+                const valid = await validateFiles([current], "image/*");
+                onCapture(await readAsDataUrl(valid[0]));
+              } catch (e) {
+                setCameraError((e as Error).message);
+              }
+            }}
+          >
+            Scan current photo: {current.name}
+          </button>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
@@ -101,8 +125,12 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
               <Camera className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-sm font-bold text-fg">Use Camera</span>
-              <span className="block text-xs text-muted">Scan a page right now</span>
+              <span className="block font-display text-sm font-bold text-fg">
+                Use Camera
+              </span>
+              <span className="block text-xs text-muted">
+                Scan a page right now
+              </span>
             </span>
           </button>
           <button
@@ -114,11 +142,20 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
               <Upload className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-sm font-bold text-fg">Upload Photos</span>
-              <span className="block text-xs text-muted">One or several at once</span>
+              <span className="block font-display text-sm font-bold text-fg">
+                Upload Photos
+              </span>
+              <span className="block text-xs text-muted">
+                One or several at once
+              </span>
             </span>
           </button>
         </div>
+        {cameraError && (
+          <p className="text-bad mt-3" role="alert">
+            {cameraError}
+          </p>
+        )}
         <input
           ref={fileInputRef}
           type="file"
@@ -126,7 +163,10 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
           multiple
           className="sr-only"
           onChange={(e) => {
-            if (e.target.files) handleFiles(e.target.files);
+            if (e.target.files)
+              void handleFiles(e.target.files).catch((e) =>
+                setCameraError((e as Error).message),
+              );
             e.target.value = "";
           }}
         />
@@ -138,7 +178,13 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
     <div>
       <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-black">
         {!cameraError && (
-          <video ref={videoRef} autoPlay playsInline muted className="h-full w-full object-cover" />
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="h-full w-full object-cover"
+          />
         )}
         {cameraError && (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 p-6 text-center">

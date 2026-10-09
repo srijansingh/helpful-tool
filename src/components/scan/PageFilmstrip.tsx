@@ -7,6 +7,7 @@ interface PageFilmstripProps {
   pages: ScanPage[];
   onReorder: (pages: ScanPage[]) => void;
   onRemove: (id: string) => void;
+  onEdit?: (id: string) => void;
 }
 
 // Drag-to-reorder via the Pointer Events API (not HTML5 drag-and-drop,
@@ -14,7 +15,12 @@ interface PageFilmstripProps {
 // same with a mouse or a finger. Dragging the handle moves the tile with
 // the pointer; crossing a neighbor's midpoint swaps it into that slot
 // immediately, so the order always matches what's on screen.
-export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps) {
+export function PageFilmstrip({
+  pages,
+  onReorder,
+  onRemove,
+  onEdit,
+}: PageFilmstripProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragX, setDragX] = useState(0);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -24,7 +30,10 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
 
   if (pages.length === 0) return null;
 
-  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>, i: number) => {
+  const handlePointerDown = (
+    e: ReactPointerEvent<HTMLDivElement>,
+    i: number,
+  ) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     startXRef.current = e.clientX;
     setDragIndex(i);
@@ -46,7 +55,10 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
       const rect = itemRefs.current[j]?.getBoundingClientRect();
       if (!rect) continue;
       const neighborCenter = rect.left + rect.width / 2;
-      const crossed = j < dragIndex ? draggedCenter < neighborCenter : draggedCenter > neighborCenter;
+      const crossed =
+        j < dragIndex
+          ? draggedCenter < neighborCenter
+          : draggedCenter > neighborCenter;
       if (crossed) {
         const next = [...current];
         const [moved] = next.splice(dragIndex, 1);
@@ -85,7 +97,11 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
           className="relative shrink-0"
           style={
             i === dragIndex
-              ? { transform: `translateX(${dragX}px)`, zIndex: 10, transition: "none" }
+              ? {
+                  transform: `translateX(${dragX}px)`,
+                  zIndex: 10,
+                  transition: "none",
+                }
               : undefined
           }
         >
@@ -95,6 +111,15 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
             className="h-24 w-20 rounded-lg border border-border object-cover"
             draggable={false}
           />
+          {onEdit && (
+            <button
+              className="btn-secondary w-full mt-1"
+              onClick={() => onEdit(page.id)}
+              aria-label={`Edit page ${i + 1}`}
+            >
+              Edit
+            </button>
+          )}
           <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[10px] font-bold text-fg">
             {i + 1}
           </span>

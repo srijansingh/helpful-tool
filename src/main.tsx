@@ -9,8 +9,10 @@ import App from "./App";
 // needed on /pdf-to-images, so there's no reason every visitor downloads
 // it up front. The Suspense boundary for these lives inside App, around
 // just the <Outlet/>, so the header/nav don't flicker away on transitions.
-const ImagePage=lazy(()=>import("./routes/ImagePage"));
-const CompressPage=lazy(()=>import("./routes/CompressPage"));
+const SharePage = lazy(() => import("./routes/SharePage"));
+const OcrPage = lazy(() => import("./routes/OcrPage"));
+const ImagePage = lazy(() => import("./routes/ImagePage"));
+const CompressPage = lazy(() => import("./routes/CompressPage"));
 const EditPage = lazy(() => import("./routes/EditPage"));
 const ToolsPage = lazy(() => import("./routes/ToolsPage"));
 const SettingsPage = lazy(() => import("./routes/SettingsPage"));
@@ -35,8 +37,10 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<App />}>
           <Route index element={<HomePage />} />
-          <Route path="image" element={<ImagePage/>}/>
-          <Route path="compress" element={<CompressPage/>}/>
+          <Route path="share" element={<SharePage />} />
+          <Route path="ocr" element={<OcrPage />} />
+          <Route path="image" element={<ImagePage />} />
+          <Route path="compress" element={<CompressPage />} />
           <Route path="edit" element={<EditPage />} />
           <Route path="tools" element={<ToolsPage />} />
           <Route path="settings" element={<SettingsPage />} />
@@ -55,5 +59,5 @@ createRoot(document.getElementById("root")!).render(
         </Route>
       </Routes>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

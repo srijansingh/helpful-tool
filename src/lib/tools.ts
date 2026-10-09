@@ -1,4 +1,16 @@
-import { FileStack, Scissors, LayoutGrid, ImageIcon, Images, ScanLine, Droplets, Hash, PenLine, Minimize2 } from "lucide-react";
+import {
+  FileStack,
+  Scissors,
+  LayoutGrid,
+  ImageIcon,
+  Images,
+  ScanLine,
+  Droplets,
+  Hash,
+  PenLine,
+  Minimize2,
+  ScanText,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface ToolDef {
@@ -10,9 +22,34 @@ export interface ToolDef {
 }
 
 export const TOOLS: ToolDef[] = [
-  {to:"/image",label:"Edit image",shortLabel:"Image",icon:ImageIcon,description:"Crop, rotate, resize, compress and convert photos."},
-  {to:"/compress",label:"Reduce scan PDF size",shortLabel:"Compress",icon:Minimize2,description:"Make photo PDFs smaller for upload limits."},
-  {to:"/edit",label:"Edit, sign & fill",shortLabel:"Edit",icon:PenLine,description:"Read, annotate, add visual signatures and fill PDF forms."},
+  {
+    to: "/ocr",
+    label: "Read text from scans",
+    shortLabel: "OCR",
+    icon: ScanText,
+    description: "Local English/Hindi OCR and searchable PDF export.",
+  },
+  {
+    to: "/image",
+    label: "Edit image",
+    shortLabel: "Image",
+    icon: ImageIcon,
+    description: "Crop, rotate, resize, compress and convert photos.",
+  },
+  {
+    to: "/compress",
+    label: "Reduce scan PDF size",
+    shortLabel: "Compress",
+    icon: Minimize2,
+    description: "Make photo PDFs smaller for upload limits.",
+  },
+  {
+    to: "/edit",
+    label: "Edit, sign & fill",
+    shortLabel: "Edit",
+    icon: PenLine,
+    description: "Read, annotate, add visual signatures and fill PDF forms.",
+  },
   {
     to: "/scan",
     label: "Scan Document",
