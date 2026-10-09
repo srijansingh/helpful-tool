@@ -9,10 +9,10 @@ self.addEventListener("fetch", (event) => {
         const files = form.getAll("files").filter((f) => f instanceof File);
         if (
           !files.length ||
-          files.length > 30 ||
-          files.reduce((n, f) => n + f.size, 0) > 100 * 1024 * 1024
+          files.length > 100 ||
+          files.reduce((n, f) => n + f.size, 0) > 50 * 1024 * 1024
         )
-          return new Response("Share up to 30 files or 100 MB at a time.", {
+          return new Response("Share up to 100 files or 50 MB at a time.", {
             status: 400,
           });
         const db = await new Promise((resolve, reject) => {

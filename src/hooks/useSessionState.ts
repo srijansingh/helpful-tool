@@ -10,20 +10,22 @@ export function useSessionState<T>(
   initial: T | (() => T),
 ): [T, (next: SetStateAction<T>) => void] {
   const id = `${scope}:${key}`;
-  const [value, setValue] = useState<T>(() =>
+  const read = (): T =>
     drafts.has(id)
       ? (drafts.get(id) as T)
       : typeof initial === "function"
         ? (initial as () => T)()
-        : initial,
-  );
+        : initial;
+  const [state, setState] = useState(() => ({ id, value: read() }));
+  const value = state.id === id ? state.value : read();
   const update = useCallback(
     (next: SetStateAction<T>) => {
-      setValue((previous) => {
-        const v =
-          typeof next === "function" ? (next as (p: T) => T)(previous) : next;
-        drafts.set(id, v);
-        return v;
+      setState((previous) => {
+        const current = previous.id === id ? previous.value : read();
+        const value =
+          typeof next === "function" ? (next as (p: T) => T)(current) : next;
+        drafts.set(id, value);
+        return { id, value };
       });
     },
     [id],

@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "./renderOptions";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 // The `?url` suffix tells Vite to emit this as a built asset and hand back
 // its final URL — the standard way to wire pdf.js's worker up under Vite.
@@ -31,7 +32,8 @@ export async function renderPdfToImages(
   }: RenderOptions = {},
 ): Promise<NamedBytes[]> {
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const pdf = await getDocument({ data: bytes }).promise;
+  const pdf = await getDocument({ ...pdfRenderingOptions, data: bytes })
+    .promise;
   const ext = format === "image/png" ? "png" : "jpg";
   const results: NamedBytes[] = [];
   let totalBytes = 0;

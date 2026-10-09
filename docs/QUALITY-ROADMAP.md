@@ -20,9 +20,18 @@ Preview identity tracks actual source bytes, including equal-name/equal-size rep
 
 Validation: production build, existing regression tests, and mobile settings/preview browser checks. This is the shared workspace foundation; full editor mark interaction, richer contextual previews and every physical-device accessibility gate remain tracked for subsequent work.
 
+## Phase 3 — existing-feature refinements
+
+Form export clears choices, supports option lists, respects read-only controls and surfaces unsupported fields. Annotation size/movement controls work with keyboard input; clamped pen translation moves strokes by their actual allowed displacement. A named annotation list makes existing marks reachable without pointing at the canvas. Signature/logo imports use bounded decoding. Image editing previews crop/rotation/encoding with stale-preview cancellation and full-resolution export.
+
+Filled form values update in a cancellable preview, and form/annotation controls share a contextual mobile sheet. Compression reuses raster sources and offers source/result review before download; larger candidates keep the original preferred. Redaction drafts survive navigation with live rectangle feedback and per-area review/removal.
+
+Scan saves update the current document after an atomic library write. Saving an already saved document retains its scan sources and OCR text; reopening restores its saved identity. Backup scope follows the current search/folder so large libraries can be exported in smaller groups. OCR preparation is cancellable and rejects HTML fallback downloads. PDF CMaps, standard fonts and image decoders are packaged locally and precached. Share staging follows the same 100-file/50MB batch limit as import. Permission gates reflect the selected task, and booklet setup exposes front/back sheet order and blank-page count.
+
+Validated: 31 regression tests including independent form clearing/read-only preservation, option-list filling and pen boundaries; production/PWA build. Local image-preview and form browser checks supplement library tests. Physical camera, cross-platform share and printer validation remain release gates.
+
 ## Remaining approved phases
 
-3. Editor/forms/signatures, scan/OCR/compression, archive/offline/share, security/booklet refinements.
 4. Consistent visual language, discovery and measured regression/release validation.
 
 Physical iOS/Android camera, installed share targets, printer fold tests, screen-reader assessment and moderated usability are release-validation tasks; automated/local-browser tests do not substitute for them.

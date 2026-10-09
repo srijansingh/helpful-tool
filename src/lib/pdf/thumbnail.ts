@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "./renderOptions";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 GlobalWorkerOptions.workerSrc = workerSrc;
@@ -25,7 +26,10 @@ export async function renderPdfThumbnail(
       canvas.width = canvas.height = 0;
     }
   }
-  const task = getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const task = getDocument({
+    ...pdfRenderingOptions,
+    data: new Uint8Array(await file.arrayBuffer()),
+  });
   const canvas = document.createElement("canvas");
   try {
     const pdf = await task.promise;

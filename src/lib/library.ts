@@ -8,6 +8,12 @@ export async function saveDocumentOnce(file: File) {
     id = crypto.randomUUID();
     savedIds.set(file, id);
   }
+  const existing = await readDocument(id);
+  if (existing && !existing.deletedAt) return existing;
+  if (existing?.deletedAt) {
+    id = crypto.randomUUID();
+    savedIds.set(file, id);
+  }
   return saveDocument(file, id);
 }
 const store = createStore("localpdf-documents", "documents");
@@ -46,6 +52,7 @@ export async function saveDocument(
     scanPages,
   };
   await set(id, doc, store);
+  savedIds.set(file, id);
   return doc;
 }
 export async function restoreDocuments(docs: SavedDocument[]) {
@@ -64,5 +71,8 @@ export async function readDocument(id: string) {
   return get<SavedDocument>(id, store);
 }
 export function documentFile(doc: SavedDocument) {
-  return new File([doc.blob], doc.name, { type: doc.type });
+  const file = new File([doc.blob], doc.name, { type: doc.type });
+  savedIds.set(file, doc.id);
+  if (doc.ocrText) ocrTexts.set(file, doc.ocrText);
+  return file;
 }

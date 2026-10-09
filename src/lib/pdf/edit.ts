@@ -4,6 +4,7 @@ import {
   PDFCheckBox,
   PDFDropdown,
   PDFRadioGroup,
+  PDFOptionList,
   rgb,
   degrees,
 } from "pdf-lib";
@@ -25,8 +26,9 @@ export interface Mark {
 }
 export interface FormValue {
   name: string;
-  kind: "text" | "checkbox" | "choice";
-  value: string | boolean;
+  kind: "text" | "checkbox" | "choice" | "list" | "unsupported";
+  value: string | boolean | string[];
+  readOnly?: boolean;
   options?: string[];
 }
 export async function readForms(bytes: Uint8Array): Promise<FormValue[]> {
@@ -69,8 +71,27 @@ export async function readForms(bytes: Uint8Array): Promise<FormValue[]> {
                     options: f.getOptions(),
                   },
                 ]
-              : [],
-    );
+              : f instanceof PDFOptionList
+                ? [
+                    {
+                      name: f.getName(),
+                      kind: "list" as const,
+                      value: f.getSelected(),
+                      options: f.getOptions(),
+                    },
+                  ]
+                : [
+                    {
+                      name: f.getName(),
+                      kind: "unsupported" as const,
+                      value: "",
+                    },
+                  ],
+    )
+    .map((value) => ({
+      ...value,
+      readOnly: doc.getForm().getField(value.name).isReadOnly(),
+    }));
 }
 // Coordinates are normalized against the visible, rotated crop box.
 export function screenPoint(
@@ -108,11 +129,22 @@ export async function editPdf(
   const form = doc.getForm();
   for (const field of fields) {
     const f = form.getField(field.name);
+    if (f.isReadOnly() || field.kind === "unsupported") continue;
     if (f instanceof PDFTextField) f.setText(String(field.value));
     if (f instanceof PDFCheckBox) field.value ? f.check() : f.uncheck();
-    if (f instanceof PDFDropdown && field.value) f.select(String(field.value));
-    if (f instanceof PDFRadioGroup && field.value)
-      f.select(String(field.value));
+    if (f instanceof PDFDropdown || f instanceof PDFRadioGroup) {
+      if (field.value) f.select(String(field.value));
+      else f.clear();
+    }
+    if (f instanceof PDFOptionList) {
+      const values = Array.isArray(field.value)
+        ? field.value
+        : field.value
+          ? [String(field.value)]
+          : [];
+      if (values.length) f.select(values);
+      else f.clear();
+    }
   }
   for (const m of marks) {
     const page = doc.getPage(m.page - 1);

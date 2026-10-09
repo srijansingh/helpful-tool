@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   listDocuments,
+  saveDocumentOnce,
   saveDocument,
   documentFile,
   updateDocument,
@@ -56,7 +57,7 @@ export default function FilesPage() {
       setBusy(false);
     }
   };
-  const save = (file: File) => action(() => saveDocument(file));
+  const save = (file: File) => action(() => saveDocumentOnce(file));
   const update = (doc: SavedDocument) => action(() => updateDocument(doc));
   const visible = docs.filter(
     (d) =>
@@ -95,6 +96,7 @@ export default function FilesPage() {
       )}
       <div className="mt-5">
         <Dropzone
+          disabled={busy}
           accept="application/pdf,image/*"
           label="Import and save a file"
           hint="This keeps a local copy on your device"
@@ -172,23 +174,24 @@ export default function FilesPage() {
       <details className="panel mt-5">
         <summary>Backup and restore</summary>
         <p className="text-sm text-muted mt-3">
-          Backup contains all active files, folders, OCR text and editable scan
-          sources. Restore adds copies and keeps existing files.
+          Backup contains the active files matching your folder and search,
+          including OCR text and editable scan sources. Restore adds copies and
+          keeps existing files.
         </p>
         <button
           className="btn-secondary mt-3"
-          disabled={busy || !docs.some((d) => !d.deletedAt)}
+          disabled={busy || !visible.some((d) => !d.deletedAt)}
           onClick={() =>
             void action(async () =>
               downloadBlob(
-                await backupDocuments(docs.filter((d) => !d.deletedAt)),
+                await backupDocuments(visible.filter((d) => !d.deletedAt)),
                 "localpdf-backup.zip",
                 false,
               ),
             )
           }
         >
-          Download local backup
+          Download filtered backup
         </button>
         <label className="btn-secondary mt-3">
           Restore backup

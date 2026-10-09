@@ -1,3 +1,4 @@
+import { useDocumentStore } from "../store/useDocumentStore";
 import { useSessionState } from "../hooks/useSessionState";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -237,6 +238,7 @@ export default function ScanPage() {
         { type: "application/pdf" },
       );
       await saveFile(file, crypto.randomUUID(), "", pages);
+      useDocumentStore.getState().setCurrent(file);
       clearSession();
       navigate("/files");
     } catch (e) {

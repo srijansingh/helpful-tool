@@ -23,6 +23,12 @@ function receive(id: string) {
           "This share has already been opened. Share it again or use Import.",
         );
       try {
+        if (
+          !Array.isArray(incoming.files) ||
+          incoming.files.length > 100 ||
+          incoming.files.reduce((sum, f) => sum + f.size, 0) > 50 * 1024 * 1024
+        )
+          throw new Error("Share up to 100 files or 50 MB at a time.");
         return await validateFiles(incoming.files, "application/pdf,image/*");
       } finally {
         await del(id, store);
@@ -53,6 +59,7 @@ export default function SharePage() {
     })();
     return () => {
       active = false;
+      if (id) jobs.delete(id);
     };
   }, []);
   return (

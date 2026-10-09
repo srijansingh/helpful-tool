@@ -1,3 +1,4 @@
+import { useSessionState } from "../hooks/useSessionState";
 import { useEffect, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { useDocumentStore } from "../store/useDocumentStore";
@@ -10,8 +11,12 @@ import {
 import { downloadBytes, downloadBlob } from "../lib/download";
 export default function OcrPage() {
   const file = useDocumentStore((s) => s.current);
-  const [language, setLanguage] = useState<OcrLanguage>("eng");
-  const [ranges, setRanges] = useState("");
+  const [language, setLanguage] = useSessionState<OcrLanguage>(
+    "ocr",
+    "language",
+    "eng",
+  );
+  const [ranges, setRanges] = useSessionState("ocr", "ranges", "");
   const [status, setStatus] = useState("");
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -91,10 +96,10 @@ export default function OcrPage() {
         className="btn-secondary"
         disabled={busy}
         onClick={async () => {
-          controller.current = null;
+          controller.current = new AbortController();
           setBusy(true);
           try {
-            await prepareOcr(language, setStatus);
+            await prepareOcr(language, setStatus, controller.current.signal);
           } catch (e) {
             setStatus((e as Error).message);
           } finally {

@@ -5,6 +5,7 @@ import { PdfPreview } from "../components/PdfPreview";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { redactPdf, type RedactionBox } from "../lib/pdf/redact";
 import { downloadBytes } from "../lib/download";
+const drafts = new WeakMap<File, RedactionBox[]>();
 export default function RedactPage() {
   const current = useDocumentStore((s) => s.current);
   const [file, setFile] = useState<File | null>(
@@ -17,25 +18,34 @@ export default function RedactPage() {
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
+  const [dragBox, setDragBox] = useState<RedactionBox | null>(null);
+  const loaded = useRef<File | null>(null);
   const start = useRef<[number, number] | null>(null);
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
   useEffect(() => {
     let active = true;
     setBytes(null);
-    setBoxes([]);
+    loaded.current = null;
+    setBoxes(file ? (drafts.get(file) ?? []) : []);
     setPage(1);
     if (file)
       file
         .arrayBuffer()
         .then((b) => {
-          if (active) setBytes(new Uint8Array(b));
+          if (active) {
+            loaded.current = file;
+            setBytes(new Uint8Array(b));
+          }
         })
         .catch((e) => setStatus(e.message));
     return () => {
       active = false;
     };
   }, [file]);
+  useEffect(() => {
+    if (file && loaded.current === file && bytes) drafts.set(file, boxes);
+  }, [file, boxes, bytes]);
   const point = (e: PointerEvent<SVGSVGElement>): [number, number] => {
     const r = e.currentTarget.getBoundingClientRect();
     return [
@@ -48,6 +58,7 @@ export default function RedactPage() {
     const [x, y] = point(e),
       [sx, sy] = start.current;
     start.current = null;
+    setDragBox(null);
     if (Math.abs(x - sx) < 0.003 || Math.abs(y - sy) < 0.003) return;
     setBoxes((b) => [
       ...b,
@@ -136,12 +147,37 @@ export default function RedactPage() {
                   if (busy) return;
                   e.currentTarget.setPointerCapture(e.pointerId);
                   start.current = point(e);
+                  setDragBox(null);
                 }}
-                onPointerUp={up}
+                onPointerMove={(e) => {
+                  if (!start.current) return;
+                  const [x, y] = point(e),
+                    [sx, sy] = start.current;
+                  setDragBox({
+                    id: "drag",
+                    page,
+                    x: Math.min(x, sx),
+                    y: Math.min(y, sy),
+                    width: Math.abs(x - sx),
+                    height: Math.abs(y - sy),
+                  });
+                }}
                 onPointerCancel={() => {
                   start.current = null;
+                  setDragBox(null);
                 }}
+                onPointerUp={up}
               >
+                {dragBox && (
+                  <rect
+                    x={dragBox.x * 1000}
+                    y={dragBox.y * 1000}
+                    width={dragBox.width * 1000}
+                    height={dragBox.height * 1000}
+                    fill="black"
+                    opacity="0.6"
+                  />
+                )}
                 {boxes
                   .filter((b) => b.page === page)
                   .map((b) => (
@@ -173,6 +209,35 @@ export default function RedactPage() {
               Clear marked areas
             </button>
           </div>
+          {boxes.length > 0 && (
+            <details className="panel mt-3">
+              <summary>
+                Marked areas ({boxes.length}) · review each page
+              </summary>
+              <ul>
+                {boxes.map((b, i) => (
+                  <li key={b.id} className="flex flex-wrap gap-2 mt-2">
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setPage(b.page)}
+                    >
+                      Area {i + 1} · page {b.page}
+                    </button>
+                    <button
+                      className="btn-secondary"
+                      disabled={busy}
+                      aria-label={`Remove area ${i + 1}`}
+                      onClick={() =>
+                        setBoxes(boxes.filter((a) => a.id !== b.id))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
           <details className="panel">
             <summary>Mark area by percentage (keyboard alternative)</summary>
             <NumericArea page={page} onAdd={(b) => setBoxes([...boxes, b])} />

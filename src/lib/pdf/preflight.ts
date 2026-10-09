@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "./renderOptions";
 import {
   getDocument,
   GlobalWorkerOptions,
@@ -18,6 +19,24 @@ export function canCopyText(file: File) {
 export function originalFile(file: File) {
   return originals.get(file) || file;
 }
+const taskPermissions: Record<string, number[]> = {
+  "/merge": [PermissionFlag.ASSEMBLE, PermissionFlag.COPY],
+  "/split": [PermissionFlag.ASSEMBLE, PermissionFlag.COPY],
+  "/organize": [PermissionFlag.ASSEMBLE, PermissionFlag.COPY],
+  "/booklet": [PermissionFlag.ASSEMBLE, PermissionFlag.COPY],
+  "/watermark": [PermissionFlag.MODIFY_CONTENTS],
+  "/page-numbers": [PermissionFlag.MODIFY_CONTENTS],
+  "/ocr": [PermissionFlag.COPY],
+  "/pdf-to-images": [PermissionFlag.COPY],
+  "/compress": [PermissionFlag.COPY],
+  "/edit": [
+    PermissionFlag.MODIFY_CONTENTS,
+    PermissionFlag.FILL_INTERACTIVE_FORMS,
+    PermissionFlag.MODIFY_ANNOTATIONS,
+  ],
+  "/redact": [PermissionFlag.MODIFY_CONTENTS, PermissionFlag.COPY],
+  "/security": [PermissionFlag.MODIFY_CONTENTS],
+};
 const copyTools = new Set(["/merge", "/split", "/organize"]);
 export async function preparePdf(
   file: File,
@@ -28,12 +47,14 @@ export async function preparePdf(
   if (preparedPaths.get(file)?.has(path)) return file;
   file = originalFile(file);
   signal.throwIfAborted();
-  const modifying = !["/", "/document", "/files"].includes(path);
+  const required = taskPermissions[path] ?? [];
+  const modifying = required.length > 0;
   if (file.size > 50 * 1024 * 1024)
     throw new Error(
       `${file.name}: use a PDF smaller than 50 MB for reliable on-device processing.`,
     );
   const task = getDocument({
+    ...pdfRenderingOptions,
     data: new Uint8Array(await file.arrayBuffer()),
     stopAtErrors: true,
     password: knownPassword,
@@ -79,12 +100,7 @@ export async function preparePdf(
     if (
       modifying &&
       permissions &&
-      [
-        PermissionFlag.MODIFY_CONTENTS,
-        PermissionFlag.ASSEMBLE,
-        PermissionFlag.FILL_INTERACTIVE_FORMS,
-        PermissionFlag.MODIFY_ANNOTATIONS,
-      ].some((flag) => !permissions.includes(flag))
+      required.some((flag) => !permissions.includes(flag))
     ) {
       let authorized = (
         await qpdfJob(file, "inspect", password, signal, () => {})

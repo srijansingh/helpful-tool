@@ -666,3 +666,29 @@ label:has(input[type="checkbox"]) {
     z-index: 61;
   }
 }
+
+.editor-workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.editor-document {
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  .editor-workspace {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    align-items: start;
+  }
+  .editor-document {
+    position: sticky;
+    top: 64px;
+    max-height: calc(100dvh - 84px);
+    overflow: auto;
+  }
+}
+@media (max-width: 767px) {
+  .editor .reader-scroll {
+    max-height: 60dvh;
+  }
+}

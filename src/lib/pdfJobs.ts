@@ -24,6 +24,7 @@ export function runPdfJob<T>(
   operation: string,
   args: unknown[],
   signal?: AbortSignal,
+  foreground = true,
 ): Promise<T> {
   signal?.throwIfAborted();
   return new Promise((resolve, reject) => {
@@ -50,7 +51,7 @@ export function runPdfJob<T>(
           ),
         );
     };
-    unregister = registerPdfJob(cancel);
+    if (foreground) unregister = registerPdfJob(cancel);
     signal?.addEventListener("abort", cancel, { once: true });
     worker.onmessage = (e) => {
       if (!finish()) return;

@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "./renderOptions";
 import { registerPdfCleanup } from "../pdfJobs";
 import {
   getDocument,
@@ -12,7 +13,10 @@ export function thumbnailSource(thumbs: string[]) {
 }
 // Return page slots immediately. Only visible tiles render images, never the entire document.
 export async function renderAllPageThumbnails(file: File): Promise<string[]> {
-  const task = getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
+  const task = getDocument({
+    ...pdfRenderingOptions,
+    data: new Uint8Array(await file.arrayBuffer()),
+  });
   try {
     const pdf = await task.promise;
     const slots = Array<string>(pdf.numPages).fill("");
@@ -44,6 +48,7 @@ export function renderPageThumbnail(
     let entry = documents.get(file);
     if (!entry) {
       const task = getDocument({
+        ...pdfRenderingOptions,
         data: new Uint8Array(await file.arrayBuffer()),
       });
       entry = { task, pdf: task.promise, images: new Map() };

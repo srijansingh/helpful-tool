@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "./renderOptions";
 import { PDFDocument } from "pdf-lib";
 import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
 import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -18,6 +19,7 @@ export async function redactPdf(
 ) {
   if (!boxes.length) throw new Error("Mark at least one area to redact.");
   const pdf = await getDocument({
+    ...pdfRenderingOptions,
     data: new Uint8Array(await file.arrayBuffer()),
   }).promise;
   const out = await PDFDocument.create();
@@ -90,14 +92,12 @@ export async function redactPdf(
         ),
       );
       const image = await out.embedPng(await png.arrayBuffer());
-      out
-        .addPage([base.width, base.height])
-        .drawImage(image, {
-          x: 0,
-          y: 0,
-          width: base.width,
-          height: base.height,
-        });
+      out.addPage([base.width, base.height]).drawImage(image, {
+        x: 0,
+        y: 0,
+        width: base.width,
+        height: base.height,
+      });
       canvas.width = canvas.height = 0;
       source.cleanup();
       await new Promise<void>((resolve) =>

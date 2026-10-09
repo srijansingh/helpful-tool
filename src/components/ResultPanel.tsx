@@ -1,3 +1,4 @@
+import { sourceKey } from "../lib/sourceKey";
 import { useNavigate } from "react-router-dom";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { ResultActions } from "./ResultActions";
@@ -41,7 +42,7 @@ export function ResultPanel() {
             session: {result.sources.map((f) => f.name).join(", ")}
           </p>
         )}
-        <ResultActions file={result.file} />
+        <ResultActions key={sourceKey(result.file)} file={result.file} />
         {result.sources.length === 1 && (
           <button
             className="btn-secondary mt-3"

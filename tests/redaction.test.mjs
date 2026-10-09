@@ -30,6 +30,10 @@ let source = await fs.readFile(
 );
 source = source
   .replace(
+    /import \{ pdfRenderingOptions \} from .*?;/,
+    `const pdfRenderingOptions={standardFontDataUrl:${JSON.stringify(path.resolve("node_modules/pdfjs-dist/standard_fonts") + "/")},cMapUrl:${JSON.stringify(path.resolve("node_modules/pdfjs-dist/cmaps") + "/")},cMapPacked:true};`,
+  )
+  .replace(
     /import workerSrc from .*?;/,
     `const workerSrc=${JSON.stringify(worker)};`,
   )

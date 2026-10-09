@@ -7,6 +7,7 @@ const root = () => new URL("/ocr/", location.href).href;
 export async function prepareOcr(
   language: OcrLanguage,
   onProgress: (text: string) => void,
+  signal?: AbortSignal,
 ) {
   const base = root();
   const paths = [
@@ -18,17 +19,19 @@ export async function prepareOcr(
   ];
   const cache = await caches.open("localpdf-ocr-assets");
   for (let i = 0; i < paths.length; i++) {
+    signal?.throwIfAborted();
     const url = base + paths[i];
     onProgress(`Downloading OCR file ${i + 1} of ${paths.length}…`);
     if (!(await cache.match(url))) {
-      const res = await fetch(url);
-      if (!res.ok)
+      const res = await fetch(url, { signal });
+      if (!res.ok || res.headers.get("content-type")?.includes("text/html"))
         throw new Error(
           "OCR download failed. Check your connection and try again.",
         );
       await cache.put(url, res);
     }
   }
+  signal?.throwIfAborted();
   localStorage.setItem(`localpdf:ocr:${language}`, "ready");
   onProgress(
     "OCR files saved for offline use in the installed app. Test once before travelling.",
@@ -51,6 +54,7 @@ export async function recognizeFile(
     rejectAbort = reject;
   });
   signal.addEventListener("abort", abort, { once: true });
+  if (signal.aborted) abort();
   const job = (async () => {
     signal.throwIfAborted();
     const images =

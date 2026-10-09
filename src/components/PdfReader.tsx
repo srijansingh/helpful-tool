@@ -1,3 +1,4 @@
+import { pdfRenderingOptions } from "../lib/pdf/renderOptions";
 import { friendlyError } from "../lib/importFiles";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
@@ -37,7 +38,7 @@ export function PdfReader({
     setError("");
     setPdf(null);
     setLocalPage(1);
-    const task = getDocument({ data: bytes.slice() });
+    const task = getDocument({ ...pdfRenderingOptions, data: bytes.slice() });
     let active = true;
     task.promise
       .then((p) => {

@@ -1,3 +1,4 @@
+import { prepareImage } from "../lib/imageBudget";
 import { useState } from "react";
 import { Droplets, Eye } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
@@ -236,11 +237,22 @@ export default function WatermarkPage() {
                         try {
                           const f = e.target.files?.[0];
                           if (!f) return;
+                          await prepareImage(f);
                           const b = await createImageBitmap(f);
                           const c = document.createElement("canvas");
-                          c.width = b.width;
-                          c.height = b.height;
-                          c.getContext("2d")!.drawImage(b, 0, 0);
+                          const scale = Math.min(
+                            1,
+                            2000 / Math.max(b.width, b.height),
+                          );
+                          c.width = Math.max(1, Math.round(b.width * scale));
+                          c.height = Math.max(1, Math.round(b.height * scale));
+                          c.getContext("2d")!.drawImage(
+                            b,
+                            0,
+                            0,
+                            c.width,
+                            c.height,
+                          );
                           b.close();
                           setLogo(c.toDataURL("image/png"));
                         } catch (e) {
