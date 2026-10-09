@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aaj Ka Panchang — Daily Panchang &amp; Shubh Muhurat</title>
+  <meta name="description" content="Today's Panchang: Tithi, Nakshatra, Rahu Kaal, Abhijit Muhurat and Choghadiya for your city. No login needed." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>Aaj Ka Panchang</h1>
+    <p class="tagline">Daily Tithi, Nakshatra &amp; Shubh Muhurat — no login, just open and check.</p>
+  </header>
+
+  <div id="festival-banner" class="festival-banner" hidden></div>
+
+  <!-- Ad slot: leaderboard, above the fold -->
+  <div class="ad-slot ad-slot--top" aria-hidden="true"></div>
+
+  <main class="container">
+    <section class="controls">
+      <button id="use-location">Use my location</button>
+      <label for="city-select">or pick a city:</label>
+      <select id="city-select"></select>
+      <span id="location-label" class="location-label"></span>
+    </section>
+
+    <section id="results" class="results" hidden></section>
+
+    <!-- Ad slot: in-content, below the panchang results -->
+    <div class="ad-slot ad-slot--mid" aria-hidden="true"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      All values are computed locally in your browser from Sun/Moon positions —
+      nothing is uploaded, no account needed, no location data is stored or sent anywhere.
+    </p>
+  </footer>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>

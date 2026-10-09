@@ -1,0 +1,9 @@
+{
+  "name": "helpful-tool",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aaj Ka Panchang — daily panchang and shubh muhurat, computed client-side, no login.",
+  "scripts": {
+    "dev": "npx --yes serve -l 5173 ."
+  }
+}

@@ -1,0 +1,154 @@
+:root {
+  --bg: #fff8ee;
+  --card-bg: #ffffff;
+  --accent: #b8540a;
+  --good: #1f7a3d;
+  --bad: #b3261e;
+  --text: #2a2017;
+  --muted: #6b5f52;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.site-header {
+  text-align: center;
+  padding: 24px 16px 8px;
+}
+
+.site-header h1 {
+  margin: 0;
+  color: var(--accent);
+}
+
+.tagline {
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.festival-banner {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 10px;
+  font-weight: 600;
+}
+
+.ad-slot {
+  min-height: 90px;
+  margin: 16px auto;
+  max-width: 970px;
+  background: repeating-linear-gradient(45deg, #eee, #eee 10px, #f5f5f5 10px, #f5f5f5 20px);
+  border: 1px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+button, select {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #d8c9b6;
+  background: #fff;
+  font-size: 14px;
+}
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.location-label {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.card h3 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.card p {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.card.warn p { color: var(--bad); }
+.card.good p { color: var(--good); }
+
+.section-title {
+  margin: 24px 0 8px;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.choghadiya-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.chog-cell {
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.chog-cell.good { background: #e4f3e8; color: var(--good); }
+.chog-cell.bad { background: #fbe7e5; color: var(--bad); }
+.chog-cell span { display: block; font-size: 11px; margin-top: 2px; }
+
+.disclaimer {
+  margin-top: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.site-footer {
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--muted);
+  font-size: 12px;
+}
