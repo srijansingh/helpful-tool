@@ -6,7 +6,7 @@ import { get, set } from "idb-keyval";
 // (nothing about your files is kept anywhere).
 export interface ActivityEntry {
   id: string;
-  tool: "merge" | "split" | "images-to-pdf" | "pdf-to-images";
+  tool: "merge" | "split" | "organize" | "images-to-pdf" | "pdf-to-images";
   label: string;
   timestamp: number;
 }

@@ -1,10 +1,33 @@
 # LocalPDF
 
-A free, no-login PDF toolkit: merge PDFs, split/extract pages, convert
-images to PDF, export PDF pages as images, and scan physical documents
-with your camera — crop, flatten perspective, filter, and build a
-multi-page PDF. Everything runs in the browser — no file is ever
-uploaded to a server — and it installs as an offline-capable PWA.
+A free, no-login PDF toolkit: merge PDFs, split/extract pages, organize
+(reorder/delete/rotate) pages, convert images to PDF, export PDF pages as
+images, and scan physical documents with your camera — crop, flatten
+perspective, filter, and build a multi-page PDF. Everything runs in the
+browser — no file is ever uploaded to a server — and it installs as an
+offline-capable PWA.
+
+Unlike server-based competitors (Smallpdf, iLovePDF and similar), there's
+no daily-use cap and no account wall — every tool is fully usable, every
+time, because nothing is metered server-side in the first place.
+
+## Homepage (`/`)
+
+A real landing page, not a redirect — hero pitch, three trust callouts
+(no upload, no daily limits/account, works offline), and a grid linking
+to every tool (`src/routes/HomePage.tsx`, `src/lib/tools.ts`).
+
+## Organize PDF (`/organize`)
+
+Reorder, delete, and rotate pages in one editor. Page tiles render via
+pdf.js (`src/lib/pdf/pageThumbnails.ts`); dragging a tile uses the same
+Pointer-Events pattern as the scan filmstrip, generalized to a wrapping
+grid via `document.elementFromPoint` instead of a single-row midpoint
+check (`src/components/organize/PageGrid.tsx`). Rotation is tracked as a
+delta on top of each page's existing `/Rotate` value (read once at load,
+in `src/lib/pdf/organize.ts`) — not a replacement for it, so a PDF that
+already has rotated pages keeps that rotation and layers the new one on
+top.
 
 ## Document scanner (`/scan`, `/scans`)
 
@@ -100,15 +123,15 @@ shell:
 - **Vite + React 19 + TypeScript** — app shell and build tooling.
 - **Tailwind CSS v4** — styling, via the CSS-first `@theme` config in
   `src/index.css` (no `tailwind.config.js` needed).
-- **React Router** — one real route per tool (`/scan`, `/scans`, `/merge`,
-  `/split`, `/images-to-pdf`, `/pdf-to-images`), each with its own
-  `<title>`/meta description via `useSeo`, which is better for search than
-  a single tabbed page.
+- **React Router** — a real homepage plus one real route per tool (`/`,
+  `/scan`, `/scans`, `/merge`, `/split`, `/organize`, `/images-to-pdf`,
+  `/pdf-to-images`), each with its own `<title>`/meta description via
+  `useSeo`, which is better for search than a single tabbed page.
 - **Zustand** — one small store per tool (`src/store/`). A Zustand store is
   a module-level singleton that lives outside the route tree, so switching
   tabs — intentionally or by accident — doesn't unmount-and-lose whatever
   files/settings were in progress, which plain component `useState` did.
-- **pdf-lib** (MIT) — merge, split, and images→PDF.
+- **pdf-lib** (MIT) — merge, split, organize, and images→PDF.
 - **pdf.js** (Apache-2.0) — PDF→images rendering.
 - **fflate** (MIT) — zipping multi-file outputs (split pages, exported
   images).
@@ -145,7 +168,7 @@ depending on the tool:
   survive switching tabs within a session, but not a full page reload
   (Zustand state is plain memory here, no persistence middleware).
 
-**For the four PDF tools specifically, the actual PDF/image bytes are
+**For the non-scan PDF tools specifically, the actual PDF/image bytes are
 never persisted.** Storing raw files there would bloat browser storage
 and directly contradict those tools' privacy pitch ("nothing about your
 files is kept anywhere"). If a "resume my last file across a reload"
