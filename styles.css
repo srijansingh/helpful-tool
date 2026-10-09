@@ -152,3 +152,46 @@ button {
   color: var(--muted);
   font-size: 12px;
 }
+
+.content-block {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #ecdfc9;
+}
+
+.content-block h2 {
+  font-size: 20px;
+  margin: 0 0 10px;
+  color: var(--accent);
+}
+
+.content-block p {
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.glossary dt {
+  font-weight: 700;
+  margin-top: 14px;
+}
+
+.glossary dd {
+  margin: 4px 0 0;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.faq-item {
+  margin-top: 18px;
+}
+
+.faq-item h3 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+.faq-item p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--text);
+}

@@ -31,6 +31,122 @@
 
     <!-- Ad slot: in-content, below the panchang results -->
     <div class="ad-slot ad-slot--mid" aria-hidden="true"></div>
+
+    <section class="content-block">
+      <h2>What is Panchang?</h2>
+      <p>
+        Panchang means "five limbs" (pancha = five, anga = limb) — the five
+        elements that make up the traditional Hindu calendar: <strong>Tithi</strong>
+        (lunar day), <strong>Vara</strong> (weekday), <strong>Nakshatra</strong>
+        (lunar mansion), <strong>Yoga</strong> (a Sun-Moon angle combination), and
+        <strong>Karana</strong> (half a tithi). Together they're used to pick
+        auspicious times for ceremonies, travel and major life events, and to
+        track festivals, which follow the lunar calendar rather than the fixed
+        Gregorian one — which is why Diwali or Holi land on a different date
+        every year.
+      </p>
+    </section>
+
+    <section class="content-block">
+      <h2>Panchang terms explained</h2>
+      <dl class="glossary">
+        <dt>Tithi</dt>
+        <dd>A lunar day, based on the angle between the Sun and Moon. A lunar
+          month has 30 tithis, split into Shukla Paksha (waxing moon, 15 days)
+          and Krishna Paksha (waning moon, 15 days).</dd>
+
+        <dt>Nakshatra</dt>
+        <dd>One of 27 lunar "mansions" the Moon moves through over its orbit,
+          each spanning about 13°20' of the sky. Used for naming days and
+          picking muhurats.</dd>
+
+        <dt>Yoga</dt>
+        <dd>One of 27 combinations formed from the combined longitudes of
+          the Sun and Moon, traditionally said to color the general nature
+          of the day.</dd>
+
+        <dt>Karana</dt>
+        <dd>Half of a tithi. There are 11 distinct karanas, which repeat
+          through the lunar month.</dd>
+
+        <dt>Rahu Kaal</dt>
+        <dd>A roughly 90-minute period each day considered inauspicious for
+          starting new work, derived from the weekday and the day's
+          sunrise–sunset window.</dd>
+
+        <dt>Gulika Kaal &amp; Yamaganda</dt>
+        <dd>Two more inauspicious periods, computed the same way as Rahu
+          Kaal but with their own weekday-based segment.</dd>
+
+        <dt>Abhijit Muhurat</dt>
+        <dd>The most auspicious window of the day, centered near solar noon
+          — generally considered favorable for starting important work.</dd>
+
+        <dt>Choghadiya</dt>
+        <dd>A division of day and night into eight periods each, labeled
+          good, neutral or bad — a quicker way to pick an auspicious time
+          without a full muhurat calculation.</dd>
+
+        <dt>Disha Shool</dt>
+        <dd>A compass direction considered unfavorable to travel toward on
+          a given weekday.</dd>
+
+        <dt>Ritu</dt>
+        <dd>The six traditional Indian seasons: Vasant (spring), Grishma
+          (summer), Varsha (monsoon), Sharad (autumn), Hemant (pre-winter)
+          and Shishir (winter).</dd>
+
+        <dt>Ayana</dt>
+        <dd>The half of the year the Sun is moving northward (Uttarayana,
+          from Makar Sankranti) or southward (Dakshinayana, from Karka
+          Sankranti).</dd>
+      </dl>
+    </section>
+
+    <section class="content-block" id="faq">
+      <h2>Frequently asked questions</h2>
+
+      <div class="faq-item">
+        <h3>Why does Rahu Kaal fall at a different time every day?</h3>
+        <p>It's tied to both the weekday and the day's sunrise–sunset
+          window, which shifts a little every day through the year — so the
+          clock time moves even though the method stays the same.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Is the Panchang the same everywhere in India?</h3>
+        <p>The tithi, nakshatra, yoga and karana are the same everywhere —
+          they depend only on the Sun and Moon's positions, not your
+          location. But sunrise/sunset-based timings like Rahu Kaal,
+          Choghadiya and Abhijit Muhurat do shift with your city, which is
+          why this page asks for your location.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What's the difference between Choghadiya and Rahu Kaal?</h3>
+        <p>Rahu Kaal is one specific inauspicious window each day.
+          Choghadiya divides the whole day and night into eight slots each,
+          so you can quickly check whether right now is good, neutral or
+          bad — useful when you need a time outside the Rahu Kaal window
+          too.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why does Diwali fall on a different date each year?</h3>
+        <p>Diwali is always celebrated on Amavasya (new moon) of the lunar
+          month of Kartik, so its Gregorian calendar date shifts from year
+          to year — the same reason Easter or Eid move around too.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How accurate are the timings on this page?</h3>
+        <p>They're computed from real Sun/Moon astronomical positions, not
+          looked up from a table — but the ayanamsa used is a linear
+          approximation, so timings can be off by a few minutes versus a
+          reference panchang. For an actual ceremony, cross-check against a
+          trusted source first.</p>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -41,5 +157,53 @@
   </footer>
 
   <script type="module" src="src/app.js"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Why does Rahu Kaal fall at a different time every day?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It's tied to both the weekday and the day's sunrise-sunset window, which shifts a little every day through the year, so the clock time moves even though the method stays the same."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the Panchang the same everywhere in India?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The tithi, nakshatra, yoga and karana are the same everywhere since they depend only on the Sun and Moon's positions, not your location. But sunrise/sunset-based timings like Rahu Kaal, Choghadiya and Abhijit Muhurat shift with your city."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What's the difference between Choghadiya and Rahu Kaal?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rahu Kaal is one specific inauspicious window each day. Choghadiya divides the whole day and night into eight slots each, so you can quickly check whether right now is good, neutral or bad."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does Diwali fall on a different date each year?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Diwali is always celebrated on Amavasya (new moon) of the lunar month of Kartik, so its Gregorian calendar date shifts from year to year."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How accurate are the timings on this page?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "They're computed from real Sun/Moon astronomical positions rather than looked up from a table, but the ayanamsa used is a linear approximation, so timings can be off by a few minutes versus a reference panchang."
+        }
+      }
+    ]
+  }
+  </script>
 </body>
 </html>

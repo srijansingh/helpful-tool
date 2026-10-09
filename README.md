@@ -57,6 +57,16 @@ Everything is **computed, not fetched**:
 **No user data is collected, stored, or transmitted.** There is no backend,
 no database, and no account system.
 
+## Text content
+
+A widget alone doesn't rank in search or give first-time visitors context,
+so the page also carries static, non-JS-dependent text: a "What is
+Panchang?" intro, a glossary explaining each term (Tithi, Nakshatra, Rahu
+Kaal, Choghadiya, etc.), and an FAQ section with matching FAQPage JSON-LD
+structured data. All of it explains established, factual/cultural concepts
+— it's not predictive content, so there's no fabrication risk the way there
+would be with, say, daily horoscope text.
+
 ## Known limitations (read before treating this as authoritative)
 
 - The ayanamsa formula is a linear approximation, not the full Swiss
