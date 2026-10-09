@@ -201,96 +201,98 @@ export default function ScanPage() {
         </Link>
       </div>
 
-      <Card className="mt-6">
-        {step === "capture" && (
-          <CameraCapture onCapture={handleCapture} onCaptureMultiple={handleCaptureMultiple} />
-        )}
+      <div className={pages.length > 0 ? "mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6" : "mt-6 lg:max-w-2xl"}>
+        <Card>
+          {step === "capture" && (
+            <CameraCapture onCapture={handleCapture} onCaptureMultiple={handleCaptureMultiple} />
+          )}
 
-        {step === "crop" && rawImage && (
-          <CropEditor imageSrc={rawImage} onConfirm={handleCropConfirm} />
-        )}
+          {step === "crop" && rawImage && (
+            <CropEditor imageSrc={rawImage} onConfirm={handleCropConfirm} />
+          )}
 
-        {step === "filter" && previewUrl && (
-          <div>
-            <div className="overflow-hidden rounded-xl bg-black">
-              {processing ? (
-                <div className="flex aspect-[3/4] items-center justify-center">
-                  <span className="h-10 w-10 animate-pulse rounded-full bg-border" />
-                </div>
-              ) : (
-                <img src={previewUrl} alt="Scanned page preview" className="w-full" />
-              )}
+          {step === "filter" && previewUrl && (
+            <div>
+              <div className="overflow-hidden rounded-xl bg-black">
+                {processing ? (
+                  <div className="flex aspect-[3/4] items-center justify-center">
+                    <span className="h-10 w-10 animate-pulse rounded-full bg-border" />
+                  </div>
+                ) : (
+                  <img src={previewUrl} alt="Scanned page preview" className="w-full" />
+                )}
+              </div>
+
+              <div className="mt-4">
+                <FilterPicker value={selectedFilter} onChange={handleFilterChange} thumbnails={filterThumbs} />
+              </div>
+
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={handleAddPage}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
+                >
+                  <Plus className="h-5 w-5" aria-hidden="true" />
+                  Add Page &amp; Scan Another
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep("crop")}
+                  className="rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg"
+                >
+                  Re-crop
+                </button>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {pages.length > 0 && (
+          <Card className="mt-4 lg:sticky lg:top-8 lg:mt-0">
+            <h2 className="font-display text-sm font-semibold text-muted">
+              {pages.length} page{pages.length === 1 ? "" : "s"} in this scan
+            </h2>
+            <div className="mt-3">
+              <PageFilmstrip pages={pages} onReorder={reorderPages} onRemove={handleRemovePage} />
             </div>
 
-            <div className="mt-4">
-              <FilterPicker value={selectedFilter} onChange={handleFilterChange} thumbnails={filterThumbs} />
+            <div className="mt-5 sm:max-w-xs lg:max-w-none">
+              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
             </div>
 
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={handlePreview}
+              disabled={previewing}
+              className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+            >
+              <Eye className="h-4 w-4" aria-hidden="true" />
+              {previewing ? "Building preview…" : "Preview PDF"}
+            </button>
+
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row lg:flex-col">
               <button
                 type="button"
-                onClick={handleAddPage}
+                onClick={handleExportPdf}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
               >
-                <Plus className="h-5 w-5" aria-hidden="true" />
-                Add Page &amp; Scan Another
+                <FileCheck2 className="h-5 w-5" aria-hidden="true" />
+                Export PDF
               </button>
               <button
                 type="button"
-                onClick={() => setStep("crop")}
-                className="rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg"
+                onClick={handleSaveToLibrary}
+                className="flex-1 rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
               >
-                Re-crop
+                Save to Library
               </button>
             </div>
-          </div>
+
+            <StatusMessage status={status} />
+          </Card>
         )}
-      </Card>
-
-      {pages.length > 0 && (
-        <Card className="mt-4">
-          <h2 className="font-display text-sm font-semibold text-muted">
-            {pages.length} page{pages.length === 1 ? "" : "s"} in this scan
-          </h2>
-          <div className="mt-3">
-            <PageFilmstrip pages={pages} onReorder={reorderPages} onRemove={handleRemovePage} />
-          </div>
-
-          <div className="mt-5 sm:max-w-xs">
-            <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
-          </div>
-
-          <button
-            type="button"
-            onClick={handlePreview}
-            disabled={previewing}
-            className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
-          >
-            <Eye className="h-4 w-4" aria-hidden="true" />
-            {previewing ? "Building preview…" : "Preview PDF"}
-          </button>
-
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleExportPdf}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
-            >
-              <FileCheck2 className="h-5 w-5" aria-hidden="true" />
-              Export PDF
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveToLibrary}
-              className="flex-1 rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
-            >
-              Save to Library
-            </button>
-          </div>
-
-          <StatusMessage status={status} />
-        </Card>
-      )}
+      </div>
 
       {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>

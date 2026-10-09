@@ -41,7 +41,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {TOOLS.map(({ to, label, description, icon: Icon }) => (
           <Link
             key={to}

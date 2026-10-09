@@ -10,10 +10,10 @@ function timeAgo(ts: number): string {
   return `${Math.round(diffH / 24)}d ago`;
 }
 
-export function RecentActivity({ entries }: { entries: ActivityEntry[] }) {
+export function RecentActivity({ entries, className = "mt-8" }: { entries: ActivityEntry[]; className?: string }) {
   if (entries.length === 0) return null;
   return (
-    <div className="mt-8 rounded-2xl border border-border bg-surface-2/50 p-4">
+    <div className={`rounded-2xl border border-border bg-surface-2/50 p-4 ${className}`}>
       <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-muted">
         <History className="h-4 w-4" aria-hidden="true" />
         Recent on this device

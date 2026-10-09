@@ -4,10 +4,13 @@ import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { Card } from "../components/Card";
+import { PageRangePicker } from "../components/split/PageRangePicker";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo, extractPages, splitEveryPage } from "../lib/pdf/split";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
+import { renderAllPageThumbnails } from "../lib/pdf/pageThumbnails";
+import { parsePageRanges, stringifyPageRanges } from "../lib/pdf/pageRanges";
 import { downloadBytes, downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
 import { formatSize } from "../lib/formatSize";
@@ -23,6 +26,8 @@ export default function SplitPage() {
   const setCurrent = useSplitStore((s) => s.setCurrent);
   const thumb = useSplitStore((s) => s.thumb);
   const setThumb = useSplitStore((s) => s.setThumb);
+  const pageThumbs = useSplitStore((s) => s.pageThumbs);
+  const setPageThumbs = useSplitStore((s) => s.setPageThumbs);
   const range = useSplitStore((s) => s.range);
   const setRange = useSplitStore((s) => s.setRange);
   const outputName = useSplitStore((s) => s.outputName);
@@ -34,6 +39,7 @@ export default function SplitPage() {
     const file = files[0];
     setStatus({ kind: "working", message: "Reading PDF…" });
     setThumb(null);
+    setPageThumbs([]);
     try {
       const { bytes, pageCount } = await loadPdfInfo(file);
       const name = file.name.replace(/\.pdf$/i, "");
@@ -41,9 +47,19 @@ export default function SplitPage() {
       setOutputName(`${name}-pages`);
       setStatus({ kind: "idle" });
       renderPdfThumbnail(file).then(setThumb).catch(() => {});
+      renderAllPageThumbnails(file).then(setPageThumbs).catch(() => {});
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't read that PDF: ${(e as Error).message}` });
     }
+  };
+
+  const selectedPages = new Set(current ? parsePageRanges(range, current.pageCount) : []);
+  const togglePage = (index: number) => {
+    if (!current) return;
+    const next = new Set(selectedPages);
+    if (next.has(index)) next.delete(index);
+    else next.add(index);
+    setRange(stringifyPageRanges([...next]));
   };
 
   const handleExtract = async () => {
@@ -126,8 +142,18 @@ export default function SplitPage() {
               className="rounded-xl border border-border bg-surface-2 px-4 py-2.5 font-mono text-sm outline-none placeholder:font-body placeholder:text-muted focus:border-accent"
             />
             <p className="-mt-1.5 text-xs text-muted">
-              Comma-separated numbers and ranges — <span className="font-mono">1-3,5,8</span> extracts pages 1, 2, 3, 5 and 8.
+              Comma-separated numbers and ranges, or just click the pages below.
             </p>
+
+            {pageThumbs.length > 0 ? (
+              <PageRangePicker thumbs={pageThumbs} selected={selectedPages} onToggle={togglePage} />
+            ) : (
+              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+                {Array.from({ length: Math.min(current.pageCount, 10) }).map((_, i) => (
+                  <span key={i} className="aspect-[3/4] animate-pulse rounded-lg bg-surface-2" />
+                ))}
+              </div>
+            )}
 
             <div className="sm:max-w-xs">
               <FilenameInput value={outputName} onChange={setOutputName} extension="pdf / zip" />

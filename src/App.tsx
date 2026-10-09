@@ -26,7 +26,7 @@ export default function App() {
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-5 sm:px-8 sm:pb-12 sm:pt-8">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-5 sm:px-8 sm:pb-12 sm:pt-8">
           <Suspense fallback={<PageLoading />}>
             <Outlet />
           </Suspense>

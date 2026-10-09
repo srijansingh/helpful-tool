@@ -107,7 +107,7 @@ export default function ScanLibraryPage() {
 
       <div className="mt-6">
         {!loaded ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {[0, 1, 2].map((i) => (
               <div key={i} className="aspect-[3/4] animate-pulse rounded-xl bg-surface-2" />
             ))}
@@ -119,7 +119,7 @@ export default function ScanLibraryPage() {
             <p className="text-sm text-muted">Scan a document and tap "Save to Library" to see it here.</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {documents.map((doc) => (
               <DocumentCard
                 key={doc.id}

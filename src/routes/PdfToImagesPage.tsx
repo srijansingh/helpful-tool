@@ -8,6 +8,7 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { renderPdfToImages } from "../lib/pdf/pdfToImages";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
+import { renderAllPageThumbnails } from "../lib/pdf/pageThumbnails";
 import { downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
 import { formatSize } from "../lib/formatSize";
@@ -23,6 +24,8 @@ export default function PdfToImagesPage() {
   const setFile = usePdfToImagesStore((s) => s.setFile);
   const thumb = usePdfToImagesStore((s) => s.thumb);
   const setThumb = usePdfToImagesStore((s) => s.setThumb);
+  const pageThumbs = usePdfToImagesStore((s) => s.pageThumbs);
+  const setPageThumbs = usePdfToImagesStore((s) => s.setPageThumbs);
   const format = usePdfToImagesStore((s) => s.format);
   const setFormat = usePdfToImagesStore((s) => s.setFormat);
   const outputName = usePdfToImagesStore((s) => s.outputName);
@@ -34,8 +37,10 @@ export default function PdfToImagesPage() {
     const f = files[0];
     setFile(f);
     setThumb(null);
+    setPageThumbs([]);
     setOutputName(f.name.replace(/\.pdf$/i, "-images"));
     renderPdfThumbnail(f).then(setThumb).catch(() => {});
+    renderAllPageThumbnails(f).then(setPageThumbs).catch(() => {});
   };
 
   const handleConvert = async () => {
@@ -115,6 +120,26 @@ export default function PdfToImagesPage() {
             <FilenameInput value={outputName} onChange={setOutputName} extension="jpg / png / zip" />
           </div>
         </div>
+
+        {file && (
+          <div className="mt-5">
+            <p className="mb-2 text-sm text-muted">
+              {pageThumbs.length > 0
+                ? `${pageThumbs.length} page${pageThumbs.length === 1 ? "" : "s"} will be exported`
+                : "Loading pages…"}
+            </p>
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+              {pageThumbs.map((src, i) => (
+                <div key={i} className="relative overflow-hidden rounded-lg">
+                  <img src={src} alt={`Page ${i + 1}`} className="aspect-[3/4] w-full object-cover" />
+                  <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[9px] font-bold text-fg">
+                    {i + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <button
           type="button"

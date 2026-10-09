@@ -56,7 +56,7 @@ export function PageGrid({ pages, thumbs, onReorder, onRotate, onRemove }: PageG
   };
 
   return (
-    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+    <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
       {pages.map((page, i) => (
         <div
           key={page.id}

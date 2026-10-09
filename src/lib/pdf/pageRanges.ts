@@ -1,3 +1,26 @@
+// The inverse of parsePageRanges: collapses a sorted list of 0-indexed
+// page numbers back into a compact 1-indexed range string ("1-3,5,7-9"),
+// used so clicking page thumbnails can drive the same text field typing
+// a range does, and vice versa.
+export function stringifyPageRanges(indices: number[]): string {
+  if (indices.length === 0) return "";
+  const sorted = [...new Set(indices)].sort((a, b) => a - b);
+  const parts: string[] = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const current = sorted[i];
+    if (current === prev + 1) {
+      prev = current;
+      continue;
+    }
+    parts.push(start === prev ? `${start + 1}` : `${start + 1}-${prev + 1}`);
+    start = current;
+    prev = current;
+  }
+  return parts.join(",");
+}
+
 // Parses a page-range string like "1-3,5,7-9" into a sorted, deduplicated
 // list of 0-indexed page numbers, clamped to [1, pageCount].
 export function parsePageRanges(input: string, pageCount: number): number[] {
