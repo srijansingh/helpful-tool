@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Eye, FileCheck2, RotateCcw } from "lucide-react";
+import { useRef, useState } from "react";
+import { Eye, FileCheck2, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { PageGrid } from "../components/organize/PageGrid";
 import { FilenameInput } from "../components/FilenameInput";
@@ -32,7 +32,9 @@ export default function OrganizePage() {
   const setLoaded = useOrganizeStore((s) => s.setLoaded);
   const setPages = useOrganizeStore((s) => s.setPages);
   const rotatePage = useOrganizeStore((s) => s.rotatePage);
+  const rotateMany = useOrganizeStore((s) => s.rotateMany);
   const removePage = useOrganizeStore((s) => s.removePage);
+  const removeMany = useOrganizeStore((s) => s.removeMany);
   const insertPageAt = useOrganizeStore((s) => s.insertPageAt);
   const setOutputName = useOrganizeStore((s) => s.setOutputName);
   const resetStore = useOrganizeStore((s) => s.reset);
@@ -43,6 +45,9 @@ export default function OrganizePage() {
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [confirmStartOver, setConfirmStartOver] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const lastSelectedIndex = useRef<number | null>(null);
   const { entries, logActivity } = useRecentActivity();
 
   const handleFile = async (files: File[]) => {
@@ -60,6 +65,43 @@ export default function OrganizePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleToggleSelect = (id: string, index: number, shiftKey: boolean) => {
+    // Capture the anchor before updating the ref — setSelectedIds's
+    // updater runs after this function returns (React defers it to the
+    // reconciliation phase), so reading lastSelectedIndex.current *inside*
+    // the updater would see the index we're about to write below, not the
+    // previous selection's anchor. A plain local variable isn't subject to
+    // that timing.
+    const anchor = lastSelectedIndex.current;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (shiftKey && anchor !== null) {
+        const [from, to] = [anchor, index].sort((a, b) => a - b);
+        for (let i = from; i <= to; i++) next.add(pages[i].id);
+      } else if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+    lastSelectedIndex.current = index;
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    lastSelectedIndex.current = null;
+  };
+
+  const handleBulkRotate = () => rotateMany(selectedIds);
+
+  const handleBulkDelete = () => {
+    removeMany(selectedIds);
+    pushToast({ message: `${selectedIds.size} page${selectedIds.size === 1 ? "" : "s"} removed` });
+    clearSelection();
+    setConfirmBulkDelete(false);
   };
 
   const handleRemovePage = (id: string) => {
@@ -150,8 +192,49 @@ export default function OrganizePage() {
               </p>
             ) : (
               <>
+                {selectedIds.size > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
+                    <span className="font-display text-sm font-semibold text-fg">
+                      {selectedIds.size} page{selectedIds.size === 1 ? "" : "s"} selected
+                    </span>
+                    <span className="flex-1" />
+                    <button
+                      type="button"
+                      onClick={handleBulkRotate}
+                      className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 font-display text-xs font-semibold text-fg focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
+                      Rotate
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmBulkDelete(true)}
+                      className="flex items-center gap-1.5 rounded-lg border border-bad/40 bg-surface px-3 py-1.5 font-display text-xs font-semibold text-bad focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Clear selection"
+                      onClick={clearSelection}
+                      className="rounded-lg p-1.5 text-muted hover:text-fg focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                )}
+
                 <div className="mt-3">
-                  <PageGrid pages={pages} thumbs={thumbs} onReorder={setPages} onRotate={rotatePage} onRemove={handleRemovePage} />
+                  <PageGrid
+                    pages={pages}
+                    thumbs={thumbs}
+                    onReorder={setPages}
+                    onRotate={rotatePage}
+                    onRemove={handleRemovePage}
+                    selected={selectedIds}
+                    onToggleSelect={handleToggleSelect}
+                  />
                 </div>
 
                 <div className="mt-5 sm:max-w-xs">
@@ -197,8 +280,18 @@ export default function OrganizePage() {
           resetStore();
           setStatus({ kind: "idle" });
           setConfirmStartOver(false);
+          clearSelection();
         }}
         onCancel={() => setConfirmStartOver(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmBulkDelete}
+        title={`Delete ${selectedIds.size} page${selectedIds.size === 1 ? "" : "s"}?`}
+        description="These pages are removed from the document you're building. The original file on your computer is untouched."
+        confirmLabel="Delete"
+        onConfirm={handleBulkDelete}
+        onCancel={() => setConfirmBulkDelete(false)}
       />
     </section>
   );

@@ -71,6 +71,24 @@ in `src/lib/pdf/organize.ts`) — not a replacement for it, so a PDF that
 already has rotated pages keeps that rotation and layers the new one on
 top.
 
+**Bulk selection**: click a page's number badge to select it (it becomes
+a checkmark), shift-click another to select the whole range between —
+the standard Gmail-style selection convention. A contextual toolbar
+appears with the selection count plus Rotate/Delete for the whole
+selection at once, matching the Carbon/Maersk bulk-action-toolbar
+pattern (a toolbar that only exists once something's selected, rather
+than disabled buttons sitting there all the time). Bulk delete confirms
+first (multi-page loss is a bigger deal than one); bulk rotate doesn't,
+same as the single-page version. Catching a real bug here is worth
+noting: the first version of shift-click range-select was broken because
+the "anchor" index was read from a ref *inside* `setState`'s updater
+function, but the ref got mutated by a line immediately after the
+`setState` call — and since React defers calling that updater until
+reconciliation, it ran after the mutation, so the anchor was always
+stale. Fixed by capturing the anchor into a local `const` before the
+`setState` call. Found by actually testing shift-click range selection
+and checking which pages ended up rotated, not by reading the code.
+
 ## Watermark PDF (`/watermark`) and Page Numbers (`/page-numbers`)
 
 Two more pdf-lib based tools, both with the live-preview-pane layout from

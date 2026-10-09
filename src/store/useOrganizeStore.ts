@@ -11,7 +11,9 @@ interface OrganizeState {
   setLoaded: (fileName: string, bytes: ArrayBuffer, rotations: number[], thumbs: string[]) => void;
   setPages: (pages: OrganizePageState[]) => void;
   rotatePage: (id: string) => void;
+  rotateMany: (ids: Set<string>) => void;
   removePage: (id: string) => void;
+  removeMany: (ids: Set<string>) => void;
   insertPageAt: (index: number, page: OrganizePageState) => void;
   setOutputName: (name: string) => void;
   reset: () => void;
@@ -40,7 +42,14 @@ export const useOrganizeStore = create<OrganizeState>((set) => ({
     set((s) => ({
       pages: s.pages.map((p) => (p.id === id ? { ...p, rotation: (p.rotation + 90) % 360 } : p)),
     })),
+  // Bulk version for the multi-select toolbar — one state update for all
+  // selected pages rather than N separate ones.
+  rotateMany: (ids) =>
+    set((s) => ({
+      pages: s.pages.map((p) => (ids.has(p.id) ? { ...p, rotation: (p.rotation + 90) % 360 } : p)),
+    })),
   removePage: (id) => set((s) => ({ pages: s.pages.filter((p) => p.id !== id) })),
+  removeMany: (ids) => set((s) => ({ pages: s.pages.filter((p) => !ids.has(p.id)) })),
   // Puts a removed page back at its original position — the undo side of
   // removePage, used by the undo toast rather than a blocking confirm on
   // every single page removal.
