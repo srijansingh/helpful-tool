@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { GripVertical, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, GripVertical, X } from "lucide-react";
 import type { ScanPage } from "../../store/useScanStore";
 
 interface PageFilmstripProps {
@@ -65,6 +65,15 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
     setDragX(0);
   };
 
+  // The keyboard-operable fallback for the pointer-drag handle below —
+  // plain divs can't be focused or activated with a keyboard, so without
+  // this, reordering has no accessible path at all.
+  const move = (i: number, dir: -1 | 1) => {
+    const next = [...pages];
+    [next[i], next[i + dir]] = [next[i + dir], next[i]];
+    onReorder(next);
+  };
+
   return (
     <div className="flex gap-3 overflow-x-auto pb-1">
       {pages.map((page, i) => (
@@ -94,7 +103,7 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
             aria-label={`Remove page ${i + 1}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => onRemove(page.id)}
-            className="absolute right-1 top-1 rounded-full bg-bad p-0.5 text-white"
+            className="absolute right-1 top-1 rounded-full bg-bad p-0.5 text-white focus-visible:ring-2 focus-visible:ring-accent"
           >
             <X className="h-3 w-3" />
           </button>
@@ -107,6 +116,26 @@ export function PageFilmstrip({ pages, onReorder, onRemove }: PageFilmstripProps
           >
             <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
             <span className="text-[10px] font-medium">Drag</span>
+          </div>
+          <div className="mt-1 flex gap-1">
+            <button
+              type="button"
+              aria-label={`Move page ${i + 1} earlier`}
+              disabled={i === 0}
+              onClick={() => move(i, -1)}
+              className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              aria-label={`Move page ${i + 1} later`}
+              disabled={i === pages.length - 1}
+              onClick={() => move(i, 1)}
+              className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       ))}
