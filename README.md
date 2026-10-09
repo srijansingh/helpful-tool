@@ -90,9 +90,21 @@ once and hoping it's believed.
   while you're adding files, and the actual output size in the success
   message after conversion — so there's no mystery about what you're
   about to get.
-- **A persistent trust badge** (`TrustBadge`) stays visible on every page
-  (in the sidebar on desktop, the top bar on mobile), not just stated once
-  in a footer nobody reads.
+- **A persistent trust badge** (`TrustBadge`) stays visible on every page —
+  the full pill in the sidebar on desktop, an icon-only `compact` variant
+  in the mobile top bar so it costs a badge, not a whole line of text, on
+  every screen — not just stated once in a footer nobody reads.
+
+## Visual design
+
+Cool neutral grays + a single indigo accent (`src/index.css`), not the
+warm cream/orange this started with — reads as a product, not a craft
+project, and leaves room to grow into an AI-tool direction without a
+second palette change later. No per-page explanatory paragraphs or FAQ
+blocks, and no inline ad placeholders (see Monetization) — on a tool
+people open to do one thing quickly, a dashed "AD SPACE" box and a wall
+of boilerplate text cost more in perceived quality than they'd ever earn
+back before a real ad unit exists.
 
 ## App shell, not a webpage with a tool embedded in it
 
@@ -192,12 +204,6 @@ confirming the page loads.
 - Per-route `<title>` and meta description (`useSeo` hook).
 - `public/robots.txt` and `public/sitemap.xml` — **update the placeholder
   domain in both before deploying.**
-- Each tool page carries a one-line trust note (`ToolContent` component)
-  under the tool itself, so there's some real text for search engines to
-  match against beyond the UI chrome — kept short deliberately; an
-  earlier version padded this out with a formal intro paragraph and a
-  full FAQ block per page, which read like a terms-of-service page and
-  made every tool a long scroll on mobile for no real benefit.
 - **Not done**: true prerendering (static HTML snapshots per route for
   crawlers that don't execute JS). Google renders JS-heavy pages fine
   today, so this is a reasonable phase-2 item, not a v1 blocker — noted
@@ -234,8 +240,8 @@ needed. Before going live:
 
 ## Monetization
 
-Two `AdSlot` placeholders per page (`src/components/AdSlot.tsx`) — one
-above the tool (in `App.tsx`, shared across all routes) and one
-in-content, between the tool and the trust note. No ad
-script is wired in yet; drop an AdSense (or similar) unit into
-`AdSlot` when ready.
+Deliberately not inline ad slots — a dashed "AD SPACE" placeholder block
+on every page read as unfinished and ate real screen space for nothing
+shown. The plan instead: ads triggered by an action (e.g. shown briefly
+around a download) or floating/dismissible, added once there's an actual
+ad unit to wire in rather than reserving layout space for one today.

@@ -3,8 +3,6 @@ import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
-import { ToolContent } from "../components/ToolContent";
-import { AdSlot } from "../components/AdSlot";
 import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
@@ -130,12 +128,6 @@ export default function PdfToImagesPage() {
       </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "pdf-to-images")} />
-
-      <AdSlot label="Ad space — in-content" />
-
-      <ToolContent>
-        Your PDF is rendered right here in your browser — nothing gets uploaded.
-      </ToolContent>
     </section>
   );
 }

@@ -5,8 +5,6 @@ import { PageGrid } from "../components/organize/PageGrid";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
-import { ToolContent } from "../components/ToolContent";
-import { AdSlot } from "../components/AdSlot";
 import { Card } from "../components/Card";
 import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
@@ -165,12 +163,6 @@ export default function OrganizePage() {
       </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "organize")} />
-
-      <AdSlot label="Ad space — in-content" />
-
-      <ToolContent>
-        Your PDF never leaves this device — reordering, deleting, and rotating pages all happen right here.
-      </ToolContent>
 
       {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>

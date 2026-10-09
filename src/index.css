@@ -4,17 +4,20 @@
   --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
 
-  /* Dark is the primary palette — see [data-theme="light"] below for the flip. */
-  --color-bg: #121316;
-  --color-surface: #1b1d22;
-  --color-surface-2: #24262d;
-  --color-fg: #f4f1ea;
-  --color-muted: #9aa0ab;
-  --color-accent: #ff6b45;
-  --color-accent-2: #2dd4bf;
+  /* Dark is the primary palette — see [data-theme="light"] below for the flip.
+     Cool neutrals + a single indigo accent, not warm cream/orange — reads as
+     a product, not a craft project, and leaves room to grow into the
+     AI-tool direction this is headed without a second palette change. */
+  --color-bg: #0a0b0f;
+  --color-surface: #141620;
+  --color-surface-2: #1c1f2b;
+  --color-fg: #f5f6f8;
+  --color-muted: #8b91a0;
+  --color-accent: #6366f1;
+  --color-accent-2: #22d3ee;
   --color-good: #4ade80;
   --color-bad: #f87171;
-  --color-border: #ffffff1f;
+  --color-border: #ffffff1a;
 }
 
 :root {
@@ -23,31 +26,31 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    --color-bg: #f6f4f0;
+    --color-bg: #f8f9fc;
     --color-surface: #ffffff;
-    --color-surface-2: #ece8e0;
-    --color-fg: #16181d;
-    --color-muted: #5b6270;
-    --color-accent: #d94e22;
-    --color-accent-2: #0f766e;
+    --color-surface-2: #f1f2f6;
+    --color-fg: #0e1016;
+    --color-muted: #656b79;
+    --color-accent: #4f46e5;
+    --color-accent-2: #0891b2;
     --color-good: #15803d;
     --color-bad: #dc2626;
-    --color-border: #16181d1a;
+    --color-border: #0e10161a;
     color-scheme: light;
   }
 }
 
 :root[data-theme="light"] {
-  --color-bg: #f6f4f0;
+  --color-bg: #f8f9fc;
   --color-surface: #ffffff;
-  --color-surface-2: #ece8e0;
-  --color-fg: #16181d;
-  --color-muted: #5b6270;
-  --color-accent: #d94e22;
-  --color-accent-2: #0f766e;
+  --color-surface-2: #f1f2f6;
+  --color-fg: #0e1016;
+  --color-muted: #656b79;
+  --color-accent: #4f46e5;
+  --color-accent-2: #0891b2;
   --color-good: #15803d;
   --color-bad: #dc2626;
-  --color-border: #16181d1a;
+  --color-border: #0e10161a;
   color-scheme: light;
 }
 
@@ -59,17 +62,4 @@ body {
 
 h1, h2, h3, .font-display {
   font-family: var(--font-display);
-}
-
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-6px) rotate(2deg); }
-}
-
-.animate-float {
-  animation: float-slow 4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-float { animation: none; }
 }

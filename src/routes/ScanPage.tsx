@@ -8,8 +8,6 @@ import { PageFilmstrip } from "../components/scan/PageFilmstrip";
 import { Card } from "../components/Card";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
-import { AdSlot } from "../components/AdSlot";
-import { ToolContent } from "../components/ToolContent";
 import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useScanStore } from "../store/useScanStore";
@@ -278,12 +276,6 @@ export default function ScanPage() {
           <StatusMessage status={status} />
         </Card>
       )}
-
-      <AdSlot label="Ad space — in-content" />
-
-      <ToolContent>
-        Your photos and scans stay on this device — nothing is uploaded, even the ones you save to your library.
-      </ToolContent>
 
       {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
     </section>

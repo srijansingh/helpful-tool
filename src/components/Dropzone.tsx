@@ -38,10 +38,10 @@ export function Dropzone({ accept, multiple = false, label, hint, onFiles }: Dro
       }}
       onDragLeave={() => setIsDragging(false)}
       onDrop={onDrop}
-      className={`group flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors
+      className={`group flex cursor-pointer flex-col items-center gap-2.5 rounded-2xl border-2 border-dashed px-5 py-7 text-center transition-colors
         ${isDragging ? "border-accent bg-accent/10" : "border-border bg-surface-2/50 hover:border-accent/60"}`}
     >
-      <DocumentIllustration className="h-20 w-20 text-muted animate-float" />
+      <DocumentIllustration className="h-14 w-14 text-muted" />
       <div className="flex items-center gap-2 font-display text-base font-semibold text-fg">
         <UploadCloud className="h-5 w-5 text-accent" aria-hidden="true" />
         {label}

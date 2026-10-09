@@ -5,7 +5,6 @@ import { BottomTabBar } from "./components/BottomTabBar";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { TrustBadge } from "./components/TrustBadge";
 import { PageLoading } from "./components/PageLoading";
-import { AdSlot } from "./components/AdSlot";
 
 export default function App() {
   return (
@@ -13,29 +12,24 @@ export default function App() {
       <Sidebar />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile-only top bar — the sidebar carries the brand/theme/trust
-            badge on larger screens, so this would be redundant there. */}
-        <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:hidden">
-          <div className="flex items-center justify-between">
-            <NavLink to="/" className="font-display text-lg font-extrabold tracking-tight">
-              Local<span className="text-accent">PDF</span>
-            </NavLink>
+        {/* Mobile-only top bar — a single compact row, like a native app's,
+            not a second line of marketing copy on every screen. The sidebar
+            carries the full brand/theme/trust badge on larger screens. */}
+        <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:hidden">
+          <NavLink to="/" className="font-display text-base font-extrabold tracking-tight">
+            Local<span className="text-accent">PDF</span>
+          </NavLink>
+          <div className="flex items-center gap-2">
+            <TrustBadge compact />
             <ThemeToggle />
           </div>
-          <TrustBadge />
         </header>
 
-        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 sm:px-8 sm:pb-12 sm:pt-10">
-          <AdSlot label="Ad space — leaderboard" />
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-5 sm:px-8 sm:pb-12 sm:pt-8">
           <Suspense fallback={<PageLoading />}>
             <Outlet />
           </Suspense>
         </main>
-
-        <footer className="mx-auto hidden w-full max-w-3xl px-8 pb-10 text-xs text-muted sm:block">
-          Every conversion runs locally in your browser — nothing is uploaded,
-          no account needed, no file is stored anywhere.
-        </footer>
       </div>
 
       <BottomTabBar />

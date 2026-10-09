@@ -3,8 +3,6 @@ import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
-import { ToolContent } from "../components/ToolContent";
-import { AdSlot } from "../components/AdSlot";
 import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
@@ -156,12 +154,6 @@ export default function SplitPage() {
       </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "split")} />
-
-      <AdSlot label="Ad space — in-content" />
-
-      <ToolContent>
-        Your PDF stays on this device the whole time — nothing is uploaded, nothing is stored.
-      </ToolContent>
     </section>
   );
 }

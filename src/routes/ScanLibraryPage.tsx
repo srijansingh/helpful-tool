@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FileCheck2, Trash2, FolderOpen } from "lucide-react";
 import { Card } from "../components/Card";
-import { AdSlot } from "../components/AdSlot";
 import { useSeo } from "../hooks/useSeo";
 import { useScanLibrary } from "../hooks/useScanLibrary";
 import type { ScanDocument } from "../hooks/useScanLibrary";
@@ -132,8 +131,6 @@ export default function ScanLibraryPage() {
           </div>
         )}
       </div>
-
-      <AdSlot label="Ad space — in-content" />
     </section>
   );
 }

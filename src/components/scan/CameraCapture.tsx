@@ -91,24 +91,32 @@ export function CameraCapture({ onCapture, onCaptureMultiple }: CameraCapturePro
   if (mode === "choose") {
     return (
       <div>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setMode("camera")}
-            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-5 py-8 transition-transform active:scale-[0.99]"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-4 text-left transition-colors hover:border-accent/60 active:scale-[0.99]"
           >
-            <Camera className="h-7 w-7 text-accent" aria-hidden="true" />
-            <span className="font-display text-base font-bold text-fg">Use Camera</span>
-            <span className="text-xs text-muted">Scan a page right now</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Camera className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-sm font-bold text-fg">Use Camera</span>
+              <span className="block text-xs text-muted">Scan a page right now</span>
+            </span>
           </button>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="flex flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-surface-2 px-5 py-8 transition-transform active:scale-[0.99]"
+            className="group flex items-center gap-3 rounded-xl border border-border bg-surface px-4 py-4 text-left transition-colors hover:border-accent/60 active:scale-[0.99]"
           >
-            <Upload className="h-7 w-7 text-accent" aria-hidden="true" />
-            <span className="font-display text-base font-bold text-fg">Upload Photos</span>
-            <span className="text-xs text-muted">One or several at once</span>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Upload className="h-5 w-5" aria-hidden="true" />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-sm font-bold text-fg">Upload Photos</span>
+              <span className="block text-xs text-muted">One or several at once</span>
+            </span>
           </button>
         </div>
         <input
