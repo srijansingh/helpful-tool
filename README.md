@@ -2,74 +2,115 @@
 
 A free, no-login PDF toolkit: merge PDFs, split/extract pages, convert
 images to PDF, and export PDF pages as images. Everything runs in the
-browser — no file is ever uploaded to a server.
+browser — no file is ever uploaded to a server — and it installs as an
+offline-capable PWA.
 
-## Why this exists
+## Stack
 
-Most free PDF tools (iLovePDF, Smallpdf, etc.) work by uploading your file
-to a server for processing. That's a real privacy cost for documents with
-personal details (IDs, forms, contracts), and it also means the tool is
-only as fast as your upload speed. Doing the same operations client-side
-removes both problems, and it's a genuinely "boring but useful" tool
-people reopen constantly — exactly the kind of site that works well
-ad-supported with no account system.
+- **Vite + React 19 + TypeScript** — app shell and build tooling.
+- **Tailwind CSS v4** — styling, via the CSS-first `@theme` config in
+  `src/index.css` (no `tailwind.config.js` needed).
+- **React Router** — one real route per tool (`/merge`, `/split`,
+  `/images-to-pdf`, `/pdf-to-images`), each with its own `<title>`/meta
+  description via `useSeo`, which is better for search than a single
+  tabbed page.
+- **pdf-lib** (MIT) — merge, split, and images→PDF.
+- **pdf.js** (Apache-2.0) — PDF→images rendering.
+- **fflate** (MIT) — zipping multi-file outputs (split pages, exported
+  images).
+- **idb-keyval** (Apache-2.0) — the "recent activity" log (see
+  Persistence below).
+- **vite-plugin-pwa** (Workbox) — service worker + manifest for
+  install-to-homescreen and offline use.
+- **lucide-react** — icon set.
 
-## How it works
+All three PDF libraries are real npm dependencies bundled by Vite — no
+manual vendoring, unlike an earlier iteration of this project.
 
-Everything runs in the browser via vendored, locally-hosted open-source
-libraries — no CDN dependency, no runtime network calls:
+### Why route-level code splitting matters here
 
-- **[pdf-lib](https://github.com/Hopding/pdf-lib)** (MIT) — creating,
-  merging, and splitting PDF documents. Used for Merge, Split, and
-  Images → PDF.
-- **[pdf.js](https://github.com/mozilla/pdf.js)** (Apache-2.0) — rendering
-  PDF pages to a canvas. Used for PDF → Images.
-- **[fflate](https://github.com/101arrowz/fflate)** (MIT) — zipping
-  multiple output files (split pages, exported images) into one download.
+`pdf.js`'s worker alone is over 1MB. It's only needed on `/pdf-to-images`,
+so that route (and `pdf-lib`-using routes) are lazy-loaded
+(`src/main.tsx`) — the initial JS payload is ~270KB gzipped instead of
+~390KB with everything bundled together.
 
-All three are vendored as their browser ESM builds in `vendor/` — see
-`src/merge.js`, `src/split.js`, `src/imagesToPdf.js`, and
-`src/pdfToImages.js` for how each is used.
+## Persistence — scoped deliberately
 
-### Tools
+Two things are persisted on-device, and nothing else:
 
-- **Merge PDFs** — pick multiple PDFs, reorder them, combine into one.
-- **Split PDF** — either extract a page range (e.g. `1-3,5,8`) into one
-  PDF, or split every page into its own file (downloaded as a zip).
-- **Images → PDF** — combine JPG/PNG/WebP/etc. images into a single PDF,
-  one image per page.
-- **PDF → Images** — export every page of a PDF as a JPG or PNG
-  (downloaded as a zip when there's more than one page).
+- **Theme choice** (`src/hooks/useTheme.ts`) — `localStorage`.
+- **Recent activity** (`src/hooks/useRecentActivity.ts`) — an IndexedDB
+  log of *metadata only*: which tool was used, a short label, and a
+  timestamp. The last 8 entries show under "Recent on this device" on
+  each tool page.
 
-### Not included (yet)
+**The actual PDF/image bytes are never persisted.** Storing raw files
+would bloat browser storage and directly contradict the tool's own
+privacy pitch ("nothing about your files is kept anywhere"). If a
+"resume my last file across a reload" feature is wanted later, that's a
+deliberately different, bigger tradeoff — flag it explicitly rather than
+assuming it's wanted.
 
-- **Compress PDF** — genuinely compressing a PDF (recompressing embedded
-  images, subsetting fonts) well is a much bigger effort than the other
-  four tools and was left out of v1 rather than shipping something that
-  barely shrinks files.
-- A page-reorder/delete tool for a *single* PDF (distinct from Split) —
-  Split's "extract pages" can emulate reordering by listing pages in the
-  wanted order, but a dedicated drag-to-reorder editor is a reasonable
-  v2 addition.
+## PWA / offline support
+
+Verified end-to-end (not just configured): after a first visit, the
+service worker precaches the app shell, every route's JS, and — critically
+— `pdf.worker.min.mjs` (the Workbox `globPatterns` had to be widened to
+include `.mjs`; by default it only grabs `.js`, which silently drops the
+pdf.js worker and breaks `/pdf-to-images` offline). All four tools were
+tested with the browser context set fully offline, including actually
+running a conversion and getting a real downloaded file back, not just
+confirming the page loads.
+
+## SEO
+
+- Per-route `<title>` and meta description (`useSeo` hook).
+- `public/robots.txt` and `public/sitemap.xml` — **update the placeholder
+  domain in both before deploying.**
+- Each tool page carries real explanatory content (`ToolContent`
+  component): a "why this instead of an upload-based converter" section
+  and tool-specific FAQs. This isn't filler — a bare tool widget has
+  nothing for search engines to match against and no context for a
+  first-time visitor; this was a real gap in an earlier iteration of this
+  project that got caught and fixed.
+- **Not done**: true prerendering (static HTML snapshots per route for
+  crawlers that don't execute JS). Google renders JS-heavy pages fine
+  today, so this is a reasonable phase-2 item, not a v1 blocker — noted
+  here rather than silently skipped.
+
+## Known gaps / deliberately out of scope
+
+- **Compress PDF** — a real compressor (recompressing embedded images,
+  subsetting fonts) is a much bigger effort than the other four tools and
+  was left out rather than shipping something that barely shrinks files.
+- **Resuming an in-progress file across a reload** — see Persistence
+  above.
 
 ## Running locally
 
-No build step. Serve the folder as static files:
-
 ```
-npm run dev
+npm install
+npm run dev       # dev server with HMR
+npm run build     # type-check + production build to dist/
+npm run preview   # serve the production build locally
 ```
-
-or open `index.html` directly (file inputs and canvas rendering work fine
-without a server, unlike the geolocation-dependent tools in some other
-projects).
 
 ## Deploying
 
-Static site — deploys as-is to Vercel, Netlify, GitHub Pages, etc. No
-environment variables, secrets, or backend needed.
+Static output (`dist/`) — deploys as-is to Vercel, Netlify, GitHub Pages,
+Cloudflare Pages, etc. No environment variables, secrets, or backend
+needed. Before going live:
+
+1. Replace `YOUR-DOMAIN-HERE` in `public/robots.txt` and
+   `public/sitemap.xml`.
+2. Confirm your host serves `/sw.js` and `/manifest.webmanifest` with the
+   correct MIME types (most static hosts do this automatically for
+   Vite's output).
 
 ## Monetization
 
-Two ad slot placeholders (`.ad-slot` divs in `index.html`) are left empty
-for an AdSense (or similar) unit — intentionally no ad script wired in yet.
+Two `AdSlot` placeholders per page (`src/components/AdSlot.tsx`) — one
+above the tool (in `App.tsx`, shared across all routes) and one
+in-content, between the tool and the explanatory/FAQ section. No ad
+script is wired in yet; drop an AdSense (or similar) unit into
+`AdSlot` when ready.

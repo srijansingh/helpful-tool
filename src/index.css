@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+
+  /* Dark is the primary palette — see [data-theme="light"] below for the flip. */
+  --color-bg: #121316;
+  --color-surface: #1b1d22;
+  --color-surface-2: #24262d;
+  --color-fg: #f4f1ea;
+  --color-muted: #9aa0ab;
+  --color-accent: #ff6b45;
+  --color-accent-2: #2dd4bf;
+  --color-good: #4ade80;
+  --color-bad: #f87171;
+  --color-border: #ffffff1f;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --color-bg: #f6f4f0;
+    --color-surface: #ffffff;
+    --color-surface-2: #ece8e0;
+    --color-fg: #16181d;
+    --color-muted: #5b6270;
+    --color-accent: #d94e22;
+    --color-accent-2: #0f766e;
+    --color-good: #15803d;
+    --color-bad: #dc2626;
+    --color-border: #16181d1a;
+    color-scheme: light;
+  }
+}
+
+:root[data-theme="light"] {
+  --color-bg: #f6f4f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #ece8e0;
+  --color-fg: #16181d;
+  --color-muted: #5b6270;
+  --color-accent: #d94e22;
+  --color-accent-2: #0f766e;
+  --color-good: #15803d;
+  --color-bad: #dc2626;
+  --color-border: #16181d1a;
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display);
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+.animate-float {
+  animation: float-slow 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float { animation: none; }
+}

@@ -1,9 +1,35 @@
 {
-  "name": "helpful-tool",
-  "version": "0.1.0",
+  "name": "pdf-toolkit",
   "private": true,
-  "description": "Aaj Ka Panchang — daily panchang and shubh muhurat, computed client-side, no login.",
+  "version": "0.1.0",
+  "description": "Merge, split and convert PDFs entirely in the browser — no upload, no login, installable as a PWA.",
+  "type": "module",
   "scripts": {
-    "dev": "npx --yes serve -l 5173 ."
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "fflate": "^0.8.3",
+    "idb-keyval": "^6.3.0",
+    "lucide-react": "^1.54.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^5.4.624",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-router-dom": "^7.18.4",
+    "tailwindcss": "^4.3.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "oxlint": "^1.81.0",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vite-plugin-pwa": "^2.0.0"
   }
 }

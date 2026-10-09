@@ -1,7 +1,7 @@
 // Parses a page-range string like "1-3,5,7-9" into a sorted, deduplicated
 // list of 0-indexed page numbers, clamped to [1, pageCount].
-export function parsePageRanges(input, pageCount) {
-  const indices = new Set();
+export function parsePageRanges(input: string, pageCount: number): number[] {
+  const indices = new Set<number>();
   const parts = input.split(",").map((p) => p.trim()).filter(Boolean);
   for (const part of parts) {
     const m = part.match(/^(\d+)(?:-(\d+))?$/);

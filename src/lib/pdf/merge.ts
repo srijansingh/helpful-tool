@@ -1,8 +1,8 @@
-import { PDFDocument } from "../vendor/pdf-lib.esm.min.js";
+import { PDFDocument } from "pdf-lib";
 
 // Merges PDF files in the given order into one PDF. Everything runs
 // in-browser via pdf-lib — no file is uploaded anywhere.
-export async function mergePdfs(files) {
+export async function mergePdfs(files: File[]): Promise<Uint8Array> {
   const merged = await PDFDocument.create();
   for (const file of files) {
     const bytes = await file.arrayBuffer();

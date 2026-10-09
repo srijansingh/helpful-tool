@@ -1,132 +1,27 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Free PDF Toolkit — Merge, Split, Convert</title>
-  <meta name="description" content="Merge PDFs, split pages, convert images to PDF, and export PDF pages as images — all in your browser. No upload, no login, no account." />
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="site-header">
-    <h1>PDF Toolkit</h1>
-    <p class="tagline">Merge, split and convert PDFs — entirely in your browser. Nothing is uploaded, no login needed.</p>
-  </header>
-
-  <!-- Ad slot: leaderboard, above the fold -->
-  <div class="ad-slot ad-slot--top" aria-hidden="true"></div>
-
-  <main class="container">
-    <nav class="tabs" role="tablist">
-      <button class="tab-btn active" data-target="panel-merge">Merge PDFs</button>
-      <button class="tab-btn" data-target="panel-split">Split PDF</button>
-      <button class="tab-btn" data-target="panel-img2pdf">Images → PDF</button>
-      <button class="tab-btn" data-target="panel-pdf2img">PDF → Images</button>
-    </nav>
-
-    <section id="panel-merge" class="tool-panel">
-      <h2>Merge PDFs</h2>
-      <p class="tool-hint">Pick two or more PDFs, reorder them, then merge into one file.</p>
-      <input id="merge-input" type="file" accept="application/pdf" multiple />
-      <div id="merge-list" class="file-list-wrap"></div>
-      <button id="merge-btn" class="action-btn">Merge &amp; Download</button>
-      <p id="merge-status" class="status"></p>
-    </section>
-
-    <section id="panel-split" class="tool-panel" hidden>
-      <h2>Split PDF</h2>
-      <p class="tool-hint">Pick a PDF, then either pull out specific pages or split every page into its own file.</p>
-      <input id="split-input" type="file" accept="application/pdf" />
-      <p id="split-info" class="tool-hint"></p>
-      <div class="split-controls">
-        <label for="split-range">Pages to extract (e.g. 1-3,5,8):</label>
-        <input id="split-range" type="text" placeholder="1-3,5,8" disabled />
-        <button id="split-extract-btn" class="action-btn" disabled>Extract Pages</button>
-      </div>
-      <button id="split-every-btn" class="action-btn secondary" disabled>Split Every Page (zip)</button>
-      <p id="split-status" class="status"></p>
-    </section>
-
-    <section id="panel-img2pdf" class="tool-panel" hidden>
-      <h2>Images to PDF</h2>
-      <p class="tool-hint">Pick one or more images (JPG, PNG, WebP…), reorder them, then combine into one PDF.</p>
-      <input id="img2pdf-input" type="file" accept="image/*" multiple />
-      <div id="img2pdf-list" class="file-list-wrap"></div>
-      <button id="img2pdf-btn" class="action-btn">Convert &amp; Download</button>
-      <p id="img2pdf-status" class="status"></p>
-    </section>
-
-    <section id="panel-pdf2img" class="tool-panel" hidden>
-      <h2>PDF to Images</h2>
-      <p class="tool-hint">Pick a PDF — each page is exported as an image (zipped if there's more than one).</p>
-      <input id="pdf2img-input" type="file" accept="application/pdf" />
-      <label for="pdf2img-format">Format:</label>
-      <select id="pdf2img-format">
-        <option value="image/jpeg">JPG</option>
-        <option value="image/png">PNG</option>
-      </select>
-      <button id="pdf2img-btn" class="action-btn">Convert &amp; Download</button>
-      <p id="pdf2img-status" class="status"></p>
-    </section>
-
-    <!-- Ad slot: in-content -->
-    <div class="ad-slot ad-slot--mid" aria-hidden="true"></div>
-
-    <section class="content-block">
-      <h2>Why use this instead of an upload-based converter?</h2>
-      <p>
-        Most free PDF tools work by uploading your file to a server,
-        processing it there, and sending the result back. That's fine for
-        most documents, but it means your file — which might have personal
-        details, ID numbers, or anything else you'd rather not hand to a
-        third party — leaves your device. This tool does the same merge,
-        split and convert operations entirely inside your browser using
-        open-source libraries (pdf-lib and pdf.js); your files never
-        leave your computer.
-      </p>
-    </section>
-
-    <section class="content-block" id="faq">
-      <h2>Frequently asked questions</h2>
-
-      <div class="faq-item">
-        <h3>Is my file actually uploaded anywhere?</h3>
-        <p>No. Every operation on this page runs in your browser's own
-          JavaScript engine. There's no server call, no account, and
-          nothing is stored once you close the tab.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>Is there a file size or page limit?</h3>
-        <p>No hard limit is enforced, but very large files are processed
-          by your device's memory, not a server, so extremely large PDFs
-          (hundreds of MB) may be slow or run out of memory on a low-end
-          phone.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>What page range formats does Split support?</h3>
-        <p>Comma-separated numbers and ranges, e.g. <code>1-3,5,8</code>
-          extracts pages 1, 2, 3, 5 and 8. Duplicate or out-of-range
-          entries are ignored automatically.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>Which image formats work for Images → PDF?</h3>
-        <p>Any format your browser can display — JPG and PNG are kept at
-          their original quality; other formats (WebP, GIF, BMP) are
-          converted losslessly before being placed on the page.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <p>
-      Every conversion runs locally in your browser — nothing is uploaded,
-      no account needed, no file is stored anywhere.
-    </p>
-  </footer>
-
-  <script type="module" src="src/app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#121316" />
+    <title>PDF Toolkit — Merge, Split &amp; Convert PDFs Free, No Upload</title>
+    <meta
+      name="description"
+      content="Merge, split and convert PDFs entirely in your browser. No file upload, no login, no account — works offline as an installable app."
+    />
+    <meta property="og:title" content="PDF Toolkit — Merge, Split & Convert PDFs Free" />
+    <meta property="og:description" content="Merge, split and convert PDFs entirely in your browser. No upload, no login." />
+    <meta property="og:type" content="website" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

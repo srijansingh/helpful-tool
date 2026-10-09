@@ -1,0 +1,38 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import { VitePWA } from 'vite-plugin-pwa'
+
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifest: {
+        name: 'PDF Toolkit — Merge, Split, Convert',
+        short_name: 'PDF Toolkit',
+        description: 'Merge, split and convert PDFs entirely in your browser. No upload, no login.',
+        theme_color: '#0b2440',
+        background_color: '#0b2440',
+        display: 'standalone',
+        start_url: '/',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        // pdf.js's worker + wasm-ish assets are large; cache them so the
+        // tools keep working offline after the first visit.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        // pdf.js ships its worker as .mjs, not .js — without it here the
+        // service worker silently skips caching it and PDF -> Images
+        // breaks offline after the first visit.
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,woff2}'],
+      },
+    }),
+  ],
+})
