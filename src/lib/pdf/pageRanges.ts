@@ -32,6 +32,8 @@ export function parsePageRanges(input: string, pageCount: number): number[] {
     let start = parseInt(m[1], 10);
     let end = m[2] ? parseInt(m[2], 10) : start;
     if (start > end) [start, end] = [end, start];
+    start = Math.max(1, start);
+    end = Math.min(pageCount, end);
     for (let p = start; p <= end; p++) {
       if (p >= 1 && p <= pageCount) indices.add(p - 1);
     }

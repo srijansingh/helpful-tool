@@ -63,6 +63,7 @@ export default function MergePage() {
   };
 
   const handleMerge = async () => {
+    if (status.kind === "working") return;
     if (files.length < 2) {
       setStatus({ kind: "error", message: "Add at least two PDFs to merge." });
       return;
@@ -74,7 +75,7 @@ export default function MergePage() {
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(bytes.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "merge", label: `Merged ${files.length} PDFs into ${filename}` });
     } catch (e) {
@@ -126,7 +127,9 @@ export default function MergePage() {
 
             <button
               type="button"
-              onClick={handleMerge}
+              data-primary-action="true"
+                  disabled={status.kind === "working" || files.length < 2}
+                  onClick={handleMerge}
               className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
             >
               Merge &amp; Download

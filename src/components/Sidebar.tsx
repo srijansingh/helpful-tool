@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Search } from "lucide-react";
+import { DESTINATIONS } from "./BottomTabBar";
 import { TOOLS } from "../lib/tools";
 import { TrustBadge } from "./TrustBadge";
 import { ThemeToggle } from "./ThemeToggle";
@@ -31,6 +32,7 @@ export function Sidebar() {
         </kbd>
       </button>
 
+      <nav aria-label="Main navigation" className="mt-4 space-y-1">{DESTINATIONS.map(({to,label,icon:Icon}) => <NavLink key={to} end={to==="/"} to={to} className={({isActive})=>`flex items-center gap-3 rounded-xl p-3 font-semibold ${isActive?"bg-accent text-white":"text-muted"}`}><Icon size={18}/>{label}</NavLink>)}</nav>
       <nav className="mt-4 flex flex-col gap-1" aria-label="Tools">
         {TOOLS.map(({ to, label, icon: Icon }) => (
           <NavLink

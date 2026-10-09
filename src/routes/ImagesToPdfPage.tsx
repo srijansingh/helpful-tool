@@ -63,6 +63,7 @@ export default function ImagesToPdfPage() {
   };
 
   const handleConvert = async () => {
+    if (status.kind === "working") return;
     if (files.length === 0) {
       setStatus({ kind: "error", message: "Add at least one image." });
       return;
@@ -74,7 +75,7 @@ export default function ImagesToPdfPage() {
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(bytes.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "images-to-pdf", label: `Converted ${files.length} images to ${filename}` });
     } catch (e) {
@@ -126,7 +127,9 @@ export default function ImagesToPdfPage() {
 
             <button
               type="button"
-              onClick={handleConvert}
+              data-primary-action="true"
+                  disabled={status.kind === "working" || files.length === 0}
+                  onClick={handleConvert}
               className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
             >
               Convert &amp; Download

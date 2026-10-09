@@ -75,6 +75,7 @@ export default function WatermarkPage() {
   };
 
   const handleApply = async () => {
+    if (status.kind === "working") return;
     if (!current) return;
     setStatus({ kind: "working", message: "Applying watermark…" });
     try {
@@ -83,7 +84,7 @@ export default function WatermarkPage() {
       downloadBytes(out, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(out.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "watermark", label: `Watermarked ${current.name}.pdf into ${filename}` });
     } catch (e) {
@@ -201,6 +202,8 @@ export default function WatermarkPage() {
 
                 <button
                   type="button"
+                  data-primary-action="true"
+                  disabled={status.kind === "working" || !current}
                   onClick={handleApply}
                   className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
                 >

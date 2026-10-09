@@ -135,6 +135,7 @@ export default function OrganizePage() {
   };
 
   const handleExport = async () => {
+    if (status.kind === "working") return;
     if (pages.length === 0) {
       setStatus({ kind: "error", message: "At least one page needs to stay in the document." });
       return;
@@ -147,7 +148,7 @@ export default function OrganizePage() {
       downloadBytes(out, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(out.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "organize", label: `Organized ${fileName} into ${filename}` });
     } catch (e) {
@@ -253,6 +254,8 @@ export default function OrganizePage() {
 
                 <button
                   type="button"
+                  data-primary-action="true"
+                  disabled={status.kind === "working" || !bytes || pages.length === 0}
                   onClick={handleExport}
                   className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
                 >

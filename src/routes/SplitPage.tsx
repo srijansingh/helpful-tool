@@ -79,6 +79,7 @@ export default function SplitPage() {
   };
 
   const handleExtract = async () => {
+    if (status.kind === "working") return;
     if (!current) return;
     setStatus({ kind: "working", message: "Extracting…" });
     try {
@@ -87,7 +88,7 @@ export default function SplitPage() {
       downloadBytes(out, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(out.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "split", label: `Extracted pages from ${current.name}.pdf into ${filename}` });
     } catch (e) {
@@ -96,6 +97,7 @@ export default function SplitPage() {
   };
 
   const handleSplitEvery = async () => {
+    if (status.kind === "working") return;
     if (!current) return;
     setStatus({ kind: "working", message: "Splitting every page…" });
     try {
@@ -105,7 +107,7 @@ export default function SplitPage() {
       downloadBlob(zipBlob, filename);
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(zipBlob.size)}, ${pages.length} files) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(zipBlob.size)}, ${pages.length} files) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "split", label: `Split ${current.name}.pdf into ${pages.length} files` });
     } catch (e) {
@@ -187,7 +189,9 @@ export default function SplitPage() {
 
             <button
               type="button"
-              onClick={handleExtract}
+              data-primary-action="true"
+                  disabled={status.kind === "working" || !current || selectedPages.size === 0}
+                  onClick={handleExtract}
               className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
             >
               Extract Pages

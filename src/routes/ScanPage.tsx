@@ -144,6 +144,7 @@ export default function ScanPage() {
   };
 
   const handleExportPdf = async () => {
+    if (status.kind === "working") return;
     if (pages.length === 0) return;
     setStatus({ kind: "working", message: "Building PDF…" });
     try {
@@ -152,7 +153,7 @@ export default function ScanPage() {
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(bytes.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
     } catch (e) {
       setStatus({ kind: "error", message: `Couldn't build PDF: ${(e as Error).message}` });
@@ -172,6 +173,7 @@ export default function ScanPage() {
   };
 
   const handleSaveToLibrary = async () => {
+    if (status.kind === "working") return;
     if (pages.length === 0) return;
     setStatus({ kind: "working", message: "Saving…" });
     try {
@@ -274,7 +276,9 @@ export default function ScanPage() {
             <div className="mt-3 flex flex-col gap-2 sm:flex-row lg:flex-col">
               <button
                 type="button"
-                onClick={handleExportPdf}
+                data-primary-action="true"
+                  disabled={status.kind === "working" || pages.length === 0}
+                  onClick={handleExportPdf}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
               >
                 <FileCheck2 className="h-5 w-5" aria-hidden="true" />

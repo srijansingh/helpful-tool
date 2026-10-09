@@ -44,6 +44,7 @@ export default function PdfToImagesPage() {
   };
 
   const handleConvert = async () => {
+    if (status.kind === "working") return;
     if (!file) {
       setStatus({ kind: "error", message: "Choose a PDF first." });
       return;
@@ -58,14 +59,14 @@ export default function PdfToImagesPage() {
         downloadBlob(blob, `${base}.${ext}`);
         setStatus({
           kind: "done",
-          message: `Done — ${base}.${ext} (${formatSize(blob.size)}) downloaded, processed entirely on this device.`,
+          message: `Done — ${base}.${ext} (${formatSize(blob.size)}) ready — download started, processed entirely on this device.`,
         });
       } else {
         const zipBlob = toZipBlob(images);
         downloadBlob(zipBlob, `${base}.zip`);
         setStatus({
           kind: "done",
-          message: `Done — ${base}.zip (${formatSize(zipBlob.size)}, ${images.length} images) downloaded, processed entirely on this device.`,
+          message: `Done — ${base}.zip (${formatSize(zipBlob.size)}, ${images.length} images) ready — download started, processed entirely on this device.`,
         });
       }
       logActivity({ tool: "pdf-to-images", label: `Exported ${images.length} images as ${base}` });
@@ -143,7 +144,9 @@ export default function PdfToImagesPage() {
 
         <button
           type="button"
-          onClick={handleConvert}
+          data-primary-action="true"
+                  disabled={status.kind === "working" || !file}
+                  onClick={handleConvert}
           className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
         >
           Convert &amp; Download

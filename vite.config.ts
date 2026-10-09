@@ -8,14 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       manifest: {
         name: 'LocalPDF — Merge, Split, Convert PDFs',
         short_name: 'LocalPDF',
         description: 'Merge, split and convert PDFs entirely in your browser. No upload, no login.',
-        theme_color: '#0b2440',
-        background_color: '#0b2440',
+        theme_color: '#f8f9fc',
+        background_color: '#f8f9fc',
         display: 'standalone',
         start_url: '/',
         icons: [

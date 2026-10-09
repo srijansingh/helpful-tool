@@ -1,7 +1,7 @@
 import { StrictMode, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { registerSW } from "virtual:pwa-register";
+import { initializePwa } from "./lib/pwa";
 import "./index.css";
 import App from "./App";
 
@@ -9,6 +9,10 @@ import App from "./App";
 // needed on /pdf-to-images, so there's no reason every visitor downloads
 // it up front. The Suspense boundary for these lives inside App, around
 // just the <Outlet/>, so the header/nav don't flicker away on transitions.
+const ToolsPage = lazy(() => import("./routes/ToolsPage"));
+const SettingsPage = lazy(() => import("./routes/SettingsPage"));
+const FilesPage = lazy(() => import("./routes/FilesPage"));
+const DocumentPage = lazy(() => import("./routes/DocumentPage"));
 const HomePage = lazy(() => import("./routes/HomePage"));
 const ScanPage = lazy(() => import("./routes/ScanPage"));
 const ScanLibraryPage = lazy(() => import("./routes/ScanLibraryPage"));
@@ -20,7 +24,7 @@ const PdfToImagesPage = lazy(() => import("./routes/PdfToImagesPage"));
 const WatermarkPage = lazy(() => import("./routes/WatermarkPage"));
 const PageNumbersPage = lazy(() => import("./routes/PageNumbersPage"));
 
-registerSW({ immediate: true });
+initializePwa();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -28,6 +32,11 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<App />}>
           <Route index element={<HomePage />} />
+          <Route path="tools" element={<ToolsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="files" element={<FilesPage />} />
+          <Route path="document" element={<DocumentPage />} />
+          <Route path="*" element={<HomePage />} />
           <Route path="scan" element={<ScanPage />} />
           <Route path="scans" element={<ScanLibraryPage />} />
           <Route path="merge" element={<MergePage />} />

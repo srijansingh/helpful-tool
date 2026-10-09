@@ -85,6 +85,7 @@ export default function PageNumbersPage() {
   };
 
   const handleApply = async () => {
+    if (status.kind === "working") return;
     if (!current) return;
     setStatus({ kind: "working", message: "Adding page numbers…" });
     try {
@@ -93,7 +94,7 @@ export default function PageNumbersPage() {
       downloadBytes(out, filename, "application/pdf");
       setStatus({
         kind: "done",
-        message: `Done — ${filename} (${formatSize(out.length)}) downloaded, processed entirely on this device.`,
+        message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
       logActivity({ tool: "page-numbers", label: `Numbered ${current.name}.pdf into ${filename}` });
     } catch (e) {
@@ -203,6 +204,8 @@ export default function PageNumbersPage() {
 
                 <button
                   type="button"
+                  data-primary-action="true"
+                  disabled={status.kind === "working" || !current}
                   onClick={handleApply}
                   className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
                 >

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
-  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: system-ui, -apple-system, sans-serif;
+  --font-body: system-ui, -apple-system, sans-serif;
 
   /* Dark is the primary palette — see [data-theme="light"] below for the flip.
      Cool neutrals + a single indigo accent, not warm cream/orange — reads as
@@ -80,3 +80,32 @@ textarea:focus-visible,
   outline-offset: 2px;
   border-radius: 4px;
 }
+
+/* Mobile document app primitives. */
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: default; opacity: .45; }
+.workspace { width:100%; max-width:1200px; margin:auto; padding:24px 16px calc(100px + env(safe-area-inset-bottom)); }
+.mobile-header { display:flex; align-items:center; justify-content:space-between; min-height:56px; padding:0 16px; border-bottom:1px solid var(--color-border); }
+.app-tabs {position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;background:var(--color-surface);border-top:1px solid var(--color-border);padding-bottom:env(safe-area-inset-bottom);}
+.tab {display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:64px;font-size:11px;font-weight:650;color:var(--color-muted);}
+.tab.active {color:var(--color-accent);background:color-mix(in srgb,var(--color-accent) 7%,transparent);}
+.eyebrow {color:var(--color-muted);font-size:11px;letter-spacing:.08em;font-weight:700;margin-bottom:8px;}
+.quick-actions {display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0;}
+.primary-tile,.secondary-tile {padding:20px 14px;border-radius:18px;display:flex;flex-direction:column;gap:9px;min-height:146px;border:1px solid var(--color-border);}
+.primary-tile {background:var(--color-accent);color:white;}.secondary-tile {background:var(--color-surface);}.quick-actions span {font-size:12px;opacity:.8;}
+.tool-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px;}
+.tool-tile {display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:10px;padding:18px;border:1px solid var(--color-border);border-radius:16px;background:var(--color-surface);min-width:0;}.tool-tile strong{font-size:14px;}
+.session-card {display:flex;align-items:center;justify-content:space-between;padding:16px;border-radius:16px;background:var(--color-surface);border:1px solid var(--color-border);gap:12px;}.session-card small {color:var(--color-muted);font-size:10px;}
+.panel {padding:20px;border-radius:18px;background:var(--color-surface);border:1px solid var(--color-border);}.panel h2 {font-size:17px;font-weight:700;margin-bottom:8px;}
+.btn,.btn-secondary,.btn-icon {display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;gap:8px;border-radius:12px;font-weight:650;font-size:14px;}
+.btn {background:var(--color-accent);color:white;}.btn-secondary {border:1px solid var(--color-border);background:var(--color-surface-2);}.btn-icon{min-width:48px;padding:8px;}
+.field {display:block;width:100%;min-height:48px;padding:12px;border-radius:12px;border:1px solid var(--color-border);background:var(--color-surface);font-size:16px;}
+.dropzone {background:var(--color-surface);border:1px dashed var(--color-border);border-radius:16px;padding:16px;}
+.sheet-overlay {position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:#0007;backdrop-filter:blur(3px);}
+.bottom-sheet {width:100%;max-width:600px;border-radius:24px 24px 0 0;background:var(--color-surface);padding:24px 20px calc(24px + env(safe-area-inset-bottom));max-height:90dvh;overflow:auto;}
+@media(max-width:639px){input,select,textarea{font-size:16px!important;}main section>div button:not([role="slider"]){min-height:44px;}main section>div button[aria-label^="Move"],main section>div button[aria-label^="Remove"]{min-width:36px;}h1{overflow-wrap:break-word;}}
+@media(min-width:640px){.mobile-header,.app-tabs{display:none;}.workspace{padding:32px;}.tool-grid{grid-template-columns:repeat(3,minmax(0,1fr));}.quick-actions{max-width:650px;}.sheet-overlay{align-items:center;}.bottom-sheet{border-radius:24px;padding:28px;}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+@media(max-width:639px){[data-primary-action]{position:fixed;left:16px;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));z-index:25;margin:0!important;box-shadow:0 4px 24px #0003;width:calc(100% - 32px)!important;}.workspace:has([data-primary-action]){padding-bottom:calc(176px + env(safe-area-inset-bottom));} .compact .tool-tile{padding:14px;} }
