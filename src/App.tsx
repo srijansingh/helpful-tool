@@ -1,67 +1,44 @@
 import { Suspense } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { FileStack, Scissors, ImageIcon, Images } from "lucide-react";
+import { Sidebar } from "./components/Sidebar";
+import { BottomTabBar } from "./components/BottomTabBar";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { TrustBadge } from "./components/TrustBadge";
 import { PageLoading } from "./components/PageLoading";
 import { AdSlot } from "./components/AdSlot";
-import { TrustBadge } from "./components/TrustBadge";
-
-const TOOLS = [
-  { to: "/merge", label: "Merge PDFs", icon: FileStack },
-  { to: "/split", label: "Split PDF", icon: Scissors },
-  { to: "/images-to-pdf", label: "Images → PDF", icon: ImageIcon },
-  { to: "/pdf-to-images", label: "PDF → Images", icon: Images },
-];
 
 export default function App() {
   return (
-    <div className="min-h-screen bg-bg text-fg">
-      <header className="mx-auto max-w-4xl px-4 pt-6 sm:pt-10">
-        <div className="flex items-center justify-between gap-4">
-          <NavLink to="/" className="font-display text-xl font-extrabold tracking-tight sm:text-2xl">
-            Local<span className="text-accent">PDF</span>
-          </NavLink>
-          <ThemeToggle />
-        </div>
-        <p className="mt-2 max-w-md text-sm text-muted sm:text-base">
-          Merge, split and convert PDFs — entirely in your browser. Nothing is
-          uploaded, no login needed.
-        </p>
-        <div className="mt-3">
+    <div className="flex min-h-screen bg-bg text-fg">
+      <Sidebar />
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Mobile-only top bar — the sidebar carries the brand/theme/trust
+            badge on larger screens, so this would be redundant there. */}
+        <header className="flex flex-col gap-3 border-b border-border px-4 py-4 sm:hidden">
+          <div className="flex items-center justify-between">
+            <NavLink to="/" className="font-display text-lg font-extrabold tracking-tight">
+              Local<span className="text-accent">PDF</span>
+            </NavLink>
+            <ThemeToggle />
+          </div>
           <TrustBadge />
-        </div>
-      </header>
+        </header>
 
-      <nav className="mx-auto mt-6 flex max-w-4xl gap-2 overflow-x-auto px-4 pb-1 sm:mt-8" aria-label="Tools">
-        {TOOLS.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 font-display text-sm font-semibold transition-colors ${
-                isActive
-                  ? "border-accent bg-accent text-bg"
-                  : "border-border bg-surface text-fg hover:border-accent/50"
-              }`
-            }
-          >
-            <Icon className="h-4 w-4" aria-hidden="true" />
-            {label}
-          </NavLink>
-        ))}
-      </nav>
+        <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-6 sm:px-8 sm:pb-12 sm:pt-10">
+          <AdSlot label="Ad space — leaderboard" />
+          <Suspense fallback={<PageLoading />}>
+            <Outlet />
+          </Suspense>
+        </main>
 
-      <main className="mx-auto max-w-4xl px-4 pb-16 pt-6">
-        <AdSlot label="Ad space — leaderboard" />
-        <Suspense fallback={<PageLoading />}>
-          <Outlet />
-        </Suspense>
-      </main>
+        <footer className="mx-auto hidden w-full max-w-3xl px-8 pb-10 text-xs text-muted sm:block">
+          Every conversion runs locally in your browser — nothing is uploaded,
+          no account needed, no file is stored anywhere.
+        </footer>
+      </div>
 
-      <footer className="mx-auto max-w-4xl px-4 pb-10 text-center text-xs text-muted">
-        Every conversion runs locally in your browser — nothing is uploaded,
-        no account needed, no file is stored anywhere.
-      </footer>
+      <BottomTabBar />
     </div>
   );
 }

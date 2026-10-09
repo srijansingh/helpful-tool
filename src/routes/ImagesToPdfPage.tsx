@@ -6,6 +6,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
+import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useImageThumbnails } from "../hooks/useImageThumbnails";
@@ -55,7 +56,7 @@ export default function ImagesToPdfPage() {
         Pick one or more images (JPG, PNG, WebP…), preview and reorder them, then combine into one PDF.
       </p>
 
-      <div className="mt-6">
+      <Card className="mt-6">
         <Dropzone
           accept="image/*"
           multiple
@@ -63,31 +64,31 @@ export default function ImagesToPdfPage() {
           hint="One page per image, in the order you add them"
           onFiles={addFiles}
         />
-      </div>
 
-      <div className="mt-5">
-        <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
-      </div>
+        <div className="mt-5">
+          <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
+        </div>
 
-      {files.length > 0 && (
-        <p className="mt-2 text-xs text-muted">
-          {files.length} image{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
-        </p>
-      )}
+        {files.length > 0 && (
+          <p className="mt-2 text-xs text-muted">
+            {files.length} image{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+          </p>
+        )}
 
-      <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
-        <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
-      </div>
+        <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
+          <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+        </div>
 
-      <button
-        type="button"
-        onClick={handleConvert}
-        className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
-      >
-        Convert &amp; Download
-      </button>
+        <button
+          type="button"
+          onClick={handleConvert}
+          className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+        >
+          Convert &amp; Download
+        </button>
 
-      <StatusMessage status={status} />
+        <StatusMessage status={status} />
+      </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "images-to-pdf")} />
 

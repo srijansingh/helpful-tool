@@ -26,8 +26,33 @@ once and hoping it's believed.
   while you're adding files, and the actual output size in the success
   message after conversion — so there's no mystery about what you're
   about to get.
-- **A persistent trust badge** (`TrustBadge`) stays visible near the top
-  of every page, not just stated once in a footer nobody reads.
+- **A persistent trust badge** (`TrustBadge`) stays visible on every page
+  (in the sidebar on desktop, the top bar on mobile), not just stated once
+  in a footer nobody reads.
+
+## App shell, not a webpage with a tool embedded in it
+
+A pill-tab row that scrolls off and a loose stack of elements on a page
+background reads as a website. This instead uses a real application
+shell:
+
+- **A persistent left sidebar** (`Sidebar.tsx`) on tablet/desktop — brand,
+  nav, trust badge and theme toggle all stay in view; `position: sticky`
+  with its own scroll, so it never scrolls away even on a long page. On
+  mobile, a **fixed bottom tab bar** (`BottomTabBar.tsx`) takes over —
+  native-app navigation, not a website's. Both share one source of truth
+  for the tool list (`src/lib/tools.ts`).
+- **Elevated workspace panels** (`Card.tsx`) — each tool's dropzone, file
+  list, rename field and action button sit inside one bounded, shadowed
+  panel, not loose on the page background. The explanatory/FAQ content
+  stays outside it, as ordinary page content below.
+- **Real drag-and-drop reordering** (`FileList.tsx`, native HTML5 DnD) via
+  a grip handle, alongside the up/down buttons (kept for accessibility
+  and because HTML5 drag-and-drop isn't usable on touch — the handle is
+  hidden below the `sm` breakpoint for that reason, not by oversight).
+- **Skeleton loading states** for thumbnails (a pulsing placeholder) while
+  pdf.js renders the first page, instead of a static icon that gives no
+  sense that something is happening.
 
 ## Stack
 

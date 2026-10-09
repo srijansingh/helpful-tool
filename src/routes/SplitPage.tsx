@@ -5,6 +5,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
+import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo, extractPages, splitEveryPage } from "../lib/pdf/split";
@@ -84,65 +85,69 @@ export default function SplitPage() {
         Pick a PDF, then either pull out specific pages or split every page into its own file.
       </p>
 
-      <div className="mt-6">
+      <Card className="mt-6">
         <Dropzone
           accept="application/pdf"
           label="Drop a PDF here or click to browse"
           hint={current ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}` : "One file at a time"}
           onFiles={handleFile}
         />
-      </div>
 
-      {current && (
-        <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
-            {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : null}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold">{current.name}.pdf</p>
-            <p className="text-xs text-muted">
-              {current.pageCount} page{current.pageCount === 1 ? "" : "s"} — {formatSize(current.size)}
-            </p>
+        {current && (
+          <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+              {thumb ? (
+                <img src={thumb} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="h-full w-full animate-pulse bg-border" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-sm font-semibold">{current.name}.pdf</p>
+              <p className="text-xs text-muted">
+                {current.pageCount} page{current.pageCount === 1 ? "" : "s"} — {formatSize(current.size)}
+              </p>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {current && (
-        <div className="mt-5 flex flex-col gap-3">
-          <label className="text-sm text-muted" htmlFor="range">
-            Pages to extract (e.g. 1-3,5,8)
-          </label>
-          <input
-            id="range"
-            type="text"
-            value={range}
-            onChange={(e) => setRange(e.target.value)}
-            placeholder="1-3,5,8"
-            className="rounded-xl border border-border bg-surface-2 px-4 py-2.5 font-display text-sm outline-none focus:border-accent"
-          />
+        {current && (
+          <div className="mt-5 flex flex-col gap-3">
+            <label className="text-sm text-muted" htmlFor="range">
+              Pages to extract (e.g. 1-3,5,8)
+            </label>
+            <input
+              id="range"
+              type="text"
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+              placeholder="1-3,5,8"
+              className="rounded-xl border border-border bg-surface-2 px-4 py-2.5 font-display text-sm outline-none focus:border-accent"
+            />
 
-          <div className="sm:max-w-xs">
-            <FilenameInput value={outputName} onChange={setOutputName} extension="pdf / zip" />
+            <div className="sm:max-w-xs">
+              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf / zip" />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExtract}
+              className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
+            >
+              Extract Pages
+            </button>
+            <button
+              type="button"
+              onClick={handleSplitEvery}
+              className="rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
+            >
+              Split Every Page (zip)
+            </button>
           </div>
+        )}
 
-          <button
-            type="button"
-            onClick={handleExtract}
-            className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
-          >
-            Extract Pages
-          </button>
-          <button
-            type="button"
-            onClick={handleSplitEvery}
-            className="rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
-          >
-            Split Every Page (zip)
-          </button>
-        </div>
-      )}
-
-      <StatusMessage status={status} />
+        <StatusMessage status={status} />
+      </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "split")} />
 

@@ -1,4 +1,6 @@
-import { ArrowDown, ArrowUp, X, FileText } from "lucide-react";
+import { useState } from "react";
+import type { DragEvent } from "react";
+import { ArrowDown, ArrowUp, GripVertical, X } from "lucide-react";
 import { formatSize } from "../lib/formatSize";
 
 interface FileListProps {
@@ -8,6 +10,9 @@ interface FileListProps {
 }
 
 export function FileList({ files, onReorder, thumbnails }: FileListProps) {
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+
   if (files.length === 0) {
     return <p className="text-sm italic text-muted">No files added yet.</p>;
   }
@@ -22,6 +27,26 @@ export function FileList({ files, onReorder, thumbnails }: FileListProps) {
     onReorder(files.filter((_, idx) => idx !== i));
   };
 
+  const reorderTo = (from: number, to: number) => {
+    if (from === to) return;
+    const next = [...files];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    onReorder(next);
+  };
+
+  const handleDragOver = (i: number) => (e: DragEvent<HTMLLIElement>) => {
+    e.preventDefault();
+    if (dragIndex !== null) setOverIndex(i);
+  };
+
+  const handleDrop = (i: number) => (e: DragEvent<HTMLLIElement>) => {
+    e.preventDefault();
+    if (dragIndex !== null) reorderTo(dragIndex, i);
+    setDragIndex(null);
+    setOverIndex(null);
+  };
+
   return (
     <ol className="flex flex-col gap-2">
       {files.map((file, i) => {
@@ -29,13 +54,33 @@ export function FileList({ files, onReorder, thumbnails }: FileListProps) {
         return (
           <li
             key={`${file.name}-${file.lastModified}-${i}`}
-            className="flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-3"
+            onDragOver={handleDragOver(i)}
+            onDrop={handleDrop(i)}
+            className={`flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-colors ${
+              overIndex === i && dragIndex !== null && dragIndex !== i ? "ring-2 ring-accent" : ""
+            } ${dragIndex === i ? "opacity-50" : ""}`}
           >
+            <span
+              draggable
+              onDragStart={(e) => {
+                setDragIndex(i);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragEnd={() => {
+                setDragIndex(null);
+                setOverIndex(null);
+              }}
+              className="hidden shrink-0 cursor-grab touch-none items-center self-stretch text-muted active:cursor-grabbing sm:flex"
+              aria-hidden="true"
+            >
+              <GripVertical className="h-4 w-4" />
+            </span>
+
             <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
               {thumb ? (
                 <img src={thumb} alt="" className="h-full w-full object-cover" />
               ) : (
-                <FileText className="h-5 w-5 text-accent" aria-hidden="true" />
+                <span className="h-full w-full animate-pulse bg-border" />
               )}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">

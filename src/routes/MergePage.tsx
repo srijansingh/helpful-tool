@@ -6,6 +6,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
+import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { usePdfThumbnails } from "../hooks/usePdfThumbnails";
@@ -53,7 +54,7 @@ export default function MergePage() {
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Merge PDFs</h1>
       <p className="mt-1 text-muted">Pick two or more PDFs, preview and reorder them, then merge into one file.</p>
 
-      <div className="mt-6">
+      <Card className="mt-6">
         <Dropzone
           accept="application/pdf"
           multiple
@@ -61,31 +62,31 @@ export default function MergePage() {
           hint="You can add more files any time before merging"
           onFiles={addFiles}
         />
-      </div>
 
-      <div className="mt-5">
-        <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
-      </div>
+        <div className="mt-5">
+          <FileList files={files} onReorder={setFiles} thumbnails={thumbnails} />
+        </div>
 
-      {files.length > 0 && (
-        <p className="mt-2 text-xs text-muted">
-          {files.length} file{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
-        </p>
-      )}
+        {files.length > 0 && (
+          <p className="mt-2 text-xs text-muted">
+            {files.length} file{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+          </p>
+        )}
 
-      <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
-        <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
-      </div>
+        <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
+          <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+        </div>
 
-      <button
-        type="button"
-        onClick={handleMerge}
-        className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
-      >
-        Merge &amp; Download
-      </button>
+        <button
+          type="button"
+          onClick={handleMerge}
+          className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+        >
+          Merge &amp; Download
+        </button>
 
-      <StatusMessage status={status} />
+        <StatusMessage status={status} />
+      </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "merge")} />
 

@@ -5,6 +5,7 @@ import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolContent } from "../components/ToolContent";
 import { AdSlot } from "../components/AdSlot";
+import { Card } from "../components/Card";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { renderPdfToImages } from "../lib/pdf/pdfToImages";
@@ -72,54 +73,58 @@ export default function PdfToImagesPage() {
         Pick a PDF — each page is exported as an image (zipped if there's more than one).
       </p>
 
-      <div className="mt-6">
+      <Card className="mt-6">
         <Dropzone
           accept="application/pdf"
           label="Drop a PDF here or click to browse"
           hint={file ? `${file.name} — ${formatSize(file.size)}` : "One file at a time"}
           onFiles={handleFile}
         />
-      </div>
 
-      {file && (
-        <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
-            {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" /> : null}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold">{file.name}</p>
-            <p className="text-xs text-muted">{formatSize(file.size)}</p>
+        {file && (
+          <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
+              {thumb ? (
+                <img src={thumb} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <span className="h-full w-full animate-pulse bg-border" />
+              )}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-sm font-semibold">{file.name}</p>
+              <p className="text-xs text-muted">{formatSize(file.size)}</p>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-5 flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm text-muted">Format</span>
+            <select
+              id="format"
+              value={format}
+              onChange={(e) => setFormat(e.target.value as "image/jpeg" | "image/png")}
+              className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-display text-sm outline-none focus:border-accent"
+            >
+              <option value="image/jpeg">JPG</option>
+              <option value="image/png">PNG</option>
+            </select>
+          </label>
+          <div className="sm:max-w-xs">
+            <FilenameInput value={outputName} onChange={setOutputName} extension="jpg / png / zip" />
           </div>
         </div>
-      )}
 
-      <div className="mt-5 flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm text-muted">Format</span>
-          <select
-            id="format"
-            value={format}
-            onChange={(e) => setFormat(e.target.value as "image/jpeg" | "image/png")}
-            className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-display text-sm outline-none focus:border-accent"
-          >
-            <option value="image/jpeg">JPG</option>
-            <option value="image/png">PNG</option>
-          </select>
-        </label>
-        <div className="sm:max-w-xs">
-          <FilenameInput value={outputName} onChange={setOutputName} extension="jpg / png / zip" />
-        </div>
-      </div>
+        <button
+          type="button"
+          onClick={handleConvert}
+          className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
+        >
+          Convert &amp; Download
+        </button>
 
-      <button
-        type="button"
-        onClick={handleConvert}
-        className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
-      >
-        Convert &amp; Download
-      </button>
-
-      <StatusMessage status={status} />
+        <StatusMessage status={status} />
+      </Card>
 
       <RecentActivity entries={entries.filter((e) => e.tool === "pdf-to-images")} />
 
