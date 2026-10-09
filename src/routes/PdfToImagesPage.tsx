@@ -104,7 +104,7 @@ export default function PdfToImagesPage() {
               id="format"
               value={format}
               onChange={(e) => setFormat(e.target.value as "image/jpeg" | "image/png")}
-              className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-display text-sm outline-none focus:border-accent"
+              className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 font-body text-sm font-semibold outline-none focus:border-accent"
             >
               <option value="image/jpeg">JPG</option>
               <option value="image/png">PNG</option>

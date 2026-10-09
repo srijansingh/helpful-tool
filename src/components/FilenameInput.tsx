@@ -25,10 +25,10 @@ export function FilenameInput({ value, onChange, extension }: FilenameInputProps
           type="text"
           value={value}
           onChange={(e) => onChange(sanitize(e.target.value))}
-          className="min-w-0 flex-1 bg-transparent px-4 py-2.5 font-display text-sm outline-none"
+          className="min-w-0 flex-1 bg-transparent px-4 py-2.5 font-body text-sm font-semibold outline-none"
           aria-label="Output filename"
         />
-        <span className="flex items-center bg-surface px-3 font-display text-sm text-muted">
+        <span className="flex items-center bg-surface px-3 font-body text-sm text-muted">
           .{extension}
         </span>
       </span>

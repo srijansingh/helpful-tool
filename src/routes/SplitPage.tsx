@@ -114,16 +114,19 @@ export default function SplitPage() {
         {current && (
           <div className="mt-5 flex flex-col gap-3">
             <label className="text-sm text-muted" htmlFor="range">
-              Pages to extract (e.g. 1-3,5,8)
+              Pages to extract
             </label>
             <input
               id="range"
               type="text"
               value={range}
               onChange={(e) => setRange(e.target.value)}
-              placeholder="1-3,5,8"
-              className="rounded-xl border border-border bg-surface-2 px-4 py-2.5 font-display text-sm outline-none focus:border-accent"
+              placeholder="e.g. 1-3,5,8"
+              className="rounded-xl border border-border bg-surface-2 px-4 py-2.5 font-mono text-sm outline-none placeholder:font-body placeholder:text-muted focus:border-accent"
             />
+            <p className="-mt-1.5 text-xs text-muted">
+              Comma-separated numbers and ranges — <span className="font-mono">1-3,5,8</span> extracts pages 1, 2, 3, 5 and 8.
+            </p>
 
             <div className="sm:max-w-xs">
               <FilenameInput value={outputName} onChange={setOutputName} extension="pdf / zip" />
