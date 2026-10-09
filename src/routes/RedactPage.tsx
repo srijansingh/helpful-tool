@@ -105,6 +105,7 @@ export default function RedactPage() {
       </p>
       <div className="mt-4">
         <Dropzone
+          disabled={busy}
           accept="application/pdf"
           label="Choose a PDF to redact"
           hint={file?.name || "Original file stays on your device"}

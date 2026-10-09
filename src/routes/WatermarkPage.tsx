@@ -11,7 +11,7 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo } from "../lib/pdf/split";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
-import { applyWatermark } from "../lib/pdf/watermark";
+import { applyWatermark } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { useWatermarkStore } from "../store/useWatermarkStore";
@@ -19,7 +19,7 @@ import { useWatermarkStore } from "../store/useWatermarkStore";
 export default function WatermarkPage() {
   useSeo(
     "Add Watermark to PDF Online Free | LocalPDF",
-    "Stamp a text watermark across every page of a PDF — right in your browser, no upload."
+    "Stamp a text watermark across every page of a PDF — right in your browser, no upload.",
   );
 
   const current = useWatermarkStore((s) => s.current);
@@ -36,7 +36,13 @@ export default function WatermarkPage() {
   const setRotation = useWatermarkStore((s) => s.setRotation);
   const outputName = useWatermarkStore((s) => s.outputName);
   const setOutputName = useWatermarkStore((s) => s.setOutputName);
-  const [position,setPosition]=useState<"center"|"top-left"|"top-right"|"bottom-left"|"bottom-right">("center");const [color,setColor]=useState("#808080");const [ranges,setRanges]=useState("");const [repeat,setRepeat]=useState(false);const [logo,setLogo]=useState("");
+  const [position, setPosition] = useState<
+    "center" | "top-left" | "top-right" | "bottom-left" | "bottom-right"
+  >("center");
+  const [color, setColor] = useState("#808080");
+  const [ranges, setRanges] = useState("");
+  const [repeat, setRepeat] = useState(false);
+  const [logo, setLogo] = useState("");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -52,15 +58,30 @@ export default function WatermarkPage() {
       setCurrent({ bytes, pageCount, name, size: file.size });
       setOutputName(`${name}-watermarked`);
       setStatus({ kind: "idle" });
-      renderPdfThumbnail(file).then(setThumb).catch(() => {});
+      renderPdfThumbnail(file)
+        .then(setThumb)
+        .catch(() => {});
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't read that PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't read that PDF: ${(e as Error).message}`,
+      });
     }
   };
 
   const build = () => {
     if (!current) throw new Error("No PDF loaded");
-    return applyWatermark(current.bytes, { text: text || "WATERMARK", opacity, fontSize, rotation,position,color,ranges,repeat,logo });
+    return applyWatermark(current.bytes, {
+      text: text || "WATERMARK",
+      opacity,
+      fontSize,
+      rotation,
+      position,
+      color,
+      ranges,
+      repeat,
+      logo,
+    });
   };
 
   const handlePreview = async () => {
@@ -69,7 +90,10 @@ export default function WatermarkPage() {
     try {
       setPreviewBytes(await build());
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -87,16 +111,26 @@ export default function WatermarkPage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "watermark", label: `Watermarked ${current.name}.pdf into ${filename}` });
+      logActivity({
+        tool: "watermark",
+        label: `Watermarked ${current.name}.pdf into ${filename}`,
+      });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't apply watermark: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't apply watermark: ${(e as Error).message}`,
+      });
     }
   };
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Watermark PDF</h1>
-      <p className="mt-1 text-muted">Stamp text across every page — preview it, then download.</p>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+        Watermark PDF
+      </h1>
+      <p className="mt-1 text-muted">
+        Stamp text across every page — preview it, then download.
+      </p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
         <div>
@@ -104,7 +138,11 @@ export default function WatermarkPage() {
             <Dropzone
               accept="application/pdf"
               label="Drop a PDF here or click to browse"
-              hint={current ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}` : "One file at a time"}
+              hint={
+                current
+                  ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}`
+                  : "One file at a time"
+              }
               onFiles={handleFile}
             />
 
@@ -112,22 +150,111 @@ export default function WatermarkPage() {
               <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
                   {thumb ? (
-                    <img src={thumb} alt="" className="h-full w-full object-cover" />
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="h-full w-full animate-pulse bg-border" />
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-display text-sm font-semibold">{current.name}.pdf</p>
+                  <p className="truncate font-display text-sm font-semibold">
+                    {current.name}.pdf
+                  </p>
                   <p className="text-xs text-muted">
-                    {current.pageCount} page{current.pageCount === 1 ? "" : "s"} — {formatSize(current.size)}
+                    {current.pageCount} page{current.pageCount === 1 ? "" : "s"}{" "}
+                    — {formatSize(current.size)}
                   </p>
                 </div>
               </div>
             )}
 
             {current && (
-              <div className="mt-5 flex flex-col gap-4"><div className="editor-options"><label className="field-label">Placement<select className="field" value={position} onChange={e=>setPosition(e.target.value as typeof position)}>{["center","top-left","top-right","bottom-left","bottom-right"].map(p=><option key={p}>{p}</option>)}</select></label><label className="field-label">Pages (blank = all)<input className="field" placeholder="1, 3-5" value={ranges} onChange={e=>setRanges(e.target.value)}/></label><label>Color<input aria-label="Watermark color" type="color" value={color} onChange={e=>setColor(e.target.value)}/></label><label className="flex gap-2"><input type="checkbox" checked={repeat} onChange={e=>setRepeat(e.target.checked)}/>Repeat in a grid</label><label className="btn-secondary">Import logo<input className="sr-only" type="file" accept="image/*" onChange={async e=>{try{const f=e.target.files?.[0];if(!f)return;const b=await createImageBitmap(f);const c=document.createElement("canvas");c.width=b.width;c.height=b.height;c.getContext("2d")!.drawImage(b,0,0);b.close();setLogo(c.toDataURL("image/png"));}catch(e){setStatus({kind:"error",message:(e as Error).message});}}}/></label>{logo&&<button className="btn-secondary" onClick={()=>setLogo("")}>Use text instead</button>}</div>
+              <div className="mt-5 flex flex-col gap-4">
+                <div className="editor-options">
+                  <label className="field-label">
+                    Placement
+                    <select
+                      className="field"
+                      value={position}
+                      onChange={(e) =>
+                        setPosition(e.target.value as typeof position)
+                      }
+                    >
+                      {[
+                        "center",
+                        "top-left",
+                        "top-right",
+                        "bottom-left",
+                        "bottom-right",
+                      ].map((p) => (
+                        <option key={p}>{p}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field-label">
+                    Pages (blank = all)
+                    <input
+                      className="field"
+                      placeholder="1, 3-5"
+                      value={ranges}
+                      onChange={(e) => setRanges(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Color
+                    <input
+                      aria-label="Watermark color"
+                      type="color"
+                      value={color}
+                      onChange={(e) => setColor(e.target.value)}
+                    />
+                  </label>
+                  <label className="flex gap-2">
+                    <input
+                      type="checkbox"
+                      checked={repeat}
+                      onChange={(e) => setRepeat(e.target.checked)}
+                    />
+                    Repeat in a grid
+                  </label>
+                  <label className="btn-secondary">
+                    Import logo
+                    <input
+                      className="sr-only"
+                      type="file"
+                      accept="image/*"
+                      onChange={async (e) => {
+                        try {
+                          const f = e.target.files?.[0];
+                          if (!f) return;
+                          const b = await createImageBitmap(f);
+                          const c = document.createElement("canvas");
+                          c.width = b.width;
+                          c.height = b.height;
+                          c.getContext("2d")!.drawImage(b, 0, 0);
+                          b.close();
+                          setLogo(c.toDataURL("image/png"));
+                        } catch (e) {
+                          setStatus({
+                            kind: "error",
+                            message: (e as Error).message,
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+                  {logo && (
+                    <button
+                      className="btn-secondary"
+                      onClick={() => setLogo("")}
+                    >
+                      Use text instead
+                    </button>
+                  )}
+                </div>
                 <label className="flex flex-col gap-1.5">
                   <span className="text-sm text-muted">Watermark text</span>
                   <input
@@ -142,7 +269,9 @@ export default function WatermarkPage() {
                 <label className="flex flex-col gap-1.5">
                   <span className="flex justify-between text-sm text-muted">
                     <span>Opacity</span>
-                    <span className="font-mono">{Math.round(opacity * 100)}%</span>
+                    <span className="font-mono">
+                      {Math.round(opacity * 100)}%
+                    </span>
                   </span>
                   <input
                     type="range"
@@ -188,7 +317,11 @@ export default function WatermarkPage() {
                 </label>
 
                 <div className="sm:max-w-xs">
-                  <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+                  <FilenameInput
+                    value={outputName}
+                    onChange={setOutputName}
+                    extension="pdf"
+                  />
                 </div>
 
                 <button
@@ -218,7 +351,9 @@ export default function WatermarkPage() {
           </Card>
 
           <div className="lg:hidden">
-            <RecentActivity entries={entries.filter((e) => e.tool === "watermark")} />
+            <RecentActivity
+              entries={entries.filter((e) => e.tool === "watermark")}
+            />
           </div>
         </div>
 
@@ -238,11 +373,19 @@ export default function WatermarkPage() {
               </div>
             )}
           </div>
-          <RecentActivity entries={entries.filter((e) => e.tool === "watermark")} className="shrink-0" />
+          <RecentActivity
+            entries={entries.filter((e) => e.tool === "watermark")}
+            className="shrink-0"
+          />
         </div>
       </div>
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

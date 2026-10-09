@@ -2,9 +2,12 @@ import { create } from "zustand";
 export interface DocumentResult {
   id: string;
   file: File;
+  sources: File[];
 }
 interface DocumentState {
   current: File | null;
+  inputs: File[];
+  setInputs: (files: File[]) => void;
   result: DocumentResult | null;
   pending: { id: string; path: string; file: File } | null;
   setCurrent: (file: File) => void;
@@ -15,6 +18,8 @@ interface DocumentState {
 }
 export const useDocumentStore = create<DocumentState>((set) => ({
   current: null,
+  inputs: [],
+  setInputs: (inputs) => set({ inputs }),
   result: null,
   pending: null,
   setCurrent: (current) => set({ current }),
@@ -24,7 +29,11 @@ export const useDocumentStore = create<DocumentState>((set) => ({
         file.type === "application/pdf" || file.type.startsWith("image/")
           ? file
           : s.current,
-      result: { id: crypto.randomUUID(), file },
+      result: {
+        id: crypto.randomUUID(),
+        file,
+        sources: s.inputs.length ? s.inputs : s.current ? [s.current] : [],
+      },
     })),
   continueTo: (path, file) =>
     set({

@@ -11,7 +11,7 @@ import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useImageThumbnails } from "../hooks/useImageThumbnails";
-import { imagesToPdf } from "../lib/pdf/imagesToPdf";
+import { imagesToPdf } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { useImagesToPdfStore } from "../store/useImagesToPdfStore";
@@ -20,7 +20,7 @@ import { useToastStore } from "../store/useToastStore";
 export default function ImagesToPdfPage() {
   useSeo(
     "Convert Images to PDF Online Free — JPG, PNG to PDF | LocalPDF",
-    "Combine JPG, PNG, WebP and other images into a single PDF, right in your browser. Preview and reorder first, no upload, no login."
+    "Combine JPG, PNG, WebP and other images into a single PDF, right in your browser. Preview and reorder first, no upload, no login.",
   );
 
   const files = useImagesToPdfStore((s) => s.files);
@@ -28,9 +28,14 @@ export default function ImagesToPdfPage() {
   const addFiles = useImagesToPdfStore((s) => s.addFiles);
   const outputName = useImagesToPdfStore((s) => s.outputName);
   const setOutputName = useImagesToPdfStore((s) => s.setOutputName);
-  const [paper,setPaper]=useState<"original"|"a4"|"letter">("a4");
-  const [orientation,setOrientation]=useState<"portrait"|"landscape">("portrait");
-  const [margin,setMargin]=useState(24);const [fit,setFit]=useState<"contain"|"cover">("contain");const [quality,setQuality]=useState(0.9);const options={paper,orientation,margin,fit,quality};
+  const [paper, setPaper] = useState<"original" | "a4" | "letter">("a4");
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
+    "portrait",
+  );
+  const [margin, setMargin] = useState(24);
+  const [fit, setFit] = useState<"contain" | "cover">("contain");
+  const [quality, setQuality] = useState(0.9);
+  const options = { paper, orientation, margin, fit, quality };
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -57,9 +62,12 @@ export default function ImagesToPdfPage() {
     if (files.length === 0 || previewing) return;
     setPreviewing(true);
     try {
-      setPreviewBytes(await imagesToPdf(files,options));
+      setPreviewBytes(await imagesToPdf(files, options));
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -73,23 +81,33 @@ export default function ImagesToPdfPage() {
     }
     setStatus({ kind: "working", message: "Converting…" });
     try {
-      const bytes = await imagesToPdf(files,options);
+      const bytes = await imagesToPdf(files, options);
       const filename = `${outputName.trim() || "images"}.pdf`;
       downloadBytes(bytes, filename, "application/pdf");
       setStatus({
         kind: "done",
         message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "images-to-pdf", label: `Converted ${files.length} images to ${filename}` });
+      logActivity({
+        tool: "images-to-pdf",
+        label: `Converted ${files.length} images to ${filename}`,
+      });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't convert: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't convert: ${(e as Error).message}`,
+      });
     }
   };
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Images to PDF</h1>
-      <p className="mt-1 text-muted">Add your images, drag them into order, combine into one PDF.</p>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+        Images to PDF
+      </h1>
+      <p className="mt-1 text-muted">
+        Add your images, drag them into order, combine into one PDF.
+      </p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
         <div>
@@ -103,20 +121,94 @@ export default function ImagesToPdfPage() {
             />
 
             <div className="mt-5">
-              <FileList files={files} onReorder={setFiles} onRemove={handleRemoveFile} thumbnails={thumbnails} />
+              <FileList
+                files={files}
+                onReorder={setFiles}
+                onRemove={handleRemoveFile}
+                thumbnails={thumbnails}
+              />
             </div>
 
             {files.length > 0 && (
               <p className="mt-2 text-xs text-muted">
-                {files.length} image{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+                {files.length} image{files.length === 1 ? "" : "s"} selected —{" "}
+                {formatSize(totalSize)} total
               </p>
             )}
 
             <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
-              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+              <FilenameInput
+                value={outputName}
+                onChange={setOutputName}
+                extension="pdf"
+              />
             </div>
 
-            <div className="editor-options"><label className="field-label">Paper size<select className="field" value={paper} onChange={e=>setPaper(e.target.value as typeof paper)}><option value="a4">A4</option><option value="letter">Letter</option><option value="original">Original image size</option></select></label><label className="field-label">Orientation<select className="field" value={orientation} onChange={e=>setOrientation(e.target.value as typeof orientation)}><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></label><label className="field-label">Margin (pt)<input className="field" type="number" min="0" max="100" value={margin} onChange={e=>setMargin(Math.max(0,Math.min(100,Number(e.target.value))))}/></label><label className="field-label">Image fit<select className="field" value={fit} onChange={e=>setFit(e.target.value as typeof fit)}><option value="contain">Fit whole image</option><option value="cover">Fill page (crops edges)</option></select></label><label className="field-label">JPEG quality<input aria-label="JPEG quality" type="range" min="0.3" max="1" step="0.1" value={quality} onChange={e=>setQuality(Number(e.target.value))}/></label></div>
+            <div className="editor-options">
+              <label className="field-label">
+                Paper size
+                <select
+                  className="field"
+                  value={paper}
+                  onChange={(e) => setPaper(e.target.value as typeof paper)}
+                >
+                  <option value="a4">A4</option>
+                  <option value="letter">Letter</option>
+                  <option value="original">Original image size</option>
+                </select>
+              </label>
+              <label className="field-label">
+                Orientation
+                <select
+                  className="field"
+                  value={orientation}
+                  onChange={(e) =>
+                    setOrientation(e.target.value as typeof orientation)
+                  }
+                >
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </select>
+              </label>
+              <label className="field-label">
+                Margin (pt)
+                <input
+                  className="field"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={margin}
+                  onChange={(e) =>
+                    setMargin(
+                      Math.max(0, Math.min(100, Number(e.target.value))),
+                    )
+                  }
+                />
+              </label>
+              <label className="field-label">
+                Image fit
+                <select
+                  className="field"
+                  value={fit}
+                  onChange={(e) => setFit(e.target.value as typeof fit)}
+                >
+                  <option value="contain">Fit whole image</option>
+                  <option value="cover">Fill page (crops edges)</option>
+                </select>
+              </label>
+              <label className="field-label">
+                JPEG quality
+                <input
+                  aria-label="JPEG quality"
+                  type="range"
+                  min="0.3"
+                  max="1"
+                  step="0.1"
+                  value={quality}
+                  onChange={(e) => setQuality(Number(e.target.value))}
+                />
+              </label>
+            </div>
             {files.length > 0 && (
               <button
                 type="button"
@@ -132,8 +224,8 @@ export default function ImagesToPdfPage() {
             <button
               type="button"
               data-primary-action="true"
-                  disabled={status.kind === "working" || files.length === 0}
-                  onClick={handleConvert}
+              disabled={status.kind === "working" || files.length === 0}
+              onClick={handleConvert}
               className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
             >
               Convert &amp; Download
@@ -143,7 +235,9 @@ export default function ImagesToPdfPage() {
           </Card>
 
           <div className="lg:hidden">
-            <RecentActivity entries={entries.filter((e) => e.tool === "images-to-pdf")} />
+            <RecentActivity
+              entries={entries.filter((e) => e.tool === "images-to-pdf")}
+            />
           </div>
         </div>
 
@@ -151,8 +245,8 @@ export default function ImagesToPdfPage() {
           <div className="min-h-0 flex-1">
             {files.length > 0 ? (
               <LivePreviewPane
-                build={() => imagesToPdf(files,options)}
-                watch={[files,paper,orientation,margin,fit,quality]}
+                build={() => imagesToPdf(files, options)}
+                watch={[files, paper, orientation, margin, fit, quality]}
                 emptyMessage="Add images to see a live preview of the PDF."
               />
             ) : (
@@ -163,11 +257,19 @@ export default function ImagesToPdfPage() {
               </div>
             )}
           </div>
-          <RecentActivity entries={entries.filter((e) => e.tool === "images-to-pdf")} className="shrink-0" />
+          <RecentActivity
+            entries={entries.filter((e) => e.tool === "images-to-pdf")}
+            className="shrink-0"
+          />
         </div>
       </div>
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

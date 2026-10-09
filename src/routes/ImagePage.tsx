@@ -68,8 +68,13 @@ export default function ImagePage() {
           quality,
         ),
       );
+      if (out.type !== format)
+        throw new Error(
+          "Your browser cannot export this format. Choose PNG or JPEG and try again.",
+        );
       setResult(out);
-      const ext = format.split("/")[1].replace("jpeg", "jpg");
+      c.width = c.height = 0;
+      const ext = out.type.split("/")[1].replace("jpeg", "jpg");
       downloadBlob(out, file.name.replace(/\.[^.]+$/, "") + "-edited." + ext);
     } catch (e) {
       setError(friendlyError(e));
@@ -86,6 +91,7 @@ export default function ImagePage() {
       </p>
       <div className="mt-4">
         <Dropzone
+          disabled={busy}
           accept="image/*"
           label="Choose a photo"
           hint={

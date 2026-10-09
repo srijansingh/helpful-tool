@@ -13,7 +13,8 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { useOrganizeStore } from "../store/useOrganizeStore";
 import { useToastStore } from "../store/useToastStore";
-import { loadOrganizeSource, buildOrganizedPdf } from "../lib/pdf/organize";
+import { loadOrganizeSource } from "../lib/pdf/organize";
+import { buildOrganizedPdf } from "../lib/pdf/workerOperations";
 import { renderAllPageThumbnails } from "../lib/pdf/pageThumbnails";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
@@ -118,15 +119,13 @@ export default function OrganizePage() {
             x += dw;
             y += dh;
           } else if (rotation === 270) x += dw;
-          out
-            .addPage([w, h])
-            .drawPage(image, {
-              x,
-              y,
-              width: image.width * scale,
-              height: image.height * scale,
-              rotate: degrees(-rotation),
-            });
+          out.addPage([w, h]).drawPage(image, {
+            x,
+            y,
+            width: image.width * scale,
+            height: image.height * scale,
+            rotate: degrees(-rotation),
+          });
         }
         await handleFile([
           new File(
@@ -138,6 +137,17 @@ export default function OrganizePage() {
       } else {
         const at = selected.length ? selected[0] : doc.getPageCount();
         if (file) {
+          file = await (
+            await import("../lib/pdf/preflight")
+          ).preparePdf(
+            (
+              await (
+                await import("../lib/importFiles")
+              ).validateFiles([file], "application/pdf", false)
+            )[0],
+            "/organize",
+            new AbortController().signal,
+          );
           const source = await PDFDocument.load(await file.arrayBuffer());
           const copied = await doc.copyPages(source, source.getPageIndices());
           if (replace) {

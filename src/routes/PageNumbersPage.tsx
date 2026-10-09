@@ -11,8 +11,11 @@ import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { loadPdfInfo } from "../lib/pdf/split";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
-import { applyPageNumbers } from "../lib/pdf/pageNumbers";
-import type { PageNumberPosition, PageNumberFormat } from "../lib/pdf/pageNumbers";
+import { applyPageNumbers } from "../lib/pdf/workerOperations";
+import type {
+  PageNumberPosition,
+  PageNumberFormat,
+} from "../lib/pdf/pageNumbers";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { usePageNumbersStore } from "../store/usePageNumbersStore";
@@ -29,7 +32,7 @@ const POSITIONS: { value: PageNumberPosition; label: string }[] = [
 export default function PageNumbersPage() {
   useSeo(
     "Add Page Numbers to PDF Online Free | LocalPDF",
-    "Number every page of a PDF — pick the position and format — right in your browser, no upload."
+    "Number every page of a PDF — pick the position and format — right in your browser, no upload.",
   );
 
   const current = usePageNumbersStore((s) => s.current);
@@ -46,7 +49,10 @@ export default function PageNumbersPage() {
   const setFontSize = usePageNumbersStore((s) => s.setFontSize);
   const outputName = usePageNumbersStore((s) => s.outputName);
   const setOutputName = usePageNumbersStore((s) => s.setOutputName);
-  const [ranges,setRanges]=useState("");const [prefix,setPrefix]=useState("");const [margin,setMargin]=useState(24);const [skipCover,setSkipCover]=useState(false);
+  const [ranges, setRanges] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [margin, setMargin] = useState(24);
+  const [skipCover, setSkipCover] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -62,15 +68,29 @@ export default function PageNumbersPage() {
       setCurrent({ bytes, pageCount, name, size: file.size });
       setOutputName(`${name}-numbered`);
       setStatus({ kind: "idle" });
-      renderPdfThumbnail(file).then(setThumb).catch(() => {});
+      renderPdfThumbnail(file)
+        .then(setThumb)
+        .catch(() => {});
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't read that PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't read that PDF: ${(e as Error).message}`,
+      });
     }
   };
 
   const build = () => {
     if (!current) throw new Error("No PDF loaded");
-    return applyPageNumbers(current.bytes, { position, format, startAt, fontSize,ranges,prefix,margin,skipCover });
+    return applyPageNumbers(current.bytes, {
+      position,
+      format,
+      startAt,
+      fontSize,
+      ranges,
+      prefix,
+      margin,
+      skipCover,
+    });
   };
 
   const handlePreview = async () => {
@@ -79,7 +99,10 @@ export default function PageNumbersPage() {
     try {
       setPreviewBytes(await build());
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -97,16 +120,26 @@ export default function PageNumbersPage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "page-numbers", label: `Numbered ${current.name}.pdf into ${filename}` });
+      logActivity({
+        tool: "page-numbers",
+        label: `Numbered ${current.name}.pdf into ${filename}`,
+      });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't add page numbers: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't add page numbers: ${(e as Error).message}`,
+      });
     }
   };
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Page Numbers</h1>
-      <p className="mt-1 text-muted">Number every page — pick where and how, preview it, then download.</p>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+        Page Numbers
+      </h1>
+      <p className="mt-1 text-muted">
+        Number every page — pick where and how, preview it, then download.
+      </p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
         <div>
@@ -114,7 +147,11 @@ export default function PageNumbersPage() {
             <Dropzone
               accept="application/pdf"
               label="Drop a PDF here or click to browse"
-              hint={current ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}` : "One file at a time"}
+              hint={
+                current
+                  ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}`
+                  : "One file at a time"
+              }
               onFiles={handleFile}
             />
 
@@ -122,27 +159,80 @@ export default function PageNumbersPage() {
               <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
                 <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
                   {thumb ? (
-                    <img src={thumb} alt="" className="h-full w-full object-cover" />
+                    <img
+                      src={thumb}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span className="h-full w-full animate-pulse bg-border" />
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-display text-sm font-semibold">{current.name}.pdf</p>
+                  <p className="truncate font-display text-sm font-semibold">
+                    {current.name}.pdf
+                  </p>
                   <p className="text-xs text-muted">
-                    {current.pageCount} page{current.pageCount === 1 ? "" : "s"} — {formatSize(current.size)}
+                    {current.pageCount} page{current.pageCount === 1 ? "" : "s"}{" "}
+                    — {formatSize(current.size)}
                   </p>
                 </div>
               </div>
             )}
 
             {current && (
-              <div className="mt-5 flex flex-col gap-4"><label className="field-label">Pages (blank = all)<input className="field" placeholder="1, 3-5" value={ranges} onChange={e=>setRanges(e.target.value)}/></label><label className="field-label">Prefix<input className="field" placeholder="Page " value={prefix} onChange={e=>setPrefix(e.target.value)}/></label><label className="field-label">Margin (pt)<input className="field" type="number" min="6" max="100" value={margin} onChange={e=>setMargin(Math.max(6,Math.min(100,Number(e.target.value)||24)))}/></label><label className="flex gap-2"><input type="checkbox" checked={skipCover} onChange={e=>setSkipCover(e.target.checked)}/>Skip cover page</label>
+              <div className="mt-5 flex flex-col gap-4">
+                <label className="field-label">
+                  Pages (blank = all)
+                  <input
+                    className="field"
+                    placeholder="1, 3-5"
+                    value={ranges}
+                    onChange={(e) => setRanges(e.target.value)}
+                  />
+                </label>
+                <label className="field-label">
+                  Prefix
+                  <input
+                    className="field"
+                    placeholder="Page "
+                    value={prefix}
+                    onChange={(e) => setPrefix(e.target.value)}
+                  />
+                </label>
+                <label className="field-label">
+                  Margin (pt)
+                  <input
+                    className="field"
+                    type="number"
+                    min="6"
+                    max="100"
+                    value={margin}
+                    onChange={(e) =>
+                      setMargin(
+                        Math.max(
+                          6,
+                          Math.min(100, Number(e.target.value) || 24),
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                <label className="flex gap-2">
+                  <input
+                    type="checkbox"
+                    checked={skipCover}
+                    onChange={(e) => setSkipCover(e.target.checked)}
+                  />
+                  Skip cover page
+                </label>
                 <label className="flex flex-col gap-1.5">
                   <span className="text-sm text-muted">Position</span>
                   <select
                     value={position}
-                    onChange={(e) => setPosition(e.target.value as PageNumberPosition)}
+                    onChange={(e) =>
+                      setPosition(e.target.value as PageNumberPosition)
+                    }
                     className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm font-semibold outline-none focus:border-accent"
                   >
                     {POSITIONS.map((p) => (
@@ -157,11 +247,15 @@ export default function PageNumbersPage() {
                   <span className="text-sm text-muted">Format</span>
                   <select
                     value={format}
-                    onChange={(e) => setFormat(e.target.value as PageNumberFormat)}
+                    onChange={(e) =>
+                      setFormat(e.target.value as PageNumberFormat)
+                    }
                     className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm font-semibold outline-none focus:border-accent"
                   >
                     <option value="number">1, 2, 3…</option>
-                    <option value="page-of-total">1 of {current.pageCount}, 2 of {current.pageCount}…</option>
+                    <option value="page-of-total">
+                      1 of {current.pageCount}, 2 of {current.pageCount}…
+                    </option>
                   </select>
                 </label>
 
@@ -183,14 +277,20 @@ export default function PageNumbersPage() {
                       min={6}
                       max={36}
                       value={fontSize}
-                      onChange={(e) => setFontSize(Number(e.target.value) || 11)}
+                      onChange={(e) =>
+                        setFontSize(Number(e.target.value) || 11)
+                      }
                       className="rounded-xl border border-border bg-surface-2 px-3 py-2.5 text-sm outline-none focus:border-accent"
                     />
                   </label>
                 </div>
 
                 <div className="sm:max-w-xs">
-                  <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+                  <FilenameInput
+                    value={outputName}
+                    onChange={setOutputName}
+                    extension="pdf"
+                  />
                 </div>
 
                 <button
@@ -220,7 +320,9 @@ export default function PageNumbersPage() {
           </Card>
 
           <div className="lg:hidden">
-            <RecentActivity entries={entries.filter((e) => e.tool === "page-numbers")} />
+            <RecentActivity
+              entries={entries.filter((e) => e.tool === "page-numbers")}
+            />
           </div>
         </div>
 
@@ -240,11 +342,19 @@ export default function PageNumbersPage() {
               </div>
             )}
           </div>
-          <RecentActivity entries={entries.filter((e) => e.tool === "page-numbers")} className="shrink-0" />
+          <RecentActivity
+            entries={entries.filter((e) => e.tool === "page-numbers")}
+            className="shrink-0"
+          />
         </div>
       </div>
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

@@ -12,7 +12,7 @@ type Engine = {
 const factory = createModule as unknown as (options: {
   locateFile: () => string;
   noInitialRun: boolean;
-  print: () => void;
+  print: (line: string) => void;
   printErr: (line: string) => void;
 }) => Promise<Engine>;
 const send = (message: unknown, transfer: Transferable[] = []) =>
@@ -30,6 +30,7 @@ self.onmessage = async (
 ) => {
   let engine: Engine | undefined;
   let errorText = "";
+
   try {
     send({ stage: "Loading local PDF engine…" });
     engine = await factory({
@@ -55,10 +56,18 @@ self.onmessage = async (
           ? "Could not unlock this PDF. Check the known document password and that the file is valid."
           : "The PDF engine could not process this file. Try an unprotected, valid PDF.",
       );
-    const bytes = new Uint8Array(engine.FS.readFile("/output.pdf"));
+    const bytes =
+      event.data.action === "inspect"
+        ? new Uint8Array()
+        : new Uint8Array(engine.FS.readFile("/output.pdf"));
     send(
       {
         bytes,
+        ownerPassword:
+          event.data.action === "inspect" &&
+          JSON.parse(
+            new TextDecoder().decode(engine.FS.readFile("/inspection.json")),
+          ).encrypt.ownerpasswordmatched === true,
         warning:
           exit === 3
             ? "The engine recovered the file with warnings. Inspect every page before relying on it."
@@ -69,11 +78,12 @@ self.onmessage = async (
   } catch (e) {
     send({ error: (e as Error).message });
   } finally {
-    try {
-      engine?.FS.unlink("/input.pdf");
-      engine?.FS.unlink("/output.pdf");
-    } catch {
-      /* Worker is disposed by the caller. */
+    for (const path of ["/inspection.json", "/input.pdf", "/output.pdf"]) {
+      try {
+        engine?.FS.unlink(path);
+      } catch {
+        /* Missing temporary files are harmless. */
+      }
     }
     event.data.password = "";
   }

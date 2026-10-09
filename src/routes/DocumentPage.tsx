@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+import { preparePdf, originalFile, canCopyText } from "../lib/pdf/preflight";
+import { friendlyError } from "../lib/importFiles";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { TOOLS } from "../lib/tools";
@@ -8,6 +10,11 @@ export default function DocumentPage() {
   const file = useDocumentStore((s) => s.current);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const navigate = useNavigate();
+  const controller = useRef<AbortController | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [allowCopy, setAllowCopy] = useState(true);
+  useEffect(() => () => controller.current?.abort(), []);
   if (!file)
     return (
       <section>
@@ -29,9 +36,26 @@ export default function DocumentPage() {
       ) : file.type === "application/pdf" ? (
         <button
           className="btn mt-4"
-          onClick={async () =>
-            setPreview(new Uint8Array(await file.arrayBuffer()))
-          }
+          disabled={busy}
+          onClick={async () => {
+            controller.current = new AbortController();
+            setBusy(true);
+            setError("");
+            try {
+              const ready = await preparePdf(
+                file,
+                "/document",
+                controller.current.signal,
+              );
+              setAllowCopy(canCopyText(ready));
+              setPreview(new Uint8Array(await ready.arrayBuffer()));
+            } catch (e) {
+              if (!controller.current.signal.aborted)
+                setError(friendlyError(e));
+            } finally {
+              setBusy(false);
+            }
+          }}
         >
           Read PDF
         </button>
@@ -40,7 +64,12 @@ export default function DocumentPage() {
           Download or share this file to open it in a compatible app.
         </p>
       )}
-      <ResultActions file={file} />
+      {error && (
+        <p role="alert" className="text-bad mt-3">
+          {error}
+        </p>
+      )}
+      <ResultActions file={originalFile(file)} />
       <h2 className="mt-6 text-lg font-bold">Continue with a tool</h2>
       <div className="tool-grid">
         {TOOLS.filter((t) =>
@@ -65,7 +94,11 @@ export default function DocumentPage() {
         ))}
       </div>
       {preview && (
-        <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
+        <PdfPreview
+          allowCopy={allowCopy}
+          bytes={preview}
+          onClose={() => setPreview(null)}
+        />
       )}
     </section>
   );

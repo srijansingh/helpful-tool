@@ -1,6 +1,15 @@
 import { ocrTexts } from "./ocrText.ts";
 import type { ScanPage } from "../store/useScanStore";
-import { createStore, get, set, del, entries } from "idb-keyval";
+import { createStore, get, set, setMany, del, entries } from "idb-keyval";
+const savedIds = new WeakMap<File, string>();
+export async function saveDocumentOnce(file: File) {
+  let id = savedIds.get(file);
+  if (!id) {
+    id = crypto.randomUUID();
+    savedIds.set(file, id);
+  }
+  return saveDocument(file, id);
+}
 const store = createStore("localpdf-documents", "documents");
 export interface SavedDocument {
   id: string;
@@ -23,6 +32,7 @@ export async function saveDocument(
   file: File,
   id: string = crypto.randomUUID(),
   folder = "",
+  scanPages?: ScanPage[],
 ): Promise<SavedDocument> {
   const doc: SavedDocument = {
     id,
@@ -33,9 +43,16 @@ export async function saveDocument(
     blob: file,
     folder,
     ocrText: ocrTexts.get(file),
+    scanPages,
   };
   await set(id, doc, store);
   return doc;
+}
+export async function restoreDocuments(docs: SavedDocument[]) {
+  await setMany(
+    docs.map((doc) => [doc.id, doc]),
+    store,
+  );
 }
 export async function updateDocument(doc: SavedDocument) {
   await set(doc.id, doc, store);

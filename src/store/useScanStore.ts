@@ -11,6 +11,16 @@ export interface ScanPage {
 
 interface ScanSessionState {
   pages: ScanPage[];
+  cropDraft: {
+    image: string;
+    quad: import("../lib/scan/perspective").Quad;
+  } | null;
+  setCropDraft: (
+    draft: {
+      image: string;
+      quad: import("../lib/scan/perspective").Quad;
+    } | null,
+  ) => void;
   addPage: (page: ScanPage) => void;
   updatePage: (id: string, patch: Partial<Omit<ScanPage, "id">>) => void;
   removePage: (id: string) => void;
@@ -25,6 +35,8 @@ interface ScanSessionState {
 // worse version of the exact bug this was built to fix elsewhere.
 export const useScanStore = create<ScanSessionState>((set) => ({
   pages: [],
+  cropDraft: null,
+  setCropDraft: (cropDraft) => set({ cropDraft }),
   addPage: (page) => set((s) => ({ pages: [...s.pages, page] })),
   updatePage: (id, patch) =>
     set((s) => ({

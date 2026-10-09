@@ -1,3 +1,4 @@
+import { useScanStore } from "../../store/useScanStore";
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import type { Point, Quad } from "../../lib/scan/perspective";
@@ -46,7 +47,12 @@ export function CropEditor({ imageSrc, onConfirm }: CropEditorProps) {
       setNatural({ width: img.naturalWidth, height: img.naturalHeight });
       imageRef.current = img;
       const detected = detectImagePaper(img);
-      setQuad(detected || defaultQuad(img.naturalWidth, img.naturalHeight));
+      const draft = useScanStore.getState().cropDraft;
+      setQuad(
+        draft?.image === imageSrc
+          ? draft.quad
+          : detected || defaultQuad(img.naturalWidth, img.naturalHeight),
+      );
       setNotice(
         detected
           ? "Edges suggested. Check all four corners before confirming."
@@ -60,6 +66,10 @@ export function CropEditor({ imageSrc, onConfirm }: CropEditorProps) {
       img.onload = null;
     };
   }, [imageSrc]);
+
+  useEffect(() => {
+    if (quad) useScanStore.getState().setCropDraft({ image: imageSrc, quad });
+  }, [quad, imageSrc]);
 
   useEffect(() => {
     const el = wrapperRef.current;

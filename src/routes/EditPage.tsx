@@ -1,9 +1,9 @@
+import { editPdf } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import {
-  editPdf,
   readForms,
   type Mark,
   type MarkKind,

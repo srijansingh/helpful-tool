@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { useDocumentStore } from "../store/useDocumentStore";
-import { buildBooklet } from "../lib/pdf/booklet";
+import { buildBooklet } from "../lib/pdf/workerOperations";
 import { PdfPreview } from "../components/PdfPreview";
 import { downloadBytes } from "../lib/download";
 export default function BookletPage() {

@@ -9,10 +9,14 @@ import { PdfPreview } from "../components/PdfPreview";
 import { PageRangePicker } from "../components/split/PageRangePicker";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
-import { loadPdfInfo, extractPages, splitEveryPage } from "../lib/pdf/split";
+import { loadPdfInfo } from "../lib/pdf/split";
+import { extractPages, splitEveryPage } from "../lib/pdf/workerOperations";
 import { renderPdfThumbnail } from "../lib/pdf/thumbnail";
 import { renderAllPageThumbnails } from "../lib/pdf/pageThumbnails";
-import { parsePageRanges, stringifyPageRanges } from "../lib/pdf/pageRanges";
+import {
+  selectedPages as validateSelection,
+  stringifyPageRanges,
+} from "../lib/pdf/pageRanges";
 import { downloadBytes, downloadBlob } from "../lib/download";
 import { toZipBlob } from "../lib/zip";
 import { formatSize } from "../lib/formatSize";
@@ -21,7 +25,7 @@ import { useSplitStore } from "../store/useSplitStore";
 export default function SplitPage() {
   useSeo(
     "Split PDF Online Free — Extract or Separate Pages | LocalPDF",
-    "Extract specific pages from a PDF or split every page into its own file, right in your browser. No upload, no login."
+    "Extract specific pages from a PDF or split every page into its own file, right in your browser. No upload, no login.",
   );
 
   const current = useSplitStore((s) => s.current);
@@ -50,14 +54,31 @@ export default function SplitPage() {
       setCurrent({ bytes, pageCount, name, size: file.size });
       setOutputName(`${name}-pages`);
       setStatus({ kind: "idle" });
-      renderPdfThumbnail(file).then(setThumb).catch(() => {});
-      renderAllPageThumbnails(file).then(setPageThumbs).catch(() => {});
+      renderPdfThumbnail(file)
+        .then(setThumb)
+        .catch(() => {});
+      renderAllPageThumbnails(file)
+        .then(setPageThumbs)
+        .catch(() => {});
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't read that PDF: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't read that PDF: ${(e as Error).message}`,
+      });
     }
   };
 
-  const selectedPages = new Set(current ? parsePageRanges(range, current.pageCount) : []);
+  let rangeError = "";
+  let indices: number[] = [];
+  try {
+    indices =
+      current && range.trim()
+        ? validateSelection(range, current.pageCount)
+        : [];
+  } catch (e) {
+    rangeError = (e as Error).message;
+  }
+  const selectedPages = new Set(indices);
   const togglePage = (index: number) => {
     if (!current) return;
     const next = new Set(selectedPages);
@@ -70,9 +91,14 @@ export default function SplitPage() {
     if (!current || previewing) return;
     setPreviewing(true);
     try {
-      setPreviewBytes(await extractPages(current.bytes, range, current.pageCount));
+      setPreviewBytes(
+        await extractPages(current.bytes, range, current.pageCount),
+      );
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -90,7 +116,10 @@ export default function SplitPage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(out.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "split", label: `Extracted pages from ${current.name}.pdf into ${filename}` });
+      logActivity({
+        tool: "split",
+        label: `Extracted pages from ${current.name}.pdf into ${filename}`,
+      });
     } catch (e) {
       setStatus({ kind: "error", message: (e as Error).message });
     }
@@ -109,7 +138,10 @@ export default function SplitPage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(zipBlob.size)}, ${pages.length} files) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "split", label: `Split ${current.name}.pdf into ${pages.length} files` });
+      logActivity({
+        tool: "split",
+        label: `Split ${current.name}.pdf into ${pages.length} files`,
+      });
     } catch (e) {
       setStatus({ kind: "error", message: (e as Error).message });
     }
@@ -118,13 +150,19 @@ export default function SplitPage() {
   return (
     <section>
       <h1 className="font-display text-2xl font-bold sm:text-3xl">Split PDF</h1>
-      <p className="mt-1 text-muted">Pull out specific pages, or split every page into its own file.</p>
+      <p className="mt-1 text-muted">
+        Pull out specific pages, or split every page into its own file.
+      </p>
 
       <Card className="mt-6">
         <Dropzone
           accept="application/pdf"
           label="Drop a PDF here or click to browse"
-          hint={current ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}` : "One file at a time"}
+          hint={
+            current
+              ? `${current.name}.pdf — ${current.pageCount} pages — ${formatSize(current.size)}`
+              : "One file at a time"
+          }
           onFiles={handleFile}
         />
 
@@ -132,15 +170,22 @@ export default function SplitPage() {
           <div className="mt-5 flex items-center gap-3 rounded-xl bg-surface-2 p-2 pr-4">
             <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
               {thumb ? (
-                <img src={thumb} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={thumb}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               ) : (
                 <span className="h-full w-full animate-pulse bg-border" />
               )}
             </span>
             <div className="min-w-0">
-              <p className="truncate font-display text-sm font-semibold">{current.name}.pdf</p>
+              <p className="truncate font-display text-sm font-semibold">
+                {current.name}.pdf
+              </p>
               <p className="text-xs text-muted">
-                {current.pageCount} page{current.pageCount === 1 ? "" : "s"} — {formatSize(current.size)}
+                {current.pageCount} page{current.pageCount === 1 ? "" : "s"} —{" "}
+                {formatSize(current.size)}
               </p>
             </div>
           </div>
@@ -153,6 +198,8 @@ export default function SplitPage() {
             </label>
             <input
               id="range"
+              aria-invalid={!!rangeError}
+              aria-describedby="range-feedback"
               type="text"
               value={range}
               onChange={(e) => setRange(e.target.value)}
@@ -163,18 +210,38 @@ export default function SplitPage() {
               Comma-separated numbers and ranges, or just click the pages below.
             </p>
 
+            <p
+              id="range-feedback"
+              role={rangeError ? "alert" : "status"}
+              className={rangeError ? "text-bad text-sm" : "text-muted text-sm"}
+            >
+              {rangeError || `${selectedPages.size} pages selected`}
+            </p>
             {pageThumbs.length > 0 ? (
-              <PageRangePicker thumbs={pageThumbs} selected={selectedPages} onToggle={togglePage} />
+              <PageRangePicker
+                thumbs={pageThumbs}
+                selected={selectedPages}
+                onToggle={togglePage}
+              />
             ) : (
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                {Array.from({ length: Math.min(current.pageCount, 10) }).map((_, i) => (
-                  <span key={i} className="aspect-[3/4] animate-pulse rounded-lg bg-surface-2" />
-                ))}
+                {Array.from({ length: Math.min(current.pageCount, 10) }).map(
+                  (_, i) => (
+                    <span
+                      key={i}
+                      className="aspect-[3/4] animate-pulse rounded-lg bg-surface-2"
+                    />
+                  ),
+                )}
               </div>
             )}
 
             <div className="sm:max-w-xs">
-              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf / zip" />
+              <FilenameInput
+                value={outputName}
+                onChange={setOutputName}
+                extension="pdf / zip"
+              />
             </div>
 
             <button
@@ -190,8 +257,12 @@ export default function SplitPage() {
             <button
               type="button"
               data-primary-action="true"
-                  disabled={status.kind === "working" || !current || selectedPages.size === 0}
-                  onClick={handleExtract}
+              disabled={
+                status.kind === "working" ||
+                !current ||
+                selectedPages.size === 0
+              }
+              onClick={handleExtract}
               className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"
             >
               Extract Pages
@@ -211,7 +282,12 @@ export default function SplitPage() {
 
       <RecentActivity entries={entries.filter((e) => e.tool === "split")} />
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

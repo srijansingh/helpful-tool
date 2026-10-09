@@ -149,14 +149,12 @@ export default function FilesPage() {
               onUpdate={update}
               onPurge={() => setPurge(doc)}
               onEditScan={() => {
-                useScanStore
-                  .getState()
-                  .reorderPages(
-                    doc.scanPages!.map((p) => ({
-                      ...p,
-                      id: crypto.randomUUID(),
-                    })),
-                  );
+                useScanStore.getState().reorderPages(
+                  doc.scanPages!.map((p) => ({
+                    ...p,
+                    id: crypto.randomUUID(),
+                  })),
+                );
                 navigate("/scan");
               }}
             />
@@ -209,7 +207,9 @@ export default function FilesPage() {
                       [documentFile(d)],
                       "application/pdf,image/*",
                     );
-                  for (const d of restored) await updateDocument(d);
+                  await (
+                    await import("../lib/library")
+                  ).restoreDocuments(restored);
                 });
               e.target.value = "";
             }}

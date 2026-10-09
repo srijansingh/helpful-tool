@@ -5,7 +5,7 @@ export async function qpdfJob(
   password: string,
   signal: AbortSignal,
   onProgress: (text: string) => void,
-): Promise<{ bytes: Uint8Array; warning: string }> {
+): Promise<{ bytes: Uint8Array; warning: string; ownerPassword?: boolean }> {
   if (file.size > 50 * 1024 * 1024)
     throw new Error("Use a PDF smaller than 50 MB for these on-device tools.");
   signal.throwIfAborted();
@@ -32,7 +32,11 @@ export async function qpdfJob(
         reject(new Error(e.data.error));
       } else {
         finish();
-        resolve({ bytes: e.data.bytes, warning: e.data.warning });
+        resolve({
+          bytes: e.data.bytes,
+          warning: e.data.warning,
+          ownerPassword: e.data.ownerPassword,
+        });
       }
     };
     worker.onerror = () => {

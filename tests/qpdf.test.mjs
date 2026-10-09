@@ -72,3 +72,39 @@ test("repair gate: this WASM build rejects broken startxref without an output", 
   assert.equal(run(q, qpdfArgs("repair")), 2);
   assert.throws(() => q.FS.readFile("/output.pdf"));
 });
+
+test("QPDF inspection distinguishes owner authentication from a user password", async () => {
+  const q = await createModule({
+    wasmBinary,
+    noInitialRun: true,
+    print: () => {},
+    printErr: () => {},
+  });
+  q.FS.writeFile("/input.pdf", await fixture());
+  assert.equal(
+    run(q, [
+      "/input.pdf",
+      "--encrypt",
+      "--user-password=user-pass",
+      "--owner-password=owner-pass",
+      "--bits=256",
+      "--modify=none",
+      "--",
+      "/output.pdf",
+    ]),
+    0,
+  );
+  q.FS.writeFile("/input.pdf", q.FS.readFile("/output.pdf"));
+  assert.equal(run(q, qpdfArgs("inspect", "user-pass")), 0);
+  assert.equal(
+    JSON.parse(new TextDecoder().decode(q.FS.readFile("/inspection.json")))
+      .encrypt.ownerpasswordmatched,
+    false,
+  );
+  assert.equal(run(q, qpdfArgs("inspect", "owner-pass")), 0);
+  assert.equal(
+    JSON.parse(new TextDecoder().decode(q.FS.readFile("/inspection.json")))
+      .encrypt.ownerpasswordmatched,
+    true,
+  );
+});

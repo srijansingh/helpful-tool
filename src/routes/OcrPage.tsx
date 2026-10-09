@@ -56,6 +56,7 @@ export default function OcrPage() {
       </p>
       <div className="mt-4">
         <Dropzone
+          disabled={busy}
           accept="application/pdf,image/*"
           label="Choose a scan or photo"
           hint={file?.name || "PDF or image"}

@@ -18,8 +18,8 @@ export async function loadOrganizeSource(file: File): Promise<OrganizeSource> {
 export interface OrganizePageState {
   id: string;
   index: number; // position in the original source document
-  crop?:number;
-  paper?:"a4"|"letter";
+  crop?: number;
+  paper?: "a4" | "letter";
   rotation: number; // user-added rotation: 0 | 90 | 180 | 270
 }
 
@@ -29,18 +29,29 @@ export interface OrganizePageState {
 export async function buildOrganizedPdf(
   bytes: ArrayBuffer,
   rotations: number[],
-  pages: OrganizePageState[]
+  pages: OrganizePageState[],
 ): Promise<Uint8Array> {
+  if (!pages.length)
+    throw new Error("Keep at least one page before exporting.");
   const src = await PDFDocument.load(bytes);
   const out = await PDFDocument.create();
   const copied = await out.copyPages(
     src,
-    pages.map((p) => p.index)
+    pages.map((p) => p.index),
   );
   copied.forEach((page, i) => {
     const total = (rotations[pages[i].index] + pages[i].rotation) % 360;
     page.setRotation(degrees(total));
-    if(pages[i].crop){const b=page.getCropBox();const inset=Math.min(0.4,Math.max(0,pages[i].crop!/100));page.setCropBox(b.x+b.width*inset,b.y+b.height*inset,b.width*(1-2*inset),b.height*(1-2*inset));}
+    if (pages[i].crop) {
+      const b = page.getCropBox();
+      const inset = Math.min(0.4, Math.max(0, pages[i].crop! / 100));
+      page.setCropBox(
+        b.x + b.width * inset,
+        b.y + b.height * inset,
+        b.width * (1 - 2 * inset),
+        b.height * (1 - 2 * inset),
+      );
+    }
     out.addPage(page);
   });
   return out.save();

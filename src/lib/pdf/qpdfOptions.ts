@@ -1,4 +1,5 @@
-export type QpdfAction = "protect" | "unlock" | "optimize" | "repair";
+export type QpdfAction =
+  "protect" | "unlock" | "optimize" | "repair" | "inspect";
 export function qpdfArgs(
   action: QpdfAction,
   password = "",
@@ -6,6 +7,14 @@ export function qpdfArgs(
 ): string[] {
   const input = "/input.pdf",
     output = "/output.pdf";
+  if (action === "inspect")
+    return [
+      input,
+      `--password=${password}`,
+      "--json",
+      "--json-key=encrypt",
+      "/inspection.json",
+    ];
   if (action === "protect") {
     if (password.length < 8)
       throw new Error("Use a password with at least 8 characters.");
@@ -20,7 +29,6 @@ export function qpdfArgs(
     ];
   }
   if (action === "unlock") {
-    if (!password) throw new Error("Enter the known document password.");
     return [input, `--password=${password}`, "--decrypt", output];
   }
   if (action === "optimize")

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
+import { preparePdf, originalFile } from "../lib/pdf/preflight";
 import { qpdfJob } from "../lib/pdf/qpdfJob";
 import type { QpdfAction } from "../lib/pdf/qpdfOptions";
 import { downloadBytes } from "../lib/download";
@@ -23,10 +24,17 @@ export default function SecurityPage() {
     setBusy(true);
     controller.current = new AbortController();
     try {
+      const source = originalFile(file);
+      const prepared = await preparePdf(
+        source,
+        "/security",
+        controller.current.signal,
+        action === "unlock" ? password : "",
+      );
       const result = await qpdfJob(
-        file,
+        prepared,
         action,
-        password,
+        action === "unlock" ? "" : password,
         controller.current.signal,
         setStatus,
       );
@@ -58,6 +66,7 @@ export default function SecurityPage() {
       </p>
       <div className="mt-4">
         <Dropzone
+          disabled={busy}
           accept="application/pdf"
           label="Choose a PDF"
           hint={file?.type === "application/pdf" ? file.name : "Up to 50 MB"}

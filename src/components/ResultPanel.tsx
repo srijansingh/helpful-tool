@@ -35,7 +35,25 @@ export function ResultPanel() {
         <p className="text-sm text-muted">
           Download started. You can share, save or keep editing.
         </p>
+        {result.sources.length > 0 && (
+          <p className="text-sm text-muted mt-2">
+            Original{result.sources.length > 1 ? "s" : ""} retained for this
+            session: {result.sources.map((f) => f.name).join(", ")}
+          </p>
+        )}
         <ResultActions file={result.file} />
+        {result.sources.length === 1 && (
+          <button
+            className="btn-secondary mt-3"
+            onClick={() => {
+              useDocumentStore.getState().setCurrent(result.sources[0]);
+              close();
+              navigate("/document");
+            }}
+          >
+            Return to original document
+          </button>
+        )}
         <button
           className="btn w-full mt-4"
           onClick={() => {

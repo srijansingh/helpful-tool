@@ -16,20 +16,24 @@ export function usePdfThumbnails(files: File[]): Map<File, string> {
     }
 
     let cancelled = false;
-    for (const file of files) {
-      if (map.has(file)) continue;
-      renderPdfThumbnail(file)
-        .then((url) => {
-          if (cancelled) return;
-          map.set(file, url);
-          forceRender();
-        })
-        .catch(() => {
-          // A corrupt/unreadable PDF just shows the fallback icon instead
-          // of a thumbnail — not worth surfacing as a page-level error
-          // this early (the real merge/split action will fail loudly).
-        });
-    }
+    void (async () => {
+      for (const file of files) {
+        if (cancelled) break;
+        if (map.has(file)) continue;
+        try {
+          const url = await renderPdfThumbnail(file);
+          if (!cancelled) {
+            map.set(file, url);
+            forceRender();
+          }
+        } catch {
+          if (!cancelled) {
+            map.set(file, "");
+            forceRender();
+          }
+        }
+      }
+    })();
     return () => {
       cancelled = true;
     };

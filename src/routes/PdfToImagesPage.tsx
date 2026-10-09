@@ -1,4 +1,9 @@
-import { useRef, useState } from "react";
+import { PageRangePicker } from "../components/split/PageRangePicker";
+import {
+  selectedPages as validateSelection,
+  stringifyPageRanges,
+} from "../lib/pdf/pageRanges";
+import { useEffect, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
@@ -34,6 +39,7 @@ export default function PdfToImagesPage() {
   const [scale, setScale] = useState(2);
   const [quality, setQuality] = useState(0.9);
   const cancel = useRef<AbortController | null>(null);
+  useEffect(() => () => cancel.current?.abort(), []);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const { entries, logActivity } = useRecentActivity();
 
@@ -117,6 +123,7 @@ export default function PdfToImagesPage() {
 
       <Card className="mt-6">
         <Dropzone
+          disabled={status.kind === "working"}
           accept="application/pdf"
           label="Drop a PDF here or click to browse"
           hint={
@@ -219,23 +226,36 @@ export default function PdfToImagesPage() {
           <div className="mt-5">
             <p className="mb-2 text-sm text-muted">
               {pageThumbs.length > 0
-                ? `${pageThumbs.length} page${pageThumbs.length === 1 ? "" : "s"} will be exported`
+                ? `${pageThumbs.length} source pages — choose pages below or enter a range`
                 : "Loading pages…"}
             </p>
-            <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-              {pageThumbs.map((src, i) => (
-                <div key={i} className="relative overflow-hidden rounded-lg">
-                  <img
-                    src={src}
-                    alt={`Page ${i + 1}`}
-                    className="aspect-[3/4] w-full object-cover"
-                  />
-                  <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[9px] font-bold text-fg">
-                    {i + 1}
-                  </span>
-                </div>
-              ))}
-            </div>
+            <PageRangePicker
+              thumbs={pageThumbs}
+              selected={(() => {
+                try {
+                  return new Set(validateSelection(ranges, pageThumbs.length));
+                } catch {
+                  return new Set<number>();
+                }
+              })()}
+              onToggle={(index) => {
+                let selected: number[] = [];
+                try {
+                  selected = validateSelection(ranges, pageThumbs.length);
+                } catch {}
+                const next = new Set(selected);
+                if (next.has(index)) next.delete(index);
+                else next.add(index);
+                if (!next.size) {
+                  setStatus({
+                    kind: "error",
+                    message: "Keep at least one page selected.",
+                  });
+                  return;
+                }
+                setRanges(stringifyPageRanges([...next]));
+              }}
+            />
           </div>
         )}
 

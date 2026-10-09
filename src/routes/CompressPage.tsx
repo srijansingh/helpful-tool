@@ -1,9 +1,9 @@
 import { PDFDocument } from "pdf-lib";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { renderPdfToImages } from "../lib/pdf/pdfToImages";
-import { imagesToPdf } from "../lib/pdf/imagesToPdf";
+import { imagesToPdf } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 export default function CompressPage() {
@@ -16,6 +16,7 @@ export default function CompressPage() {
   const [busy, setBusy] = useState(false);
   const [target, setTarget] = useState(0);
   const cancel = useRef<AbortController | null>(null);
+  useEffect(() => () => cancel.current?.abort(), []);
   const build = async () => {
     if (!file || busy || !accepted) return;
     setBusy(true);
@@ -58,6 +59,12 @@ export default function CompressPage() {
       }
       cancel.current.signal.throwIfAborted();
       if (!best) throw new Error("No pages were rendered.");
+      if (best.length >= file.size) {
+        setStatus(
+          `Your original (${formatSize(file.size)}) is smaller than this result (${formatSize(best.length)}). No replacement was downloaded. Keep your original or adjust the settings.`,
+        );
+        return;
+      }
       downloadBytes(
         best,
         file.name.replace(/\.pdf$/i, "") + "-smaller.pdf",
@@ -85,6 +92,7 @@ export default function CompressPage() {
       </p>
       <div className="mt-4">
         <Dropzone
+          disabled={busy}
           accept="application/pdf"
           label="Choose a PDF"
           hint={

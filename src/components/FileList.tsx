@@ -15,7 +15,12 @@ interface FileListProps {
 // Organize's page grid, so dragging behaves identically, and works, on
 // touch everywhere in the app rather than only here on desktop with a
 // mouse. The Move up/down buttons stay as the keyboard-operable path.
-export function FileList({ files, onReorder, onRemove, thumbnails }: FileListProps) {
+export function FileList({
+  files,
+  onReorder,
+  onRemove,
+  thumbnails,
+}: FileListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const filesRef = useRef(files);
   filesRef.current = files;
@@ -24,7 +29,8 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
     return <p className="text-sm italic text-muted">No files added yet.</p>;
   }
 
-  const keyOf = (file: File, i: number) => `${file.name}-${file.lastModified}-${i}`;
+  const keyOf = (file: File, i: number) =>
+    `${file.name}-${file.lastModified}-${i}`;
 
   const move = (i: number, dir: -1 | 1) => {
     const next = [...files];
@@ -37,7 +43,10 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
     onReorder(files.filter((_, idx) => idx !== i));
   };
 
-  const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>, i: number) => {
+  const handlePointerDown = (
+    e: ReactPointerEvent<HTMLDivElement>,
+    i: number,
+  ) => {
     e.currentTarget.setPointerCapture(e.pointerId);
     setDragIndex(i);
   };
@@ -68,7 +77,9 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
             key={keyOf(file, i)}
             data-file-index={i}
             className={`flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-shadow ${
-              dragIndex === i ? "relative z-10 shadow-lg ring-2 ring-accent" : ""
+              dragIndex === i
+                ? "relative z-10 shadow-lg ring-2 ring-accent"
+                : ""
             }`}
           >
             <div
@@ -84,14 +95,22 @@ export function FileList({ files, onReorder, onRemove, thumbnails }: FileListPro
 
             <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface">
               {thumb ? (
-                <img src={thumb} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={thumb}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               ) : (
-                <span className="h-full w-full animate-pulse bg-border" />
+                <span className="text-xs text-muted">
+                  {thumbnails?.has(file) ? "PDF" : "…"}
+                </span>
               )}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate font-display text-sm">{file.name}</span>
-              <span className="text-xs text-muted">{formatSize(file.size)}</span>
+              <span className="text-xs text-muted">
+                {formatSize(file.size)}
+              </span>
             </span>
             <span className="flex shrink-0 gap-1">
               <button

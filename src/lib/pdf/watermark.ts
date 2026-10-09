@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, degrees } from "pdf-lib";
 import { selectedPages } from "./pageRanges.ts";
+import { screenPoint } from "./edit.ts";
 import { textFont } from "./font.ts";
 export interface WatermarkOptions {
   text: string;
@@ -29,13 +30,20 @@ export async function applyWatermark(
   const logo = options.logo ? await doc.embedPng(options.logo) : null;
   for (const i of pages) {
     const page = doc.getPage(i);
-    const { x: bx, y: by, width, height } = page.getCropBox();
+    const box = page.getCropBox();
+    const pageRotation = ((page.getRotation().angle % 360) + 360) % 360;
+    const width = pageRotation % 180 ? box.height : box.width;
+    const height = pageRotation % 180 ? box.width : box.height;
     const textWidth = logo
       ? Math.min(120, width / 3)
       : font.widthOfTextAtSize(options.text, options.fontSize);
     const textHeight = logo
       ? (textWidth * logo.height) / logo.width
       : options.fontSize;
+    if (textWidth > width || textHeight > height)
+      throw new Error(
+        `The watermark is too large for page ${i + 1}. Reduce the text size or use a smaller logo.`,
+      );
     const angle = (options.rotation * Math.PI) / 180;
     const pos = options.position || "center";
     const cx = pos.endsWith("left")
@@ -55,16 +63,20 @@ export async function applyWatermark(
         ])
       : [[cx, cy]];
     for (const [mx, my] of centers) {
-      const x =
-        bx +
+      const displayX =
         mx -
         ((textWidth / 2) * Math.cos(angle) -
           textHeight * 0.35 * Math.sin(angle));
-      const y =
-        by +
+      const displayY =
         my -
         ((textWidth / 2) * Math.sin(angle) +
           textHeight * 0.35 * Math.cos(angle));
+      const [x, y] = screenPoint(
+        box,
+        pageRotation,
+        displayX / width,
+        1 - displayY / height,
+      );
       if (logo)
         page.drawImage(logo, {
           x,
@@ -72,7 +84,7 @@ export async function applyWatermark(
           width: textWidth,
           height: textHeight,
           opacity: options.opacity,
-          rotate: degrees(options.rotation),
+          rotate: degrees(options.rotation + pageRotation),
         });
       else
         page.drawText(options.text, {
@@ -82,7 +94,7 @@ export async function applyWatermark(
           size: options.fontSize,
           color,
           opacity: options.opacity,
-          rotate: degrees(options.rotation),
+          rotate: degrees(options.rotation + pageRotation),
         });
     }
   }

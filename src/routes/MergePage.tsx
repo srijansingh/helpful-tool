@@ -11,7 +11,7 @@ import { PdfPreview } from "../components/PdfPreview";
 import { useSeo } from "../hooks/useSeo";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 import { usePdfThumbnails } from "../hooks/usePdfThumbnails";
-import { mergePdfs } from "../lib/pdf/merge";
+import { mergePdfs } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 import { useMergeStore } from "../store/useMergeStore";
@@ -20,7 +20,7 @@ import { useToastStore } from "../store/useToastStore";
 export default function MergePage() {
   useSeo(
     "Merge PDF Files Online Free — LocalPDF",
-    "Combine multiple PDF files into one, in your browser. See page previews, rename the result, no upload, no login."
+    "Combine multiple PDF files into one, in your browser. See page previews, rename the result, no upload, no login.",
   );
 
   const files = useMergeStore((s) => s.files);
@@ -56,7 +56,10 @@ export default function MergePage() {
     try {
       setPreviewBytes(await mergePdfs(files));
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't build preview: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't build preview: ${(e as Error).message}`,
+      });
     } finally {
       setPreviewing(false);
     }
@@ -65,7 +68,10 @@ export default function MergePage() {
   const handleMerge = async () => {
     if (status.kind === "working") return;
     if (files.length < 2) {
-      setStatus({ kind: "error", message: "Add at least two PDFs or images to merge." });
+      setStatus({
+        kind: "error",
+        message: "Add at least two PDFs or images to merge.",
+      });
       return;
     }
     setStatus({ kind: "working", message: "Merging…" });
@@ -77,15 +83,23 @@ export default function MergePage() {
         kind: "done",
         message: `Done — ${filename} (${formatSize(bytes.length)}) ready — download started, processed entirely on this device.`,
       });
-      logActivity({ tool: "merge", label: `Merged ${files.length} PDFs into ${filename}` });
+      logActivity({
+        tool: "merge",
+        label: `Merged ${files.length} PDFs into ${filename}`,
+      });
     } catch (e) {
-      setStatus({ kind: "error", message: `Couldn't merge: ${(e as Error).message}` });
+      setStatus({
+        kind: "error",
+        message: `Couldn't merge: ${(e as Error).message}`,
+      });
     }
   };
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Merge PDFs</h1>
+      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+        Merge PDFs
+      </h1>
       <p className="mt-1 text-muted">Combine PDFs and photos in any order.</p>
 
       <div className="mt-6 lg:grid lg:grid-cols-[1fr_380px] lg:items-start lg:gap-6">
@@ -100,17 +114,27 @@ export default function MergePage() {
             />
 
             <div className="mt-5">
-              <FileList files={files} onReorder={setFiles} onRemove={handleRemoveFile} thumbnails={thumbnails} />
+              <FileList
+                files={files}
+                onReorder={setFiles}
+                onRemove={handleRemoveFile}
+                thumbnails={thumbnails}
+              />
             </div>
 
             {files.length > 0 && (
               <p className="mt-2 text-xs text-muted">
-                {files.length} file{files.length === 1 ? "" : "s"} selected — {formatSize(totalSize)} total
+                {files.length} file{files.length === 1 ? "" : "s"} selected —{" "}
+                {formatSize(totalSize)} total
               </p>
             )}
 
             <div className="mt-5 flex flex-col gap-3 sm:max-w-xs">
-              <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
+              <FilenameInput
+                value={outputName}
+                onChange={setOutputName}
+                extension="pdf"
+              />
             </div>
 
             {files.length > 0 && (
@@ -128,8 +152,8 @@ export default function MergePage() {
             <button
               type="button"
               data-primary-action="true"
-                  disabled={status.kind === "working" || files.length < 2}
-                  onClick={handleMerge}
+              disabled={status.kind === "working" || files.length < 2}
+              onClick={handleMerge}
               className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99] sm:w-auto"
             >
               Merge &amp; Download
@@ -139,7 +163,9 @@ export default function MergePage() {
           </Card>
 
           <div className="lg:hidden">
-            <RecentActivity entries={entries.filter((e) => e.tool === "merge")} />
+            <RecentActivity
+              entries={entries.filter((e) => e.tool === "merge")}
+            />
           </div>
         </div>
 
@@ -161,11 +187,19 @@ export default function MergePage() {
               </div>
             )}
           </div>
-          <RecentActivity entries={entries.filter((e) => e.tool === "merge")} className="shrink-0" />
+          <RecentActivity
+            entries={entries.filter((e) => e.tool === "merge")}
+            className="shrink-0"
+          />
         </div>
       </div>
 
-      {previewBytes && <PdfPreview bytes={previewBytes} onClose={() => setPreviewBytes(null)} />}
+      {previewBytes && (
+        <PdfPreview
+          bytes={previewBytes}
+          onClose={() => setPreviewBytes(null)}
+        />
+      )}
     </section>
   );
 }

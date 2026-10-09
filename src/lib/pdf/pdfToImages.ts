@@ -34,10 +34,11 @@ export async function renderPdfToImages(
   const pdf = await getDocument({ data: bytes }).promise;
   const ext = format === "image/png" ? "png" : "jpg";
   const results: NamedBytes[] = [];
-  const pages = ranges.trim()
-    ? selectedPages(ranges, pdf.numPages)
-    : Array.from({ length: pdf.numPages }, (_, i) => i);
+  let totalBytes = 0;
   try {
+    const pages = ranges.trim()
+      ? selectedPages(ranges, pdf.numPages)
+      : Array.from({ length: pdf.numPages }, (_, i) => i);
     if (pages.length > maxPages)
       throw new Error(
         `Choose at most ${maxPages} pages at a time for this export.`,
@@ -66,9 +67,32 @@ export async function renderPdfToImages(
         signal?.removeEventListener("abort", cancel);
       }
       signal?.throwIfAborted();
-      const blob: Blob = await new Promise((resolve) =>
-        canvas.toBlob((b) => resolve(b!), format, quality),
+      const blob: Blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(
+          (b) =>
+            b
+              ? resolve(b)
+              : reject(
+                  new Error(
+                    "Image export failed. Reduce the resolution and try again.",
+                  ),
+                ),
+          format,
+          quality,
+        ),
       );
+      totalBytes += blob.size;
+      if (totalBytes > 50 * 1024 * 1024) {
+        canvas.width = canvas.height = 0;
+        throw new Error(
+          "The images exceed 50 MB. Choose fewer pages or reduce the resolution.",
+        );
+      }
+      if (blob.type !== format)
+        throw new Error(
+          "This browser does not support the selected image format. Choose PNG or JPEG.",
+        );
+      page.cleanup();
       results.push({
         name: `page-${i}.${ext}`,
         bytes: new Uint8Array(await blob.arrayBuffer()),

@@ -1,3 +1,4 @@
+import { useSessionState } from "../hooks/useSessionState";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, FileCheck2, Plus, FolderOpen } from "lucide-react";
@@ -20,9 +21,9 @@ import type { FilterType } from "../lib/scan/filters";
 import { downscale } from "../lib/scan/downscale";
 import { loadImage } from "../lib/scan/loadImage";
 import { dataUrlToFile } from "../lib/scan/dataUrlToFile";
-import { saveDocument as saveFile, updateDocument } from "../lib/library";
+import { saveDocument as saveFile } from "../lib/library";
 import { detectImagePaper } from "../lib/scan/detect";
-import { imagesToPdf } from "../lib/pdf/imagesToPdf";
+import { imagesToPdf } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
 
@@ -43,28 +44,48 @@ export default function ScanPage() {
   const clearSession = useScanStore((s) => s.clear);
   const pushToast = useToastStore((s) => s.push);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [mode, setMode] = useState<
-    "document" | "id" | "receipt" | "whiteboard"
-  >("document");
-  const [batchCrop, setBatchCrop] = useState(false);
-  const [step, setStep] = useState<Step>("capture");
-  const [rawImage, setRawImage] = useState<string | null>(null);
-  const [warpedCanvas, setWarpedCanvas] = useState<HTMLCanvasElement | null>(
+  const [editingId, setEditingId] = useSessionState<string | null>(
+    "scan",
+    "editingId",
     null,
   );
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>("enhance");
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [filterThumbs, setFilterThumbs] = useState<
+  const [mode, setMode] = useSessionState<
+    "document" | "id" | "receipt" | "whiteboard"
+  >("scan", "mode", "document");
+  const [batchCrop, setBatchCrop] = useSessionState("scan", "batchCrop", false);
+  const [step, setStep] = useSessionState<Step>("scan", "step", "capture");
+  const [rawImage, setRawImage] = useSessionState<string | null>(
+    "scan",
+    "rawImage",
+    null,
+  );
+  const [warpedCanvas, setWarpedCanvas] =
+    useSessionState<HTMLCanvasElement | null>("scan", "warpedCanvas", null);
+  const [selectedFilter, setSelectedFilter] = useSessionState<FilterType>(
+    "scan",
+    "selectedFilter",
+    "enhance",
+  );
+  const [previewUrl, setPreviewUrl] = useSessionState<string | null>(
+    "scan",
+    "previewUrl",
+    null,
+  );
+  const [filterThumbs, setFilterThumbs] = useSessionState<
     Partial<Record<FilterType, string>>
-  >({});
-  const [outputName, setOutputName] = useState("scan");
+  >("scan", "filterThumbs", {});
+  const [outputName, setOutputName] = useSessionState(
+    "scan",
+    "outputName",
+    "scan",
+  );
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [processing, setProcessing] = useState(false);
   const [previewBytes, setPreviewBytes] = useState<Uint8Array | null>(null);
   const [previewing, setPreviewing] = useState(false);
 
   const resetEditor = () => {
+    useScanStore.getState().setCropDraft(null);
     setEditingId(null);
     setStep("capture");
     setRawImage(null);
@@ -215,16 +236,7 @@ export default function ScanPage() {
         `${outputName.trim() || "scan"}.pdf`,
         { type: "application/pdf" },
       );
-      const saved = await saveFile(file);
-      try {
-        await updateDocument({ ...saved, scanPages: pages });
-      } catch (e) {
-        setStatus({
-          kind: "error",
-          message: `PDF saved, but editable scan sources could not be saved: ${(e as Error).message}`,
-        });
-        return;
-      }
+      await saveFile(file, crypto.randomUUID(), "", pages);
       clearSession();
       navigate("/files");
     } catch (e) {
@@ -461,7 +473,10 @@ export default function ScanPage() {
                 type="button"
                 data-primary-action="true"
                 disabled={
-                  status.kind === "working" || processing || step !== "capture" || pages.length === 0
+                  status.kind === "working" ||
+                  processing ||
+                  step !== "capture" ||
+                  pages.length === 0
                 }
                 onClick={handleExportPdf}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-bg transition-transform active:scale-[0.99]"

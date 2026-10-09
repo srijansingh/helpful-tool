@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { saveDocument } from "../lib/library";
+import { saveDocumentOnce } from "../lib/library";
 import { friendlyError } from "../lib/importFiles";
 export function ResultActions({ file }: { file: File }) {
   const [url, setUrl] = useState("");
@@ -9,6 +9,7 @@ export function ResultActions({ file }: { file: File }) {
     return () => URL.revokeObjectURL(next);
   }, [file]);
   const [message, setMessage] = useState("");
+  const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const canShare =
     typeof navigator.canShare === "function" &&
@@ -40,12 +41,13 @@ export function ResultActions({ file }: { file: File }) {
         </a>
         <button
           className="btn-secondary"
-          disabled={busy}
+          disabled={busy || saved}
           onClick={async () => {
             if (busy) return;
             setBusy(true);
             try {
-              await saveDocument(file);
+              await saveDocumentOnce(file);
+              setSaved(true);
               setMessage("Saved in My files on this device.");
             } catch (e) {
               setMessage(friendlyError(e));
@@ -54,7 +56,7 @@ export function ResultActions({ file }: { file: File }) {
             }
           }}
         >
-          Save on device
+          {saved ? "Saved on device" : "Save on device"}
         </button>
       </div>
       {message && (

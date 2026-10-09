@@ -1,3 +1,4 @@
+import { friendlyError } from "../lib/importFiles";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   getDocument,
@@ -8,12 +9,14 @@ import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 GlobalWorkerOptions.workerSrc = workerSrc;
 export function PdfReader({
   bytes,
+  allowCopy = true,
   page = 1,
   onPage,
   overlay,
   onSize,
 }: {
   bytes: Uint8Array;
+  allowCopy?: boolean;
   page?: number;
   onPage?: (page: number) => void;
   overlay?: ReactNode;
@@ -41,7 +44,7 @@ export function PdfReader({
         if (active) setPdf(p);
       })
       .catch((e) => {
-        if (active) setError(e.message);
+        if (active) setError(friendlyError(e));
       });
     return () => {
       active = false;
@@ -73,7 +76,7 @@ export function PdfReader({
           viewport,
         });
         await renderTask.promise;
-        const content = await p.getTextContent();
+        const content = allowCopy ? await p.getTextContent() : { items: [] };
         if (active)
           setText(
             content.items
@@ -81,7 +84,7 @@ export function PdfReader({
               .join(" "),
           );
       } catch (e) {
-        if (active) setError((e as Error).message);
+        if (active) setError(friendlyError(e));
       } finally {
         if (active) setLoading(false);
       }
@@ -90,14 +93,14 @@ export function PdfReader({
       active = false;
       renderTask?.cancel();
     };
-  }, [pdf, number, zoom]);
+  }, [pdf, number, zoom, allowCopy]);
   const go = (n: number) => {
     const value = Math.max(1, Math.min(pdf?.numPages || 1, n));
     if (onPage) onPage(value);
     else setLocalPage(value);
   };
   const search = async () => {
-    if (!pdf || !query.trim()) return;
+    if (!allowCopy || !pdf || !query.trim()) return;
     setLoading(true);
     try {
       for (let offset = 1; offset <= pdf.numPages; offset++) {
@@ -113,6 +116,8 @@ export function PdfReader({
         }
       }
       setError("No matching text. Scanned pages need OCR first.");
+    } catch {
+      setError("Search could not finish. Try again or reopen the document.");
     } finally {
       setLoading(false);
     }
@@ -161,6 +166,7 @@ export function PdfReader({
       <div className="reader-search">
         <input
           className="field"
+          disabled={!allowCopy}
           aria-label="Find text in PDF"
           placeholder="Find text"
           value={query}
@@ -171,7 +177,7 @@ export function PdfReader({
         />
         <button
           className="btn-secondary"
-          disabled={!pdf || loading}
+          disabled={!allowCopy || !pdf || loading}
           onClick={() => void search()}
         >
           Find next
@@ -192,7 +198,9 @@ export function PdfReader({
       <details className="mt-3">
         <summary>Selectable page text</summary>
         <p className="select-text whitespace-pre-wrap p-3">
-          {text || "No text layer on this page."}
+          {allowCopy
+            ? text || "No text layer on this page."
+            : "This document restricts copying text."}
         </p>
       </details>
     </div>
