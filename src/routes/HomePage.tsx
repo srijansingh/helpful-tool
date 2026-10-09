@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Infinity as InfinityIcon, Lock, Zap } from "lucide-react";
 import { TOOLS } from "../lib/tools";
+import { RecentActivity } from "../components/RecentActivity";
 import { useSeo } from "../hooks/useSeo";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 
 const PITCH = [
   { icon: Lock, text: "Nothing is ever uploaded" },
@@ -14,6 +16,8 @@ export default function HomePage() {
     "LocalPDF — Free PDF Tools That Never Leave Your Device",
     "Merge, split, organize, scan, and convert PDFs entirely in your browser. No upload, no account, no daily limits."
   );
+
+  const { entries } = useRecentActivity();
 
   return (
     <section>
@@ -62,6 +66,8 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
+
+      <RecentActivity entries={entries} />
     </section>
   );
 }

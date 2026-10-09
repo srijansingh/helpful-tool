@@ -17,6 +17,48 @@ A real landing page, not a redirect — hero pitch, three trust callouts
 (no upload, no daily limits/account, works offline), and a grid linking
 to every tool (`src/routes/HomePage.tsx`, `src/lib/tools.ts`).
 
+## Desktop and keyboard, not just mobile
+
+An enterprise-UX audit (research against Linear/Stripe/Carbon/Maersk
+design-system patterns, plus a live audit of this app) found the desktop
+layout was a mobile layout stretched onto a wide monitor — a single
+narrow column leaving most of a 1536px-wide screen empty — and that
+several interactions (page reordering, destructive deletes) had no
+keyboard path and no confirmation. Addressed directly:
+
+- **Main container widened** (`max-w-3xl` → `max-w-6xl`, `App.tsx`).
+  Merge and Images→PDF get a real two-pane desktop layout: file list on
+  the left, a **live-updating preview pane** on the right
+  (`LivePreviewPane.tsx`) that rebuilds the actual output PDF (debounced
+  500ms) and renders every page as you add/reorder/remove files — not a
+  modal you have to ask for. Falls back to the modal-based "Preview PDF"
+  on mobile, where there's no width to spare.
+- **Split PDF got a real feature, not just more width**: every page
+  renders as a clickable thumbnail (`PageRangePicker.tsx`) that toggles
+  in/out of the extraction range, synced both ways with the range text
+  field (`stringifyPageRanges` in `src/lib/pdf/pageRanges.ts` is the
+  inverse of the existing parser). Previously the only way to pick pages
+  was typing numbers blind against a single first-page thumbnail.
+- **Command palette** (`CommandPalette.tsx`): Cmd/Ctrl+K from any screen,
+  or the "Jump to…" trigger in the sidebar / search icon on mobile.
+  Type to filter, arrow keys + Enter to navigate, Escape to dismiss.
+- **Keyboard-accessible reordering**: the Pointer-Events drag handles in
+  the scan filmstrip and Organize's page grid were plain `<div>`s with no
+  way to focus or activate them from a keyboard. Both now have real
+  Move-earlier/Move-later `<button>`s alongside the drag handle — same
+  pattern `FileList` already used, which was itself rebuilt onto Pointer
+  Events (from HTML5 drag-and-drop, which doesn't work well on touch) so
+  dragging behaves identically everywhere in the app.
+- **ConfirmDialog** for genuinely hard-to-recover actions (deleting a
+  saved scan, discarding every edit in Organize via "Start Over") and an
+  **undo toast** (`useToastStore` + `ToastViewport`) for frequent,
+  low-consequence ones (removing a single page or file) — a blocking
+  dialog on every page removal would be its own kind of friction.
+- **One global `:focus-visible` style** (`index.css`) instead of relying
+  on each browser's inconsistent default, and `role="status"
+  aria-live="polite"` on `StatusMessage` so success/error messages are
+  actually announced to screen readers.
+
 ## Organize PDF (`/organize`)
 
 Reorder, delete, and rotate pages in one editor. Page tiles render via
@@ -172,7 +214,11 @@ depending on the tool:
 - **Recent activity** (`src/hooks/useRecentActivity.ts`) — an IndexedDB
   log of *metadata only*: which tool was used, a short label, and a
   timestamp. The last 8 entries show under "Recent on this device" on
-  each PDF tool page.
+  each PDF tool page, and unfiltered (every tool together) on the
+  homepage as a returning-user dashboard. Each entry links back to its
+  tool (`RecentActivity.tsx`) — that's the honest version of "resume,"
+  since the actual file bytes are never kept (next point): no thumbnail,
+  no restored file, just a fast way back to the right tool.
 - **Scan library** (`src/hooks/useScanLibrary.ts`) — the one deliberate
   exception: real image bytes, in IndexedDB. See Document scanner above
   for why.
