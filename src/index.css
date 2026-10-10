@@ -18,7 +18,17 @@
   --color-accent-2: #22d3ee;
   --color-good: #4ade80;
   --color-bad: #f87171;
+  --color-warning: #fbbf24;
+  --color-info: #60a5fa;
   --color-border: #ffffff1a;
+
+  /* One radius scale, used everywhere instead of ad hoc 12/16/18px values
+     scattered across components — sm for controls/chips, md for inputs and
+     buttons, lg for cards/panels/modals. */
+  --radius: 12px;
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
 }
 
 :root {
@@ -36,6 +46,8 @@
     --color-accent-2: #0891b2;
     --color-good: #15803d;
     --color-bad: #dc2626;
+    --color-warning: #b45309;
+    --color-info: #1d4ed8;
     --color-border: #0e10161a;
     color-scheme: light;
   }
@@ -51,6 +63,8 @@
   --color-accent-2: #0891b2;
   --color-good: #15803d;
   --color-bad: #dc2626;
+  --color-warning: #b45309;
+  --color-info: #1d4ed8;
   --color-border: #0e10161a;
   color-scheme: light;
 }
@@ -485,6 +499,19 @@ button:disabled {
 .app-sidebar {
   display: none;
 }
+.tooltip-bubble {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  padding: 5px 9px;
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-fg);
+  color: var(--color-bg);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px #0003;
+}
 .skip-link {
   position: fixed;
   top: 8px;
@@ -556,13 +583,19 @@ label:has(input[type="checkbox"]) {
     position: sticky;
     top: 0;
     height: 100dvh;
-    width: 208px;
+    width: 264px;
     flex-shrink: 0;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
     border-right: 1px solid var(--color-border);
     background: var(--color-surface);
     padding: 20px 12px;
+    transition: width 0.15s ease;
+  }
+  .app-sidebar[data-collapsed="true"] {
+    width: 56px;
+    padding: 20px 8px;
   }
   .document-workspace {
     display: grid;
@@ -580,6 +613,12 @@ label:has(input[type="checkbox"]) {
   .workspace-inspector {
     grid-column: 2;
     grid-row: 1;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-sidebar:not([data-collapsed="false"]) {
+    width: 56px;
+    padding: 20px 8px;
   }
 }
 @media (min-width: 640px) and (max-width: 767px) {
