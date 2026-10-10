@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
+import { FilenameInput } from "../components/FilenameInput";
 import { preparePdf, originalFile } from "../lib/pdf/preflight";
 import { qpdfJob } from "../lib/pdf/qpdfJob";
 import type { QpdfAction } from "../lib/pdf/qpdfOptions";
@@ -14,6 +15,7 @@ export default function SecurityPage() {
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [outputName, setOutputName] = useState("");
   const { logActivity } = useRecentActivity();
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
@@ -42,7 +44,8 @@ export default function SecurityPage() {
       );
       setPassword("");
       setConfirm("");
-      const name = file.name.replace(/\.pdf$/i, "") + `-${action}.pdf`;
+      const defaultName = file.name.replace(/\.pdf$/i, "") + `-${action}`;
+      const name = `${outputName.trim() || defaultName}.pdf`;
       if (action === "optimize" && result.bytes.length >= file.size) {
         setStatus(
           `The original (${formatSize(file.size)}) is already smaller than the optimized result (${formatSize(result.bytes.length)}). Keep your original.`,
@@ -76,7 +79,10 @@ export default function SecurityPage() {
           accept="application/pdf"
           label="Choose a PDF"
           hint={file?.type === "application/pdf" ? file.name : "Up to 50 MB"}
-          onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
+          onFiles={(files) => {
+            useDocumentStore.getState().setCurrent(files[0]);
+            setOutputName(files[0].name.replace(/\.pdf$/i, "") + `-${action}`);
+          }}
         />
       </div>
       <div className="tool-form mt-4">
@@ -87,10 +93,12 @@ export default function SecurityPage() {
             disabled={busy}
             value={action}
             onChange={(e) => {
-              setAction(e.target.value as QpdfAction);
+              const next = e.target.value as QpdfAction;
+              setAction(next);
               setPassword("");
               setConfirm("");
               setStatus("");
+              if (file) setOutputName(file.name.replace(/\.pdf$/i, "") + `-${next}`);
             }}
           >
             <option value="protect">Add password · AES-256</option>
@@ -132,6 +140,7 @@ export default function SecurityPage() {
           Optimization recompresses internal PDF streams; the size reduction
           varies. Rewriting a PDF invalidates existing certificate signatures.
         </p>
+        <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
         <div className="flex flex-wrap gap-3">
           <button
             className="btn"

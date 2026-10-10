@@ -1,4 +1,5 @@
 import { PdfPreview } from "../components/PdfPreview";
+import { FilenameInput } from "../components/FilenameInput";
 import { editImage } from "../lib/editImage";
 import { PDFDocument } from "pdf-lib";
 import { useEffect, useRef, useState } from "react";
@@ -20,6 +21,9 @@ export default function CompressPage() {
   const [candidate, setCandidate] = useState<Uint8Array | null>(null);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const [target, setTarget] = useState(0);
+  const [outputName, setOutputName] = useState(
+    initial ? initial.name.replace(/\.pdf$/i, "") + "-smaller" : "",
+  );
   const { logActivity } = useRecentActivity();
   useEffect(() => {
     setCandidate(null);
@@ -125,6 +129,7 @@ export default function CompressPage() {
             onFiles={(f) => {
               setFile(f[0]);
               useDocumentStore.getState().setCurrent(f[0]);
+              setOutputName(f[0].name.replace(/\.pdf$/i, "") + "-smaller");
             }}
           />
         </div>
@@ -173,6 +178,7 @@ export default function CompressPage() {
             I want a flattened photo PDF and accept the loss of text and
             interactive features.
           </label>
+          <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
           <button
             className="btn"
             data-primary-action
@@ -181,7 +187,7 @@ export default function CompressPage() {
             }
             onClick={() => {
               if (candidate && file) {
-                const name = file.name.replace(/\.pdf$/i, "") + "-smaller.pdf";
+                const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-smaller"}.pdf`;
                 downloadBytes(candidate, name, "application/pdf");
                 logActivity({
                   tool: "compress",

@@ -3,6 +3,7 @@ import { PDFDocument } from "pdf-lib";
 import { useEffect } from "react";
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
+import { FilenameInput } from "../components/FilenameInput";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { buildBooklet } from "../lib/pdf/workerOperations";
 import { PdfPreview } from "../components/PdfPreview";
@@ -11,6 +12,9 @@ import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function BookletPage() {
   const initial = useDocumentStore((s) => s.current);
   const [file, setFile] = useState<File | null>(initial);
+  const [outputName, setOutputName] = useState(
+    initial ? initial.name.replace(/\.pdf$/i, "") + "-booklet" : "",
+  );
   const [count, setCount] = useState(0);
   useEffect(() => {
     let active = true;
@@ -43,7 +47,7 @@ export default function BookletPage() {
         right,
       );
       if (exportFile) {
-        const name = file.name.replace(/\.pdf$/i, "") + "-booklet.pdf";
+        const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-booklet"}.pdf`;
         downloadBytes(out, name, "application/pdf");
         setStatus(
           "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
@@ -80,6 +84,7 @@ export default function BookletPage() {
             onFiles={(f) => {
               setFile(f[0]);
               useDocumentStore.getState().setCurrent(f[0]);
+              setOutputName(f[0].name.replace(/\.pdf$/i, "") + "-booklet");
             }}
           />
         </div>
@@ -132,6 +137,7 @@ export default function BookletPage() {
             Check the preview before printing. Existing certificate
             signatures are not retained.
           </p>
+          <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
           <div className="flex flex-wrap gap-3">
             <button
               className="btn-secondary"

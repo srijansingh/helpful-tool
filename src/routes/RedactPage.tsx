@@ -3,6 +3,7 @@ import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import { PdfPreview } from "../components/PdfPreview";
 import { ToolSettings } from "../components/ToolSettings";
+import { FilenameInput } from "../components/FilenameInput";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { redactPdf, type RedactionBox } from "../lib/pdf/redact";
 import { downloadBytes } from "../lib/download";
@@ -21,6 +22,7 @@ export default function RedactPage() {
   const [accepted, setAccepted] = useState(false);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const [dragBox, setDragBox] = useState<RedactionBox | null>(null);
+  const [outputName, setOutputName] = useState("");
   const { logActivity } = useRecentActivity();
   const loaded = useRef<File | null>(null);
   const start = useRef<[number, number] | null>(null);
@@ -32,6 +34,7 @@ export default function RedactPage() {
     loaded.current = null;
     setBoxes(file ? (drafts.get(file) ?? []) : []);
     setPage(1);
+    setOutputName(file ? file.name.replace(/\.pdf$/i, "") + "-redacted" : "");
     if (file)
       file
         .arrayBuffer()
@@ -87,7 +90,7 @@ export default function RedactPage() {
         setStatus,
       );
       if (download) {
-        const name = file.name.replace(/\.pdf$/i, "") + "-redacted.pdf";
+        const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-redacted"}.pdf`;
         downloadBytes(out, name, "application/pdf");
         setStatus(
           "New redacted PDF created. Inspect all pages and share only this new file.",
@@ -262,6 +265,13 @@ export default function RedactPage() {
                 I accept a photo PDF with no selectable text or interactive
                 features. I have checked the areas to remove.
               </label>
+              <div className="mt-3">
+                <FilenameInput
+                  value={outputName}
+                  onChange={setOutputName}
+                  extension="pdf"
+                />
+              </div>
               <p className="text-sm text-muted mt-3">
                 The original and any older saved copies remain on your
                 device. This tool does not delete them. Output is limited to
