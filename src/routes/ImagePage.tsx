@@ -7,6 +7,7 @@ import { Dropzone } from "../components/Dropzone";
 import { downloadBlob } from "../lib/download";
 import { friendlyError } from "../lib/importFiles";
 import { formatSize } from "../lib/formatSize";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function ImagePage() {
   const initial = useDocumentStore((s) => s.current);
   const [file, setFile] = useState<File | null>(initial);
@@ -22,6 +23,7 @@ export default function ImagePage() {
   const [result, setResult] = useState<Blob | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const { logActivity } = useRecentActivity();
   useEffect(() => {
     setResult(null);
     if (!file?.type.startsWith("image/")) return;
@@ -72,7 +74,9 @@ export default function ImagePage() {
       setResult(out);
 
       const ext = out.type.split("/")[1].replace("jpeg", "jpg");
-      downloadBlob(out, file.name.replace(/\.[^.]+$/, "") + "-edited." + ext);
+      const name = file.name.replace(/\.[^.]+$/, "") + "-edited." + ext;
+      downloadBlob(out, name);
+      logActivity({ tool: "image", label: `Edited ${file.name} into ${name}` });
     } catch (e) {
       setError(friendlyError(e));
     } finally {

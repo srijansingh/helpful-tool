@@ -9,6 +9,7 @@ import {
   type OcrLanguage,
 } from "../lib/ocr";
 import { downloadBytes, downloadBlob } from "../lib/download";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function OcrPage() {
   const file = useDocumentStore((s) => s.current);
   const [language, setLanguage] = useSessionState<OcrLanguage>(
@@ -25,6 +26,7 @@ export default function OcrPage() {
     setText(file ? (ocrTexts.get(file) ?? "") : "");
   }, [file]);
   const [busy, setBusy] = useState(false);
+  const { logActivity } = useRecentActivity();
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
   const run = async () => {
@@ -41,16 +43,17 @@ export default function OcrPage() {
         setStatus,
       );
       setText(result.text);
-      downloadBytes(
-        result.bytes,
-        file.name.replace(/\.[^.]+$/, "") + "-searchable.pdf",
-        "application/pdf",
-      );
+      const name = file.name.replace(/\.[^.]+$/, "") + "-searchable.pdf";
+      downloadBytes(result.bytes, name, "application/pdf");
       const output = useDocumentStore.getState().current;
       if (output) ocrTexts.set(output, result.text);
       setStatus(
         "Searchable PDF ready. Check the extracted text for errors before using it.",
       );
+      logActivity({
+        tool: "ocr",
+        label: `Recognized text in ${file.name} into ${name}`,
+      });
     } catch (e) {
       setStatus(
         e instanceof Error

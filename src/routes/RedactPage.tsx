@@ -6,6 +6,7 @@ import { ToolSettings } from "../components/ToolSettings";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { redactPdf, type RedactionBox } from "../lib/pdf/redact";
 import { downloadBytes } from "../lib/download";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 const drafts = new WeakMap<File, RedactionBox[]>();
 export default function RedactPage() {
   const current = useDocumentStore((s) => s.current);
@@ -20,6 +21,7 @@ export default function RedactPage() {
   const [accepted, setAccepted] = useState(false);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const [dragBox, setDragBox] = useState<RedactionBox | null>(null);
+  const { logActivity } = useRecentActivity();
   const loaded = useRef<File | null>(null);
   const start = useRef<[number, number] | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -85,14 +87,15 @@ export default function RedactPage() {
         setStatus,
       );
       if (download) {
-        downloadBytes(
-          out,
-          file.name.replace(/\.pdf$/i, "") + "-redacted.pdf",
-          "application/pdf",
-        );
+        const name = file.name.replace(/\.pdf$/i, "") + "-redacted.pdf";
+        downloadBytes(out, name, "application/pdf");
         setStatus(
           "New redacted PDF created. Inspect all pages and share only this new file.",
         );
+        logActivity({
+          tool: "redact",
+          label: `Redacted ${file.name} into ${name}`,
+        });
       } else {
         setPreview(out);
         setStatus("Preview the rebuilt output before export.");

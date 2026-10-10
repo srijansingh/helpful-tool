@@ -23,6 +23,7 @@ import {
 } from "../lib/pdf/edit";
 import { downloadBytes } from "../lib/download";
 import { friendlyError } from "../lib/importFiles";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 const drafts = new WeakMap<
   File,
   { history: Mark[][]; cursor: number; fields: FormValue[] }
@@ -46,6 +47,7 @@ export default function EditPage() {
   const [image, setImage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const { logActivity } = useRecentActivity();
   const loadedFile = useRef<File | null>(null);
   const svg = useRef<SVGSVGElement>(null);
   const gesture = useRef<{
@@ -237,11 +239,17 @@ export default function EditPage() {
     setBusy(true);
     setError("");
     try {
+      const name =
+        (file?.name.replace(/\.pdf$/i, "") || "document") + "-edited.pdf";
       downloadBytes(
         await editPdf(bytes, marks, fields, flatten),
-        (file?.name.replace(/\.pdf$/i, "") || "document") + "-edited.pdf",
+        name,
         "application/pdf",
       );
+      logActivity({
+        tool: "edit",
+        label: `Edited ${file?.name ?? "a document"} into ${name}`,
+      });
     } catch (e) {
       setError(friendlyError(e));
     } finally {

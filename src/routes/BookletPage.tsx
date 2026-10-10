@@ -7,6 +7,7 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { buildBooklet } from "../lib/pdf/workerOperations";
 import { PdfPreview } from "../components/PdfPreview";
 import { downloadBytes } from "../lib/download";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function BookletPage() {
   const initial = useDocumentStore((s) => s.current);
   const [file, setFile] = useState<File | null>(initial);
@@ -31,6 +32,7 @@ export default function BookletPage() {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [preview, setPreview] = useState<Uint8Array | null>(null);
+  const { logActivity } = useRecentActivity();
   const build = async (exportFile: boolean) => {
     if (!file || busy) return;
     setBusy(true);
@@ -41,14 +43,15 @@ export default function BookletPage() {
         right,
       );
       if (exportFile) {
-        downloadBytes(
-          out,
-          file.name.replace(/\.pdf$/i, "") + "-booklet.pdf",
-          "application/pdf",
-        );
+        const name = file.name.replace(/\.pdf$/i, "") + "-booklet.pdf";
+        downloadBytes(out, name, "application/pdf");
         setStatus(
           "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
         );
+        logActivity({
+          tool: "booklet",
+          label: `Built a booklet from ${file.name} into ${name}`,
+        });
       } else setPreview(out);
     } catch (e) {
       setStatus((e as Error).message);

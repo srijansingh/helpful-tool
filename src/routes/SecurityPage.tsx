@@ -6,6 +6,7 @@ import { qpdfJob } from "../lib/pdf/qpdfJob";
 import type { QpdfAction } from "../lib/pdf/qpdfOptions";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function SecurityPage() {
   const file = useDocumentStore((s) => s.current);
   const [action, setAction] = useState<QpdfAction>("protect");
@@ -13,6 +14,7 @@ export default function SecurityPage() {
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const { logActivity } = useRecentActivity();
   const controller = useRef<AbortController | null>(null);
   useEffect(() => () => controller.current?.abort(), []);
   const run = async () => {
@@ -51,6 +53,10 @@ export default function SecurityPage() {
       setStatus(
         `${name} ready (${formatSize(result.bytes.length)}). ${result.warning}`,
       );
+      logActivity({
+        tool: "security",
+        label: `${action === "protect" ? "Protected" : action === "unlock" ? "Unlocked" : "Optimized"} ${file.name} into ${name}`,
+      });
     } catch (e) {
       setStatus((e as Error).message);
     } finally {

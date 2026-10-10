@@ -8,6 +8,7 @@ import { renderPdfToImages } from "../lib/pdf/pdfToImages";
 import { imagesToPdf } from "../lib/pdf/workerOperations";
 import { downloadBytes } from "../lib/download";
 import { formatSize } from "../lib/formatSize";
+import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function CompressPage() {
   const initial = useDocumentStore((s) => s.current);
   const [file, setFile] = useState<File | null>(initial);
@@ -19,6 +20,7 @@ export default function CompressPage() {
   const [candidate, setCandidate] = useState<Uint8Array | null>(null);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const [target, setTarget] = useState(0);
+  const { logActivity } = useRecentActivity();
   useEffect(() => {
     setCandidate(null);
     setStatus("");
@@ -178,13 +180,14 @@ export default function CompressPage() {
               !file || file.type !== "application/pdf" || !accepted || busy
             }
             onClick={() => {
-              if (candidate && file)
-                downloadBytes(
-                  candidate,
-                  file.name.replace(/\.pdf$/i, "") + "-smaller.pdf",
-                  "application/pdf",
-                );
-              else void build();
+              if (candidate && file) {
+                const name = file.name.replace(/\.pdf$/i, "") + "-smaller.pdf";
+                downloadBytes(candidate, name, "application/pdf");
+                logActivity({
+                  tool: "compress",
+                  label: `Reduced ${file.name} into ${name}`,
+                });
+              } else void build();
             }}
           >
             {busy
