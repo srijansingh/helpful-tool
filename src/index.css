@@ -367,18 +367,19 @@ button:disabled {
 }
 
 @media (max-width: 639px) {
+  /* Previously position:fixed, pinned near the bottom of the viewport.
+     On any form tall enough to need scrolling (Security, Compress, and
+     every other tool with a FilenameInput before this button), the
+     fixed button sat at a fixed screen position while in-flow content
+     — the filename field most of all — scrolled up underneath it,
+     producing a real, reproducible visual overlap no amount of
+     reserved trailing padding could fix (the overlap happens mid-page,
+     not at the end of the document, so end-of-document padding never
+     reaches it). Keeping the primary action in normal flow, as on
+     desktop, makes the overlap structurally impossible instead of
+     tuning its odds. */
   [data-primary-action] {
-    position: fixed;
-    left: 16px;
-    right: 16px;
-    bottom: calc(72px + env(safe-area-inset-bottom));
-    z-index: 25;
-    margin: 0 !important;
-    box-shadow: 0 4px 24px #0003;
-    width: calc(100% - 32px) !important;
-  }
-  .workspace:has([data-primary-action]) {
-    padding-bottom: calc(176px + env(safe-area-inset-bottom));
+    width: 100%;
   }
   .compact .tool-tile {
     padding: 14px;
@@ -515,9 +516,6 @@ button:disabled {
   .editor-toolbar button {
     flex-shrink: 0;
   }
-  .editor [data-primary-action] {
-    bottom: calc(16px + env(safe-area-inset-bottom));
-  }
   .editor .panel summary {
     overflow-wrap: anywhere;
   }
@@ -650,12 +648,21 @@ label:has(input[type="checkbox"]) {
     width: 264px;
     flex-shrink: 0;
     flex-direction: column;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: hidden;
     border-right: 1px solid var(--color-border);
     background: var(--color-surface);
     padding: 20px 12px;
     transition: width 0.15s ease;
+  }
+  /* Only the nav list scrolls — the logo/toggle above it and the trust
+     badge below it stay pinned, so the app's one privacy signal is
+     always on screen instead of requiring the sidebar itself to be
+     scrolled all the way to its end to ever see it. */
+  .app-sidebar-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
   }
   .app-sidebar[data-collapsed="true"] {
     width: 56px;
@@ -694,12 +701,6 @@ label:has(input[type="checkbox"]) {
   }
 }
 @media (max-width: 767px) {
-  .workspace.focused [data-primary-action] {
-    bottom: calc(16px + env(safe-area-inset-bottom));
-  }
-  .workspace.focused:has([data-primary-action]) {
-    padding-bottom: calc(100px + env(safe-area-inset-bottom));
-  }
   .settings-trigger {
     display: flex;
     align-items: center;
@@ -830,7 +831,12 @@ label:has(input[type="checkbox"]) {
   }
 }
 @media (max-width: 767px) {
-  .mobile-header > .text-xs {
+  /* Hidden only on the in-tool header, where it's genuinely tight
+     against the back arrow + tool name; the home header has room and
+     is exactly where a first-time, trust-evaluating visitor looks, so
+     it must stay — previously this hid the app's privacy message at
+     every mobile width, full stop. */
+  .mobile-header.task-header > .text-xs {
     display: none;
   }
   .workspace.focused > section > h1 {
