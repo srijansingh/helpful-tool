@@ -12,6 +12,8 @@ import {
   Highlighter,
   Square,
   ImageIcon,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { editPdf } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
@@ -347,26 +349,32 @@ export default function EditPage() {
                 </Tooltip>
               );
             })}
-            <button
-              className="btn-secondary"
-              disabled={cursor === 0}
-              onClick={() => {
-                setCursor(cursor - 1);
-                setSelected(null);
-              }}
-            >
-              Undo
-            </button>
-            <button
-              className="btn-secondary"
-              disabled={cursor === history.length - 1}
-              onClick={() => {
-                setCursor(cursor + 1);
-                setSelected(null);
-              }}
-            >
-              Redo
-            </button>
+            <Tooltip label="Undo" side="bottom">
+              <button
+                aria-label="Undo"
+                className="btn-secondary"
+                disabled={cursor === 0}
+                onClick={() => {
+                  setCursor(cursor - 1);
+                  setSelected(null);
+                }}
+              >
+                <Undo2 size={20} aria-hidden="true" />
+              </button>
+            </Tooltip>
+            <Tooltip label="Redo" side="bottom">
+              <button
+                aria-label="Redo"
+                className="btn-secondary"
+                disabled={cursor === history.length - 1}
+                onClick={() => {
+                  setCursor(cursor + 1);
+                  setSelected(null);
+                }}
+              >
+                <Redo2 size={20} aria-hidden="true" />
+              </button>
+            </Tooltip>
           </div>
 
           <p className="text-sm text-muted mt-2">
@@ -665,14 +673,9 @@ export default function EditPage() {
                   </button>
                 </div>
               )}
-              <Accordion summary={`Fill PDF form (${fields.length} fields)`}>
-                {!fields.length ? (
-                  <p className="mt-3">
-                    No interactive fields found. Use the Text tool to fill a
-                    scanned form.
-                  </p>
-                ) : (
-                  fields.map((f, i) => (
+              {fields.length > 0 && (
+                <Accordion summary={`Fill PDF form (${fields.length} fields)`}>
+                  {fields.map((f, i) => (
                     <label className="field-label mt-3" key={f.name}>
                       {f.name}
                       {f.readOnly ? " (read only)" : ""}
@@ -753,17 +756,17 @@ export default function EditPage() {
                         />
                       )}
                     </label>
-                  ))
-                )}
-                <label className="flex gap-2 mt-3">
-                  <input
-                    type="checkbox"
-                    checked={flatten}
-                    onChange={(e) => setFlatten(e.target.checked)}
-                  />
-                  Flatten filled form fields when exporting
-                </label>
-              </Accordion>
+                  ))}
+                  <label className="flex gap-2 mt-3">
+                    <input
+                      type="checkbox"
+                      checked={flatten}
+                      onChange={(e) => setFlatten(e.target.checked)}
+                    />
+                    Flatten filled form fields when exporting
+                  </label>
+                </Accordion>
+              )}
             </ToolSettings>
           </div>
           <button

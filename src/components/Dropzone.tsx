@@ -4,6 +4,13 @@ import { useLocation } from "react-router-dom";
 import { UploadCloud } from "lucide-react";
 import { validateFiles, friendlyError } from "../lib/importFiles";
 import { useDocumentStore } from "../store/useDocumentStore";
+// Module-level (not component state): on an "automatic" route (DocumentGate's
+// list), picking a file remounts this component once — the gate tears the
+// page down while it prepares the newly-current file, then rebuilds it — so
+// a plain ref or useState reset right after the pick it's meant to track.
+// Keyed by route so a file picked on one tool never suppresses "Use
+// current" on a different one.
+const recentPicks = new Map<string, File>();
 interface Props {
   accept: string;
   multiple?: boolean;
@@ -68,8 +75,10 @@ export function Dropzone({
       }
       job.signal.throwIfAborted();
       useDocumentStore.getState().setInputs(files.map(originalFile));
-      if (prepared.length === 1)
+      if (prepared.length === 1) {
+        recentPicks.set(location.pathname, prepared[0]);
         useDocumentStore.getState().setCurrent(prepared[0]);
+      }
       await callback.current(prepared);
     } catch (e) {
       if (!job.signal.aborted) setError(friendlyError(e));
@@ -88,6 +97,7 @@ export function Dropzone({
   }, [pending?.id, location.pathname]);
   const compatible =
     current &&
+    current !== recentPicks.get(location.pathname) &&
     (accept.includes(current.type) ||
       (accept.includes("image/*") && current.type.startsWith("image/")));
   return (

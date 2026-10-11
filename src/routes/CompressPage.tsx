@@ -206,6 +206,11 @@ export default function CompressPage() {
                 ? "Download smaller PDF"
                 : "Create smaller PDF"}
           </button>
+          {file && file.type === "application/pdf" && !accepted && !busy && (
+            <p className="text-sm text-muted">
+              Check the box above to enable this button.
+            </p>
+          )}
           {candidate && (
             <div className="flex gap-2">
               <button
