@@ -1,5 +1,6 @@
 import { pdfRenderingOptions } from "../lib/pdf/renderOptions";
 import { friendlyError } from "../lib/importFiles";
+import { Accordion } from "./Accordion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   getDocument,
@@ -196,14 +197,13 @@ export function PdfReader({
           {overlay}
         </div>
       </div>
-      <details className="mt-3">
-        <summary>Selectable page text</summary>
-        <p className="select-text whitespace-pre-wrap p-3">
+      <Accordion summary="Selectable page text">
+        <p className="select-text whitespace-pre-wrap">
           {allowCopy
             ? text || "No text layer on this page."
             : "This document restricts copying text."}
         </p>
-      </details>
+      </Accordion>
     </div>
   );
 }

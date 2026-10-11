@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Search, FolderOpen, Trash2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Tooltip } from "../components/Tooltip";
+import { Accordion } from "../components/Accordion";
 import {
   listDocuments,
   saveDocumentOnce,
@@ -179,54 +180,55 @@ export default function FilesPage() {
           </Link>
         </div>
       )}
-      <details className="panel mt-5">
-        <summary>Backup and restore</summary>
-        <p className="text-sm text-muted mt-3">
-          Backup contains the active files matching your folder and search,
-          including OCR text and editable scan sources. Restore adds copies and
-          keeps existing files.
-        </p>
-        <button
-          className="btn-secondary mt-3"
-          disabled={busy || !visible.some((d) => !d.deletedAt)}
-          onClick={() =>
-            void action(async () =>
-              downloadBlob(
-                await backupDocuments(visible.filter((d) => !d.deletedAt)),
-                "localpdf-backup.zip",
-                false,
-              ),
-            )
-          }
-        >
-          Download filtered backup
-        </button>
-        <label className="btn-secondary mt-3">
-          Restore backup
-          <input
-            className="sr-only"
-            type="file"
-            accept=".zip,application/zip"
-            disabled={busy}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f)
-                void action(async () => {
-                  const restored = await restoreBackup(f);
-                  for (const d of restored)
-                    await validateFiles(
-                      [documentFile(d)],
-                      "application/pdf,image/*",
-                    );
-                  await (
-                    await import("../lib/library")
-                  ).restoreDocuments(restored);
-                });
-              e.target.value = "";
-            }}
-          />
-        </label>
-      </details>
+      <div className="mt-5">
+        <Accordion summary="Backup and restore" variant="card">
+          <p className="text-sm text-muted">
+            Backup contains the active files matching your folder and search,
+            including OCR text and editable scan sources. Restore adds copies
+            and keeps existing files.
+          </p>
+          <button
+            className="btn-secondary mt-3"
+            disabled={busy || !visible.some((d) => !d.deletedAt)}
+            onClick={() =>
+              void action(async () =>
+                downloadBlob(
+                  await backupDocuments(visible.filter((d) => !d.deletedAt)),
+                  "localpdf-backup.zip",
+                  false,
+                ),
+              )
+            }
+          >
+            Download filtered backup
+          </button>
+          <label className="btn-secondary mt-3">
+            Restore backup
+            <input
+              className="sr-only"
+              type="file"
+              accept=".zip,application/zip"
+              disabled={busy}
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f)
+                  void action(async () => {
+                    const restored = await restoreBackup(f);
+                    for (const d of restored)
+                      await validateFiles(
+                        [documentFile(d)],
+                        "application/pdf,image/*",
+                      );
+                    await (
+                      await import("../lib/library")
+                    ).restoreDocuments(restored);
+                  });
+                e.target.value = "";
+              }}
+            />
+          </label>
+        </Accordion>
+      </div>
       {legacyLoaded && legacy.length > 0 && (
         <div className="panel mt-4">
           <p>{legacy.length} scans in your previous library.</p>
@@ -312,8 +314,7 @@ function SavedRow({
           {new Date(doc.updatedAt).toLocaleDateString()}
         </span>
       </button>
-      <details className="mt-3">
-        <summary>File actions</summary>
+      <Accordion summary="File actions">
         {doc.deletedAt ? (
           <div className="editor-options">
             <button
@@ -382,7 +383,7 @@ function SavedRow({
             </div>
           </>
         )}
-      </details>
+      </Accordion>
     </article>
   );
 }

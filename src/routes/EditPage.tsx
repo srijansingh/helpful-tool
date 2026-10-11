@@ -3,6 +3,7 @@ import { moveMark, resizeMark } from "../lib/markGeometry";
 import { prepareImage } from "../lib/imageBudget";
 import { ToolSettings } from "../components/ToolSettings";
 import { Tooltip } from "../components/Tooltip";
+import { Accordion } from "../components/Accordion";
 import {
   MousePointer2,
   Type,
@@ -32,6 +33,7 @@ const drafts = new WeakMap<
 export default function EditPage() {
   const file = useDocumentStore((s) => s.current);
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(true);
   const [formPreview, setFormPreview] = useState<Uint8Array | null>(null);
   const [formUpdating, setFormUpdating] = useState(false);
   const [page, setPage] = useState(1);
@@ -58,6 +60,10 @@ export default function EditPage() {
     move: boolean;
   } | null>(null);
   const marks = history[cursor] || [];
+  const hasBytes = Boolean(bytes);
+  useEffect(() => {
+    setUploadOpen(!hasBytes);
+  }, [hasBytes]);
   useEffect(() => {
     loadedFile.current = null;
     setBytes(null);
@@ -265,16 +271,22 @@ export default function EditPage() {
         Add text, drawings and visual signatures. Original text stays in place.
         Drafts stay in this session until exported.
       </p>
-      <details className="panel mt-4" open={!bytes}>
-        <summary>{bytes ? `Change PDF · ${file?.name}` : "Open a PDF"}</summary>
-        <Dropzone
-          disabled={busy}
-          accept="application/pdf"
-          label="Open a PDF to edit"
-          hint={file?.name || "Choose a PDF"}
-          onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
-        />
-      </details>
+      <div className="mt-4">
+        <Accordion
+          variant="card"
+          summary={bytes ? `Change PDF · ${file?.name}` : "Open a PDF"}
+          open={uploadOpen}
+          onOpenChange={setUploadOpen}
+        >
+          <Dropzone
+            disabled={busy}
+            accept="application/pdf"
+            label="Open a PDF to edit"
+            hint={file?.name || "Choose a PDF"}
+            onFiles={(files) => useDocumentStore.getState().setCurrent(files[0])}
+          />
+        </Accordion>
+      </div>
       {bytes && (
         <>
           <div
@@ -536,9 +548,8 @@ export default function EditPage() {
                 </label>
               </div>
               {marks.length > 0 && (
-                <details className="panel mt-3">
-                  <summary>Annotations ({marks.length})</summary>
-                  <div className="flex flex-wrap gap-2 mt-3">
+                <Accordion summary={`Annotations (${marks.length})`}>
+                  <div className="flex flex-wrap gap-2">
                     {marks.map((m, i) => (
                       <button
                         key={m.id}
@@ -554,7 +565,7 @@ export default function EditPage() {
                       </button>
                     ))}
                   </div>
-                </details>
+                </Accordion>
               )}
               {active && (
                 <div className="panel mt-3">
@@ -644,8 +655,7 @@ export default function EditPage() {
                   </button>
                 </div>
               )}
-              <details className="panel mt-4">
-                <summary>Fill PDF form ({fields.length} fields)</summary>
+              <Accordion summary={`Fill PDF form (${fields.length} fields)`}>
                 {!fields.length ? (
                   <p className="mt-3">
                     No interactive fields found. Use the Text tool to fill a
@@ -743,7 +753,7 @@ export default function EditPage() {
                   />
                   Flatten filled form fields when exporting
                 </label>
-              </details>
+              </Accordion>
             </ToolSettings>
           </div>
           <button

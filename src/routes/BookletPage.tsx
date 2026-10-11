@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
+import { Accordion } from "../components/Accordion";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { buildBooklet } from "../lib/pdf/workerOperations";
 import { PdfPreview } from "../components/PdfPreview";
@@ -112,12 +113,10 @@ export default function BookletPage() {
             Right-side binding
           </label>
           {count > 0 && (
-            <details className="panel">
-              <summary>
-                Sheet plan · {Math.ceil(count / 4)} sheets ·{" "}
-                {Math.ceil(count / 4) * 4 - count} blank pages
-              </summary>
-              <ol className="text-sm mt-3 space-y-2">
+            <Accordion
+              summary={`Sheet plan · ${Math.ceil(count / 4)} sheets · ${Math.ceil(count / 4) * 4 - count} blank pages`}
+            >
+              <ol className="text-sm space-y-2">
                 {bookletOrder(count, right)
                   .slice(0, 40)
                   .map((pair, i) => (
@@ -132,7 +131,7 @@ export default function BookletPage() {
               {Math.ceil(count / 2) > 40 && (
                 <p>Preview the PDF for the remaining sheet sides.</p>
               )}
-            </details>
+            </Accordion>
           )}
           <p className="text-sm text-muted">
             Export includes page content and flattened interactive form

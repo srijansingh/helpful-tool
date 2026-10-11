@@ -3,6 +3,7 @@ import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import { PdfPreview } from "../components/PdfPreview";
 import { ToolSettings } from "../components/ToolSettings";
+import { Accordion } from "../components/Accordion";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { useDocumentStore } from "../store/useDocumentStore";
@@ -225,10 +226,7 @@ export default function RedactPage() {
                 </button>
               </div>
               {boxes.length > 0 && (
-                <details className="panel mt-3">
-                  <summary>
-                    Marked areas ({boxes.length}) · review each page
-                  </summary>
+                <Accordion summary={`Marked areas (${boxes.length}) · review each page`}>
                   <ul>
                     {boxes.map((b, i) => (
                       <li key={b.id} className="flex flex-wrap gap-2 mt-2">
@@ -251,15 +249,14 @@ export default function RedactPage() {
                       </li>
                     ))}
                   </ul>
-                </details>
+                </Accordion>
               )}
-              <details className="panel mt-3">
-                <summary>Mark area by percentage (keyboard alternative)</summary>
+              <Accordion summary="Mark area by percentage (keyboard alternative)">
                 <NumericArea
                   page={page}
                   onAdd={(b) => setBoxes([...boxes, b])}
                 />
-              </details>
+              </Accordion>
               <label className="panel flex gap-2 mt-3">
                 <input
                   type="checkbox"
