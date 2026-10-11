@@ -18,6 +18,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { DocumentGate } from "./components/DocumentGate";
 import { ImportPrompt } from "./components/ImportPrompt";
 import { ResultPanel } from "./components/ResultPanel";
+import { Banner } from "./components/Banner";
 export default function App() {
   const path = useLocation().pathname;
   const jobCount = usePdfJobState((s) => s.count);
@@ -81,12 +82,12 @@ export default function App() {
       </div>
       {!focused && <BottomTabBar />}
       {jobCount > 0 && (
-        <div className="processing-banner" role="status">
+        <Banner>
           <span>Processing on your device…</span>
           <button className="btn-secondary" onClick={cancelPdfJobs}>
             Cancel processing
           </button>
-        </div>
+        </Banner>
       )}
       <ToastViewport />
       <CommandPalette />

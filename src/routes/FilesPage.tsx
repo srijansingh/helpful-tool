@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Search, FolderOpen, Trash2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
+import { Tooltip } from "../components/Tooltip";
 import {
   listDocuments,
   saveDocumentOnce,
@@ -103,32 +105,38 @@ export default function FilesPage() {
           onFiles={(files) => void save(files[0])}
         />
       </div>
-      <div className="editor-options">
+      <div className="filter-bar mt-3">
+        <Search className="h-4 w-4 text-muted shrink-0" aria-hidden="true" />
         <input
-          className="field flex-1"
+          className="filter-bar-search"
           aria-label="Search saved files"
           placeholder="Search names, folders or OCR text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <select
-          className="field"
-          aria-label="Folder"
-          value={folder}
-          onChange={(e) => setFolder(e.target.value)}
-        >
-          <option value="all">All folders</option>
-          {folders.map((f) => (
-            <option key={f}>{f}</option>
-          ))}
-        </select>
-        <button
-          className="btn-secondary"
-          aria-pressed={trash}
-          onClick={() => setTrash(!trash)}
-        >
-          {trash ? "Show files" : "Trash"}
-        </button>
+        <label className="filter-bar-folder">
+          <FolderOpen className="h-4 w-4 text-muted shrink-0" aria-hidden="true" />
+          <select
+            aria-label="Folder"
+            value={folder}
+            onChange={(e) => setFolder(e.target.value)}
+          >
+            <option value="all">All folders</option>
+            {folders.map((f) => (
+              <option key={f}>{f}</option>
+            ))}
+          </select>
+        </label>
+        <Tooltip label={trash ? "Show files" : "Show trash"} side="bottom">
+          <button
+            className="btn-icon"
+            aria-pressed={trash}
+            aria-label={trash ? "Show files" : "Show trash"}
+            onClick={() => setTrash(!trash)}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </Tooltip>
       </div>
       {error && (
         <p role="alert" className="text-bad mt-3">
