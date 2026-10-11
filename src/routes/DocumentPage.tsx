@@ -6,12 +6,13 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { TOOLS } from "../lib/tools";
 import { PdfPreview } from "../components/PdfPreview";
 import { ResultActions } from "../components/ResultActions";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 export default function DocumentPage() {
   const file = useDocumentStore((s) => s.current);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const navigate = useNavigate();
   const controller = useRef<AbortController | null>(null);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const [allowCopy, setAllowCopy] = useState(true);
   useEffect(() => () => controller.current?.abort(), []);
@@ -40,7 +41,7 @@ export default function DocumentPage() {
           onClick={async () => {
             controller.current = new AbortController();
             setBusy(true);
-            setError("");
+            setStatus({ kind: "idle" });
             try {
               const ready = await preparePdf(
                 file,
@@ -51,7 +52,7 @@ export default function DocumentPage() {
               setPreview(new Uint8Array(await ready.arrayBuffer()));
             } catch (e) {
               if (!controller.current.signal.aborted)
-                setError(friendlyError(e));
+                setStatus({ kind: "error", message: friendlyError(e) });
             } finally {
               setBusy(false);
             }
@@ -64,11 +65,7 @@ export default function DocumentPage() {
           Download or share this file to open it in a compatible app.
         </p>
       )}
-      {error && (
-        <p role="alert" className="text-bad mt-3">
-          {error}
-        </p>
-      )}
+      <StatusMessage status={status} />
       <ResultActions file={originalFile(file)} />
       <h2 className="mt-6 text-lg font-bold">Continue with a tool</h2>
       <div className="tool-grid">

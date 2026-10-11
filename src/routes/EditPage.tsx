@@ -4,6 +4,7 @@ import { prepareImage } from "../lib/imageBudget";
 import { ToolSettings } from "../components/ToolSettings";
 import { Tooltip } from "../components/Tooltip";
 import { Accordion } from "../components/Accordion";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import {
   MousePointer2,
   Type,
@@ -48,7 +49,7 @@ export default function EditPage() {
   const [color, setColor] = useState("#202b47");
   const [selected, setSelected] = useState<string | null>(null);
   const [image, setImage] = useState("");
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const { logActivity } = useRecentActivity();
   const loadedFile = useRef<File | null>(null);
@@ -68,7 +69,7 @@ export default function EditPage() {
     loadedFile.current = null;
     setBytes(null);
     setPage(1);
-    setError("");
+    setStatus({ kind: "idle" });
     if (!file || file.type !== "application/pdf") return;
     let active = true;
     (async () => {
@@ -84,7 +85,7 @@ export default function EditPage() {
           setCursor(d?.cursor || 0);
         }
       } catch (e) {
-        if (active) setError(friendlyError(e));
+        if (active) setStatus({ kind: "error", message: friendlyError(e) });
       }
     })();
     return () => {
@@ -111,7 +112,7 @@ export default function EditPage() {
           if (!controller.signal.aborted) setFormPreview(value);
         })
         .catch((e) => {
-          if (!controller.signal.aborted) setError(friendlyError(e));
+          if (!controller.signal.aborted) setStatus({ kind: "error", message: friendlyError(e) });
         })
         .finally(() => {
           if (!controller.signal.aborted) setFormUpdating(false);
@@ -148,11 +149,17 @@ export default function EditPage() {
       return;
     }
     if (mode === "text" && !text.trim()) {
-      setError("Enter your text or typed signature first.");
+      setStatus({
+        kind: "error",
+        message: "Enter your text or typed signature first.",
+      });
       return;
     }
     if (mode === "image" && !image) {
-      setError("Import an image or signature first.");
+      setStatus({
+        kind: "error",
+        message: "Import an image or signature first.",
+      });
       return;
     }
     const m: Mark = {
@@ -171,7 +178,7 @@ export default function EditPage() {
     };
     gesture.current = { start: p, mark: m, original: marks, move: false };
     setSelected(m.id);
-    setError("");
+    setStatus({ kind: "idle" });
   };
   const move = (e: PointerEvent<SVGSVGElement>) => {
     const g = gesture.current;
@@ -213,7 +220,10 @@ export default function EditPage() {
       ) {
         setHistory((h) => h.map((v, i) => (i === cursor ? g.original : v)));
         gesture.current = null;
-        setError("Drag on the page to draw this mark.");
+        setStatus({
+          kind: "error",
+          message: "Drag on the page to draw this mark.",
+        });
         return;
       }
       if (added.kind === "pen") {
@@ -244,7 +254,7 @@ export default function EditPage() {
   const save = async () => {
     if (!bytes || busy) return;
     setBusy(true);
-    setError("");
+    setStatus({ kind: "idle" });
     try {
       const name =
         (file?.name.replace(/\.pdf$/i, "") || "document") + "-edited.pdf";
@@ -258,7 +268,7 @@ export default function EditPage() {
         label: `Edited ${file?.name ?? "a document"} into ${name}`,
       });
     } catch (e) {
-      setError(friendlyError(e));
+      setStatus({ kind: "error", message: friendlyError(e) });
     } finally {
       setBusy(false);
     }
@@ -541,7 +551,7 @@ export default function EditPage() {
                         setImage(c.toDataURL("image/png"));
                         setMode("image");
                       } catch (e) {
-                        setError(friendlyError(e));
+                        setStatus({ kind: "error", message: friendlyError(e) });
                       }
                     }}
                   />
@@ -766,11 +776,7 @@ export default function EditPage() {
           </button>
         </>
       )}
-      {error && (
-        <p role="alert" className="text-bad mt-3">
-          {error}
-        </p>
-      )}
+      <StatusMessage status={status} />
     </section>
   );
 }

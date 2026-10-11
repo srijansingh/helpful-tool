@@ -2,12 +2,15 @@ import { hasSessionDrafts } from "../hooks/useSessionState";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import { usePwaStore } from "../lib/pwa";
 import { useDocumentStore } from "../store/useDocumentStore";
 export default function SettingsPage() {
   const pwa = usePwaStore();
   const current = useDocumentStore((s) => s.current);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [confirmUpdate, setConfirmUpdate] = useState(false);
   return (
     <section>
       <h1 className="text-3xl font-bold">Settings</h1>
@@ -29,7 +32,10 @@ export default function SettingsPage() {
                 await pwa.install?.prompt();
                 usePwaStore.setState({ install: null });
               } catch {
-                setError("Use your browser menu to install LocalPDF.");
+                setStatus({
+                  kind: "error",
+                  message: "Use your browser menu to install LocalPDF.",
+                });
               }
             }}
           >
@@ -71,14 +77,7 @@ export default function SettingsPage() {
           </p>
           <button
             className="btn mt-3"
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Reload to update? Save any temporary work first.",
-                )
-              )
-                void pwa.update();
-            }}
+            onClick={() => setConfirmUpdate(true)}
           >
             Reload and update
           </button>
@@ -92,7 +91,19 @@ export default function SettingsPage() {
           or operating system, so export important files as a backup.
         </p>
       </div>
-      {error && <p role="alert">{error}</p>}
+      <StatusMessage status={status} />
+      <ConfirmDialog
+        open={confirmUpdate}
+        title="Reload to update?"
+        description="Save any temporary work first. Updating reloads the app and clears temporary work."
+        confirmLabel="Reload and update"
+        danger={false}
+        onConfirm={() => {
+          setConfirmUpdate(false);
+          void pwa.update();
+        }}
+        onCancel={() => setConfirmUpdate(false)}
+      />
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { validateFiles } from "../lib/importFiles";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { useMergeStore } from "../store/useMergeStore";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 const store = createStore("localpdf-share", "incoming");
 const jobs = new Map<string, Promise<File[]>>();
 function receive(id: string) {
@@ -40,7 +41,7 @@ function receive(id: string) {
 }
 export default function SharePage() {
   const [files, setFiles] = useState<File[]>([]);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const navigate = useNavigate();
   useEffect(() => {
     let active = true;
@@ -54,7 +55,8 @@ export default function SharePage() {
         const valid = await receive(id);
         if (active) setFiles(valid);
       } catch (e) {
-        if (active) setError((e as Error).message);
+        if (active)
+          setStatus({ kind: "error", message: (e as Error).message });
       }
     })();
     return () => {
@@ -69,11 +71,7 @@ export default function SharePage() {
         Choose a file to open. Save it in My files if you want to keep it on
         this device.
       </p>
-      {error && (
-        <p role="alert" className="mt-3">
-          {error}
-        </p>
-      )}
+      <StatusMessage status={status} />
       <div className="space-y-3 mt-4">
         {files.map((file, i) => (
           <button

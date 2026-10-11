@@ -3,6 +3,7 @@ import { Search, FolderOpen, Trash2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { Tooltip } from "../components/Tooltip";
 import { Accordion } from "../components/Accordion";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import {
   listDocuments,
   saveDocumentOnce,
@@ -29,7 +30,7 @@ export default function FilesPage() {
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState("all");
   const [trash, setTrash] = useState(false);
-  const [error, setError] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const [purge, setPurge] = useState<SavedDocument | null>(null);
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ export default function FilesPage() {
     try {
       setDocs(await listDocuments());
     } catch (e) {
-      setError(friendlyError(e));
+      setStatus({ kind: "error", message: friendlyError(e) });
     } finally {
       setLoaded(true);
     }
@@ -50,12 +51,12 @@ export default function FilesPage() {
   const action = async (task: () => Promise<unknown>) => {
     if (busy) return;
     setBusy(true);
-    setError("");
+    setStatus({ kind: "idle" });
     try {
       await task();
       await refresh();
     } catch (e) {
-      setError(friendlyError(e));
+      setStatus({ kind: "error", message: friendlyError(e) });
     } finally {
       setBusy(false);
     }
@@ -139,11 +140,7 @@ export default function FilesPage() {
           </button>
         </Tooltip>
       </div>
-      {error && (
-        <p role="alert" className="text-bad mt-3">
-          {error}
-        </p>
-      )}
+      <StatusMessage status={status} />
       <div className="mt-4 space-y-3">
         {!loaded ? (
           <p role="status">Loading files…</p>
