@@ -80,7 +80,7 @@ export default function SecurityPage() {
         Passwords and files stay on this device. Keep a separate original and
         remember the password you choose.
       </p>
-      <div className="mt-4">
+      <div className="mt-4 max-w-[640px]">
         <Dropzone
           disabled={busy}
           accept="application/pdf"

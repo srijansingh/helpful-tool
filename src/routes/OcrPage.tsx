@@ -78,7 +78,7 @@ export default function OcrPage() {
         Create a searchable PDF or copy text from a photo. Recognition runs on
         this device; accuracy depends on lighting and print quality.
       </p>
-      <div className="mt-4">
+      <div className="mt-4 max-w-[640px]">
         <Dropzone
           disabled={busy}
           accept="application/pdf,image/*"

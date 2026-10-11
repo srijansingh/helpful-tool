@@ -75,7 +75,7 @@ export default function BookletPage() {
           Arrange pages on landscape sheets for folding. Blank pages are added
           to make a multiple of four.
         </p>
-        <div className="mt-4">
+        <div className="mt-4 max-w-[640px]">
           <Dropzone
             disabled={busy}
             accept="application/pdf"

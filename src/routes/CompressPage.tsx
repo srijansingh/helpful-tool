@@ -120,7 +120,7 @@ export default function CompressPage() {
           Up to 50 pages per document. Review the result before downloading;
           tiny text can lose clarity.
         </p>
-        <div className="mt-4">
+        <div className="mt-4 max-w-[640px]">
           <Dropzone
             disabled={busy}
             accept="application/pdf"

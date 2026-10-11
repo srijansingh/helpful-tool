@@ -138,6 +138,16 @@ export default function RedactPage() {
           }}
         />
       </div>
+      {!bytes && (
+        <ol className="panel mt-4 max-w-[640px] space-y-2 text-sm">
+          <li>1. Choose a PDF above.</li>
+          <li>2. Drag a rectangle over each area you want to black out.</li>
+          <li>
+            3. Export — every page is rebuilt from pixels, so the marked
+            areas, original text and metadata are gone, not just covered.
+          </li>
+        </ol>
+      )}
       {bytes && (
         <>
           <p className="mt-3 text-sm">
