@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import { preparePdf, originalFile } from "../lib/pdf/preflight";
 import { qpdfJob } from "../lib/pdf/qpdfJob";
 import type { QpdfAction } from "../lib/pdf/qpdfOptions";
@@ -13,7 +14,7 @@ export default function SecurityPage() {
   const [action, setAction] = useState<QpdfAction>("protect");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const [outputName, setOutputName] = useState("");
   const { logActivity } = useRecentActivity();
@@ -22,10 +23,14 @@ export default function SecurityPage() {
   const run = async () => {
     if (!file || busy) return;
     if (action === "protect" && (password.length < 8 || password !== confirm)) {
-      setStatus("Use at least 8 characters and confirm the same password.");
+      setStatus({
+        kind: "error",
+        message: "Use at least 8 characters and confirm the same password.",
+      });
       return;
     }
     setBusy(true);
+    setStatus({ kind: "working", message: "Working…" });
     controller.current = new AbortController();
     try {
       const source = originalFile(file);
@@ -40,28 +45,30 @@ export default function SecurityPage() {
         action,
         action === "unlock" ? "" : password,
         controller.current.signal,
-        setStatus,
+        (message) => setStatus({ kind: "working", message }),
       );
       setPassword("");
       setConfirm("");
       const defaultName = file.name.replace(/\.pdf$/i, "") + `-${action}`;
       const name = `${outputName.trim() || defaultName}.pdf`;
       if (action === "optimize" && result.bytes.length >= file.size) {
-        setStatus(
-          `The original (${formatSize(file.size)}) is already smaller than the optimized result (${formatSize(result.bytes.length)}). Keep your original.`,
-        );
+        setStatus({
+          kind: "done",
+          message: `The original (${formatSize(file.size)}) is already smaller than the optimized result (${formatSize(result.bytes.length)}). Keep your original.`,
+        });
         return;
       }
       downloadBytes(result.bytes, name, "application/pdf");
-      setStatus(
-        `${name} ready (${formatSize(result.bytes.length)}). ${result.warning}`,
-      );
+      setStatus({
+        kind: "done",
+        message: `${name} ready (${formatSize(result.bytes.length)}). ${result.warning}`,
+      });
       logActivity({
         tool: "security",
         label: `${action === "protect" ? "Protected" : action === "unlock" ? "Unlocked" : "Optimized"} ${file.name} into ${name}`,
       });
     } catch (e) {
-      setStatus((e as Error).message);
+      setStatus({ kind: "error", message: (e as Error).message });
     } finally {
       setBusy(false);
     }
@@ -97,7 +104,7 @@ export default function SecurityPage() {
               setAction(next);
               setPassword("");
               setConfirm("");
-              setStatus("");
+              setStatus({ kind: "idle" });
               if (file) setOutputName(file.name.replace(/\.pdf$/i, "") + `-${next}`);
             }}
           >
@@ -165,9 +172,7 @@ export default function SecurityPage() {
             </button>
           )}
         </div>
-        {status && (
-          <p role="status">{status}</p>
-        )}
+        <StatusMessage status={status} />
       </div>
     </section>
   );

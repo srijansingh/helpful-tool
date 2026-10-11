@@ -1,5 +1,6 @@
 import { PdfPreview } from "../components/PdfPreview";
 import { FilenameInput } from "../components/FilenameInput";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import { editImage } from "../lib/editImage";
 import { PDFDocument } from "pdf-lib";
 import { useEffect, useRef, useState } from "react";
@@ -16,7 +17,7 @@ export default function CompressPage() {
   const [quality, setQuality] = useState(0.7);
   const [scale, setScale] = useState(1.5);
   const [accepted, setAccepted] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const [candidate, setCandidate] = useState<Uint8Array | null>(null);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
@@ -27,7 +28,7 @@ export default function CompressPage() {
   const { logActivity } = useRecentActivity();
   useEffect(() => {
     setCandidate(null);
-    setStatus("");
+    setStatus({ kind: "idle" });
   }, [file, quality, scale, target]);
   const cancel = useRef<AbortController | null>(null);
   useEffect(() => () => cancel.current?.abort(), []);
@@ -42,7 +43,7 @@ export default function CompressPage() {
         scale,
         signal: cancel.current.signal,
         onProgress: (done, total) =>
-          setStatus(`Preparing ${done} of ${total} pages…`),
+          setStatus({ kind: "working", message: `Preparing ${done} of ${total} pages…` }),
       });
       const source = await PDFDocument.load(await file.arrayBuffer());
       for (const q of target > 0
@@ -84,22 +85,25 @@ export default function CompressPage() {
       cancel.current.signal.throwIfAborted();
       if (!best) throw new Error("No pages were rendered.");
       if (best.length >= file.size) {
-        setStatus(
-          `Your original (${formatSize(file.size)}) is smaller than this result (${formatSize(best.length)}). No replacement was downloaded. Keep your original or adjust the settings.`,
-        );
+        setStatus({
+          kind: "error",
+          message: `Your original (${formatSize(file.size)}) is smaller than this result (${formatSize(best.length)}). No replacement was downloaded. Keep your original or adjust the settings.`,
+        });
         return;
       }
       setCandidate(best);
       setPreview(best);
-      setStatus(
-        `Original ${formatSize(file.size)} → result ${formatSize(best.length)}.${target && best.length > target * 1024 ? " The requested size could not be reached with these settings." : ""}${best.length >= file.size ? " The original file is smaller; keep it for best quality." : ""}`,
-      );
+      setStatus({
+        kind: "done",
+        message: `Original ${formatSize(file.size)} → result ${formatSize(best.length)}.${target && best.length > target * 1024 ? " The requested size could not be reached with these settings." : ""}`,
+      });
     } catch (e) {
-      setStatus(
-        cancel.current?.signal.aborted
+      setStatus({
+        kind: "error",
+        message: cancel.current?.signal.aborted
           ? "Cancelled. Original file is unchanged."
           : (e as Error).message,
-      );
+      });
     } finally {
       setBusy(false);
     }
@@ -228,7 +232,7 @@ export default function CompressPage() {
               Cancel
             </button>
           )}
-          {status && <p role="status">{status}</p>}
+          <StatusMessage status={status} />
         </div>
       </fieldset>
       {preview && (

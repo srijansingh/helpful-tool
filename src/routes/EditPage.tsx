@@ -2,6 +2,7 @@ import { runPdfJob } from "../lib/pdfJobs";
 import { moveMark, resizeMark } from "../lib/markGeometry";
 import { prepareImage } from "../lib/imageBudget";
 import { ToolSettings } from "../components/ToolSettings";
+import { Tooltip } from "../components/Tooltip";
 import {
   MousePointer2,
   Type,
@@ -290,40 +291,40 @@ export default function EditPage() {
                 "rectangle",
                 "image",
               ] as const
-            ).map((t) => (
-              <button
-                key={t}
-                title={
-                  t === "image"
-                    ? "Image / signature"
-                    : t === "pen"
-                      ? "Draw signature"
-                      : t
-                }
-                aria-label={
-                  t === "image"
-                    ? "Image / signature"
-                    : t === "pen"
-                      ? "Draw signature"
-                      : t
-                }
-                className={mode === t ? "btn" : "btn-secondary"}
-                aria-pressed={mode === t}
-                onClick={() => setMode(t)}
-              >
-                {(() => {
-                  const Icon = {
-                    select: MousePointer2,
-                    text: Type,
-                    pen: PenLine,
-                    highlight: Highlighter,
-                    rectangle: Square,
-                    image: ImageIcon,
-                  }[t];
-                  return <Icon size={20} aria-hidden="true" />;
-                })()}
-              </button>
-            ))}
+            ).map((t) => {
+              const label =
+                t === "image"
+                  ? "Image / signature"
+                  : t === "pen"
+                    ? "Draw signature"
+                    : t === "select"
+                      ? "Select / move"
+                      : t === "text"
+                        ? "Add text"
+                        : t === "highlight"
+                          ? "Highlight"
+                          : "Rectangle";
+              const Icon = {
+                select: MousePointer2,
+                text: Type,
+                pen: PenLine,
+                highlight: Highlighter,
+                rectangle: Square,
+                image: ImageIcon,
+              }[t];
+              return (
+                <Tooltip key={t} label={label} side="bottom">
+                  <button
+                    aria-label={label}
+                    className={mode === t ? "btn" : "btn-secondary"}
+                    aria-pressed={mode === t}
+                    onClick={() => setMode(t)}
+                  >
+                    <Icon size={20} aria-hidden="true" />
+                  </button>
+                </Tooltip>
+              );
+            })}
             <button
               className="btn-secondary"
               disabled={cursor === 0}

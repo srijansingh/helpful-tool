@@ -10,6 +10,7 @@ import {
 } from "../lib/ocr";
 import { downloadBytes, downloadBlob } from "../lib/download";
 import { useRecentActivity } from "../hooks/useRecentActivity";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 export default function OcrPage() {
   const file = useDocumentStore((s) => s.current);
   const [language, setLanguage] = useSessionState<OcrLanguage>(
@@ -18,7 +19,7 @@ export default function OcrPage() {
     "eng",
   );
   const [ranges, setRanges] = useSessionState("ocr", "ranges", "");
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [text, setText] = useState(() =>
     file ? (ocrTexts.get(file) ?? "") : "",
   );
@@ -40,28 +41,32 @@ export default function OcrPage() {
         language,
         ranges,
         controller.current.signal,
-        setStatus,
+        (message) => setStatus({ kind: "working", message }),
       );
       setText(result.text);
       const name = file.name.replace(/\.[^.]+$/, "") + "-searchable.pdf";
       downloadBytes(result.bytes, name, "application/pdf");
       const output = useDocumentStore.getState().current;
       if (output) ocrTexts.set(output, result.text);
-      setStatus(
-        "Searchable PDF ready. Check the extracted text for errors before using it.",
-      );
+      setStatus({
+        kind: "done",
+        message:
+          "Searchable PDF ready. Check the extracted text for errors before using it.",
+      });
       logActivity({
         tool: "ocr",
         label: `Recognized text in ${file.name} into ${name}`,
       });
     } catch (e) {
-      setStatus(
-        e instanceof Error
-          ? e.message
-          : typeof e === "string"
-            ? e
-            : "OCR could not finish. Prepare the offline assets and try again.",
-      );
+      setStatus({
+        kind: "error",
+        message:
+          e instanceof Error
+            ? e.message
+            : typeof e === "string"
+              ? e
+              : "OCR could not finish. Prepare the offline assets and try again.",
+      });
     } finally {
       setBusy(false);
     }
@@ -115,15 +120,21 @@ export default function OcrPage() {
               controller.current = new AbortController();
               setBusy(true);
               try {
-                await prepareOcr(language, setStatus, controller.current.signal);
-              } catch (e) {
-                setStatus(
-                  e instanceof Error
-                    ? e.message
-                    : typeof e === "string"
-                      ? e
-                      : "OCR could not finish. Prepare the offline assets and try again.",
+                await prepareOcr(
+                  language,
+                  (message) => setStatus({ kind: "working", message }),
+                  controller.current.signal,
                 );
+              } catch (e) {
+                setStatus({
+                  kind: "error",
+                  message:
+                    e instanceof Error
+                      ? e.message
+                      : typeof e === "string"
+                        ? e
+                        : "OCR could not finish. Prepare the offline assets and try again.",
+                });
               } finally {
                 setBusy(false);
               }
@@ -160,7 +171,7 @@ export default function OcrPage() {
             </button>
           )}
         </div>
-        {status && <p role="status">{status}</p>}
+        <StatusMessage status={status} />
       </div>
       {text && (
         <div className="panel mt-4">
@@ -180,9 +191,12 @@ export default function OcrPage() {
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(text);
-                  setStatus("Text copied.");
+                  setStatus({ kind: "done", message: "Text copied." });
                 } catch {
-                  setStatus("Select and copy the text from the box.");
+                  setStatus({
+                    kind: "error",
+                    message: "Select and copy the text from the box.",
+                  });
                 }
               }}
             >

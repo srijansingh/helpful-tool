@@ -4,6 +4,7 @@ import { PdfReader } from "../components/PdfReader";
 import { PdfPreview } from "../components/PdfPreview";
 import { ToolSettings } from "../components/ToolSettings";
 import { FilenameInput } from "../components/FilenameInput";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { redactPdf, type RedactionBox } from "../lib/pdf/redact";
 import { downloadBytes } from "../lib/download";
@@ -17,7 +18,7 @@ export default function RedactPage() {
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [boxes, setBoxes] = useState<RedactionBox[]>([]);
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [preview, setPreview] = useState<Uint8Array | null>(null);
@@ -44,7 +45,7 @@ export default function RedactPage() {
             setBytes(new Uint8Array(b));
           }
         })
-        .catch((e) => setStatus(e.message));
+        .catch((e) => setStatus({ kind: "error", message: e.message }));
     return () => {
       active = false;
     };
@@ -87,28 +88,31 @@ export default function RedactPage() {
         file,
         boxes,
         controller.current.signal,
-        setStatus,
+        (message) => setStatus({ kind: "working", message }),
       );
       if (download) {
         const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-redacted"}.pdf`;
         downloadBytes(out, name, "application/pdf");
-        setStatus(
-          "New redacted PDF created. Inspect all pages and share only this new file.",
-        );
+        setStatus({
+          kind: "done",
+          message:
+            "New redacted PDF created. Inspect all pages and share only this new file.",
+        });
         logActivity({
           tool: "redact",
           label: `Redacted ${file.name} into ${name}`,
         });
       } else {
         setPreview(out);
-        setStatus("Preview the rebuilt output before export.");
+        setStatus({ kind: "done", message: "Preview the rebuilt output before export." });
       }
     } catch (e) {
-      setStatus(
-        controller.current?.signal.aborted
+      setStatus({
+        kind: "error",
+        message: controller.current?.signal.aborted
           ? "Cancelled. Original file is unchanged."
           : (e as Error).message,
-      );
+      });
     } finally {
       setBusy(false);
     }
@@ -307,11 +311,7 @@ export default function RedactPage() {
           </button>
         </>
       )}
-      {status && (
-        <p role="status" className="mt-3">
-          {status}
-        </p>
-      )}
+      <StatusMessage status={status} />
       {preview && (
         <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
       )}

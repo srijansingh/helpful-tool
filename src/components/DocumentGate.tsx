@@ -12,19 +12,24 @@ const automatic = new Set([
 export function DocumentGate({ children }: { children: ReactNode }) {
   const path = useLocation().pathname;
   const file = useDocumentStore((s) => s.current);
-  const [ready, setReady] = useState<{ file: File; path: string } | null>(null);
+  // Tracked by path, not by file identity: once this route has prepared a
+  // document, a later change to `current` (e.g. a tool publishing its own
+  // export as the new current document) must not re-gate and remount the
+  // page — that would discard in-progress work. A path change (fresh visit,
+  // including via "Continue with this document") always starts from null.
+  const [readyPath, setReadyPath] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const needs = file?.type === "application/pdf" && automatic.has(path);
   useEffect(() => {
-    if (!needs || (ready?.file === file && ready.path === path)) return;
+    if (!needs || readyPath === path) return;
     const controller = new AbortController();
     setError("");
     void import("../lib/pdf/preflight")
       .then((m) => m.preparePdf(file!, path, controller.signal))
       .then((prepared) => {
         if (!controller.signal.aborted) {
-          setReady({ file: prepared, path });
+          setReadyPath(path);
           useDocumentStore.getState().setCurrent(prepared);
         }
       })
@@ -32,8 +37,8 @@ export function DocumentGate({ children }: { children: ReactNode }) {
         if (!controller.signal.aborted) setError(friendlyError(e));
       });
     return () => controller.abort();
-  }, [file, path, needs, retry, ready]);
-  if (needs && (ready?.file !== file || ready.path !== path))
+  }, [file, path, needs, retry, readyPath]);
+  if (needs && readyPath !== path)
     return (
       <section>
         <h1 className="text-2xl font-bold">Open document</h1>

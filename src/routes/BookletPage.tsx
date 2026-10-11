@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
+import { StatusMessage, type Status } from "../components/StatusMessage";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { buildBooklet } from "../lib/pdf/workerOperations";
 import { PdfPreview } from "../components/PdfPreview";
@@ -34,7 +35,7 @@ export default function BookletPage() {
   const [paper, setPaper] = useState<"a4" | "letter">("a4");
   const [right, setRight] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [preview, setPreview] = useState<Uint8Array | null>(null);
   const { logActivity } = useRecentActivity();
   const build = async (exportFile: boolean) => {
@@ -49,16 +50,18 @@ export default function BookletPage() {
       if (exportFile) {
         const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-booklet"}.pdf`;
         downloadBytes(out, name, "application/pdf");
-        setStatus(
-          "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
-        );
+        setStatus({
+          kind: "done",
+          message:
+            "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
+        });
         logActivity({
           tool: "booklet",
           label: `Built a booklet from ${file.name} into ${name}`,
         });
       } else setPreview(out);
     } catch (e) {
-      setStatus((e as Error).message);
+      setStatus({ kind: "error", message: (e as Error).message });
     } finally {
       setBusy(false);
     }
@@ -155,7 +158,7 @@ export default function BookletPage() {
               {busy ? "Arranging pages…" : "Export booklet PDF"}
             </button>
           </div>
-          {status && <p role="status">{status}</p>}
+          <StatusMessage status={status} />
         </div>
         {preview && (
           <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
