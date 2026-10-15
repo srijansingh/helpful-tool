@@ -4,7 +4,7 @@ import { extractPages, splitEveryPage } from "../lib/pdf/split";
 import { buildOrganizedPdf } from "../lib/pdf/organize";
 import { applyWatermark } from "../lib/pdf/watermark";
 import { applyPageNumbers } from "../lib/pdf/pageNumbers";
-import { editPdf } from "../lib/pdf/edit";
+import { editPdf, readForms } from "../lib/pdf/edit";
 import { buildBooklet } from "../lib/pdf/booklet";
 import { friendlyError } from "../lib/importFiles";
 self.onmessage = async (
@@ -12,7 +12,10 @@ self.onmessage = async (
 ) => {
   const { operation, args } = e.data;
   try {
-    let result: Uint8Array | Awaited<ReturnType<typeof splitEveryPage>>;
+    let result:
+      | Uint8Array
+      | Awaited<ReturnType<typeof splitEveryPage>>
+      | Awaited<ReturnType<typeof readForms>>;
     switch (operation) {
       case "merge":
         result = await mergePdfs(...(args as Parameters<typeof mergePdfs>));
@@ -48,6 +51,9 @@ self.onmessage = async (
       case "edit":
         result = await editPdf(...(args as Parameters<typeof editPdf>));
         break;
+      case "readForms":
+        result = await readForms(...(args as Parameters<typeof readForms>));
+        break;
       case "booklet":
         result = await buildBooklet(
           ...(args as Parameters<typeof buildBooklet>),
@@ -59,7 +65,9 @@ self.onmessage = async (
     const transfer =
       result instanceof Uint8Array
         ? [result.buffer]
-        : result.map((r) => r.bytes.buffer);
+        : result.length && "bytes" in result[0]
+          ? result.map((r) => (r as { bytes: Uint8Array }).bytes.buffer)
+          : [];
     (
       self as unknown as {
         postMessage: (message: unknown, transfer: Transferable[]) => void;

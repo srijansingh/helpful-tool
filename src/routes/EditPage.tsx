@@ -15,19 +15,14 @@ import {
   Undo2,
   Redo2,
 } from "lucide-react";
-import { editPdf } from "../lib/pdf/workerOperations";
+import { editPdf, readForms } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import { PageThumbRail } from "../components/PageThumbRail";
 import { usePdfPageCount } from "../hooks/usePdfPageCount";
-import {
-  readForms,
-  type Mark,
-  type MarkKind,
-  type FormValue,
-} from "../lib/pdf/edit";
+import type { Mark, MarkKind, FormValue } from "../lib/pdf/edit";
 import { downloadBytes } from "../lib/download";
 import { friendlyError } from "../lib/importFiles";
 import { useRecentActivity } from "../hooks/useRecentActivity";

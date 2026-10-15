@@ -5,7 +5,7 @@ import type { extractPages as extract, splitEveryPage as split } from "./split";
 import type { buildOrganizedPdf as organize } from "./organize";
 import type { applyWatermark as watermark } from "./watermark";
 import type { applyPageNumbers as numbers } from "./pageNumbers";
-import type { editPdf as edit } from "./edit";
+import type { editPdf as edit, readForms as forms } from "./edit";
 import type { buildBooklet as booklet } from "./booklet";
 export const mergePdfs = (...args: Parameters<typeof merge>) =>
   runPdfJob<Awaited<ReturnType<typeof merge>>>("merge", args);
@@ -23,5 +23,7 @@ export const applyPageNumbers = (...args: Parameters<typeof numbers>) =>
   runPdfJob<Awaited<ReturnType<typeof numbers>>>("numbers", args);
 export const editPdf = (...args: Parameters<typeof edit>) =>
   runPdfJob<Awaited<ReturnType<typeof edit>>>("edit", args);
+export const readForms = (...args: Parameters<typeof forms>) =>
+  runPdfJob<Awaited<ReturnType<typeof forms>>>("readForms", args);
 export const buildBooklet = (...args: Parameters<typeof booklet>) =>
   runPdfJob<Awaited<ReturnType<typeof booklet>>>("booklet", args);
