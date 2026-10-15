@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
 import { PdfPreview } from "../components/PdfPreview";
+import { PageThumbRail } from "../components/PageThumbRail";
+import { usePdfPageCount } from "../hooks/usePdfPageCount";
 import { ToolSettings } from "../components/ToolSettings";
 import { Accordion } from "../components/Accordion";
 import { FilenameInput } from "../components/FilenameInput";
@@ -26,6 +28,7 @@ export default function RedactPage() {
   const [dragBox, setDragBox] = useState<RedactionBox | null>(null);
   const [outputName, setOutputName] = useState("");
   const { logActivity } = useRecentActivity();
+  const pageCount = usePdfPageCount(bytes);
   const loaded = useRef<File | null>(null);
   const start = useRef<[number, number] | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -156,6 +159,13 @@ export default function RedactPage() {
             file.
           </p>
           <div className="editor-workspace">
+            <PageThumbRail
+              className="editor-thumbs"
+              file={file}
+              pageCount={pageCount}
+              page={page}
+              onSelect={setPage}
+            />
             <div className="editor-document mt-3">
               <PdfReader
                 bytes={bytes}

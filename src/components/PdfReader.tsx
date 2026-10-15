@@ -1,6 +1,8 @@
 import { pdfRenderingOptions } from "../lib/pdf/renderOptions";
 import { friendlyError } from "../lib/importFiles";
 import { Accordion } from "./Accordion";
+import { Tooltip } from "./Tooltip";
+import { Minus, Plus, StretchHorizontal, StretchVertical } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   getDocument,
@@ -27,11 +29,14 @@ export function PdfReader({
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [localPage, setLocalPage] = useState(page);
   const [zoom, setZoom] = useState(1);
+  const [fitMode, setFitMode] = useState<"width" | "page" | "custom">("width");
+  const [pageSize, setPageSize] = useState({ width: 595, height: 842 });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [text, setText] = useState("");
   const canvas = useRef<HTMLCanvasElement>(null);
+  const scroll = useRef<HTMLDivElement>(null);
   const sizeCallback = useRef(onSize);
   sizeCallback.current = onSize;
   const number = onPage ? page : localPage;
@@ -66,6 +71,7 @@ export function PdfReader({
         if (!active) return;
         const view = p.getViewport({ scale: 1 });
         sizeCallback.current?.({ width: view.width, height: view.height });
+        setPageSize({ width: view.width, height: view.height });
         const scale =
           Math.min(2, 1600 / Math.max(view.width, view.height)) * zoom;
         const viewport = p.getViewport({ scale });
@@ -100,6 +106,25 @@ export function PdfReader({
     const value = Math.max(1, Math.min(pdf?.numPages || 1, n));
     if (onPage) onPage(value);
     else setLocalPage(value);
+  };
+  const stepZoom = (delta: number) => {
+    setFitMode("custom");
+    setZoom((z) => Math.max(0.25, Math.min(3, Math.round((z + delta) * 20) / 20)));
+  };
+  const fitWidth = () => {
+    setFitMode("width");
+    setZoom(1);
+  };
+  const fitPage = () => {
+    const el = scroll.current;
+    if (!el) return;
+    setFitMode("page");
+    setZoom(
+      Math.max(
+        0.25,
+        Math.min(3, (el.clientHeight / el.clientWidth) * (pageSize.width / pageSize.height)),
+      ),
+    );
   };
   const search = async () => {
     if (!allowCopy || !pdf || !query.trim()) return;
@@ -155,15 +180,47 @@ export function PdfReader({
         >
           →
         </button>
-        <select
-          aria-label="Zoom"
-          value={zoom}
-          onChange={(e) => setZoom(Number(e.target.value))}
-        >
-          <option value={1}>Fit width</option>
-          <option value={1.5}>150%</option>
-          <option value={2}>200%</option>
-        </select>
+        <div className="reader-zoom" role="group" aria-label="Zoom">
+          <Tooltip label="Zoom out" side="bottom">
+            <button
+              className="btn-secondary"
+              aria-label="Zoom out"
+              onClick={() => stepZoom(-0.1)}
+            >
+              <Minus size={16} aria-hidden="true" />
+            </button>
+          </Tooltip>
+          <span className="reader-zoom-value">{Math.round(zoom * 100)}%</span>
+          <Tooltip label="Zoom in" side="bottom">
+            <button
+              className="btn-secondary"
+              aria-label="Zoom in"
+              onClick={() => stepZoom(0.1)}
+            >
+              <Plus size={16} aria-hidden="true" />
+            </button>
+          </Tooltip>
+          <Tooltip label="Fit width" side="bottom">
+            <button
+              className="btn-secondary"
+              aria-label="Fit width"
+              aria-pressed={fitMode === "width"}
+              onClick={fitWidth}
+            >
+              <StretchHorizontal size={16} aria-hidden="true" />
+            </button>
+          </Tooltip>
+          <Tooltip label="Fit page" side="bottom">
+            <button
+              className="btn-secondary"
+              aria-label="Fit page"
+              aria-pressed={fitMode === "page"}
+              onClick={fitPage}
+            >
+              <StretchVertical size={16} aria-hidden="true" />
+            </button>
+          </Tooltip>
+        </div>
       </div>
       <div className="reader-search">
         <input
@@ -191,7 +248,7 @@ export function PdfReader({
         </p>
       )}
       {loading && <p role="status">Loading page…</p>}
-      <div className="reader-scroll">
+      <div className="reader-scroll" ref={scroll}>
         <div className="reader-page" style={{ width: `${zoom * 100}%` }}>
           <canvas ref={canvas} aria-label={`PDF page ${number}`} />
           {overlay}

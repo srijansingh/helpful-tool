@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { useDialogFocus } from "../hooks/useDialogFocus";
+import { Tooltip } from "./Tooltip";
 export function ToolSettings({
   children,
   enabled,
@@ -47,14 +48,23 @@ export function ToolSettings({
         aria-label={title}
       >
         <div className="settings-heading">
-          <h2>{title}</h2>
-          <button
-            className="btn-secondary settings-close"
-            aria-label="Close settings"
-            onClick={() => setOpen(false)}
-          >
-            <X size={18} />
-          </button>
+          <h2 className="flex items-center gap-2">
+            <SlidersHorizontal
+              size={16}
+              className="text-accent"
+              aria-hidden="true"
+            />
+            {title}
+          </h2>
+          <Tooltip label="Close" side="left">
+            <button
+              className="btn-secondary settings-close"
+              aria-label="Close settings"
+              onClick={() => setOpen(false)}
+            >
+              <X size={18} />
+            </button>
+          </Tooltip>
         </div>
         {children}
       </div>

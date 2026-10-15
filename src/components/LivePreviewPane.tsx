@@ -8,6 +8,10 @@ interface LivePreviewPaneProps {
   watch: unknown;
   emptyMessage: string;
   title?: string;
+  // Lets a caller (e.g. a page-thumbnail rail) drive which page the
+  // preview shows, instead of the reader tracking it internally.
+  page?: number;
+  onPage?: (page: number) => void;
 }
 
 // A persistent, auto-updating preview of what the current files will
@@ -20,6 +24,8 @@ export function LivePreviewPane({
   watch,
   emptyMessage,
   title = "Preview",
+  page,
+  onPage,
 }: LivePreviewPaneProps) {
   const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,7 +94,7 @@ export function LivePreviewPane({
             Couldn't build preview: {error}
           </p>
         )}
-        {bytes && <PdfReader bytes={bytes} />}
+        {bytes && <PdfReader bytes={bytes} page={page} onPage={onPage} />}
       </div>
     </div>
   );

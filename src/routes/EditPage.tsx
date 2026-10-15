@@ -20,6 +20,8 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
 import { PdfReader } from "../components/PdfReader";
+import { PageThumbRail } from "../components/PageThumbRail";
+import { usePdfPageCount } from "../hooks/usePdfPageCount";
 import {
   readForms,
   type Mark,
@@ -64,6 +66,7 @@ export default function EditPage() {
   } | null>(null);
   const marks = history[cursor] || [];
   const hasBytes = Boolean(bytes);
+  const pageCount = usePdfPageCount(bytes);
   useEffect(() => {
     setUploadOpen(!hasBytes);
   }, [hasBytes]);
@@ -306,75 +309,79 @@ export default function EditPage() {
             role="toolbar"
             aria-label="Annotation tools"
           >
-            {(
-              [
-                "select",
-                "text",
-                "pen",
-                "highlight",
-                "rectangle",
-                "image",
-              ] as const
-            ).map((t) => {
-              const label =
-                t === "image"
-                  ? "Image / signature"
-                  : t === "pen"
-                    ? "Draw signature"
-                    : t === "select"
-                      ? "Select / move"
-                      : t === "text"
-                        ? "Add text"
-                        : t === "highlight"
-                          ? "Highlight"
-                          : "Rectangle";
-              const Icon = {
-                select: MousePointer2,
-                text: Type,
-                pen: PenLine,
-                highlight: Highlighter,
-                rectangle: Square,
-                image: ImageIcon,
-              }[t];
-              return (
-                <Tooltip key={t} label={label} side="bottom">
-                  <button
-                    aria-label={label}
-                    className={mode === t ? "btn" : "btn-secondary"}
-                    aria-pressed={mode === t}
-                    onClick={() => setMode(t)}
-                  >
-                    <Icon size={20} aria-hidden="true" />
-                  </button>
-                </Tooltip>
-              );
-            })}
-            <Tooltip label="Undo" side="bottom">
-              <button
-                aria-label="Undo"
-                className="btn-secondary"
-                disabled={cursor === 0}
-                onClick={() => {
-                  setCursor(cursor - 1);
-                  setSelected(null);
-                }}
-              >
-                <Undo2 size={20} aria-hidden="true" />
-              </button>
-            </Tooltip>
-            <Tooltip label="Redo" side="bottom">
-              <button
-                aria-label="Redo"
-                className="btn-secondary"
-                disabled={cursor === history.length - 1}
-                onClick={() => {
-                  setCursor(cursor + 1);
-                  setSelected(null);
-                }}
-              >
-                <Redo2 size={20} aria-hidden="true" />
-              </button>
-            </Tooltip>
+            <div className="editor-toolbar-group">
+              {(
+                [
+                  "select",
+                  "text",
+                  "pen",
+                  "highlight",
+                  "rectangle",
+                  "image",
+                ] as const
+              ).map((t) => {
+                const label =
+                  t === "image"
+                    ? "Image / signature"
+                    : t === "pen"
+                      ? "Draw signature"
+                      : t === "select"
+                        ? "Select / move"
+                        : t === "text"
+                          ? "Add text"
+                          : t === "highlight"
+                            ? "Highlight"
+                            : "Rectangle";
+                const Icon = {
+                  select: MousePointer2,
+                  text: Type,
+                  pen: PenLine,
+                  highlight: Highlighter,
+                  rectangle: Square,
+                  image: ImageIcon,
+                }[t];
+                return (
+                  <Tooltip key={t} label={label} side="bottom">
+                    <button
+                      aria-label={label}
+                      className={mode === t ? "btn" : "btn-secondary"}
+                      aria-pressed={mode === t}
+                      onClick={() => setMode(t)}
+                    >
+                      <Icon size={20} aria-hidden="true" />
+                    </button>
+                  </Tooltip>
+                );
+              })}
+            </div>
+            <div className="editor-toolbar-group">
+              <Tooltip label="Undo" side="bottom">
+                <button
+                  aria-label="Undo"
+                  className="btn-secondary"
+                  disabled={cursor === 0}
+                  onClick={() => {
+                    setCursor(cursor - 1);
+                    setSelected(null);
+                  }}
+                >
+                  <Undo2 size={20} aria-hidden="true" />
+                </button>
+              </Tooltip>
+              <Tooltip label="Redo" side="bottom">
+                <button
+                  aria-label="Redo"
+                  className="btn-secondary"
+                  disabled={cursor === history.length - 1}
+                  onClick={() => {
+                    setCursor(cursor + 1);
+                    setSelected(null);
+                  }}
+                >
+                  <Redo2 size={20} aria-hidden="true" />
+                </button>
+              </Tooltip>
+            </div>
           </div>
 
           <p className="text-sm text-muted mt-2">
@@ -382,6 +389,13 @@ export default function EditPage() {
             visual marks, not certificate signatures.
           </p>
           <div className="editor-workspace">
+            <PageThumbRail
+              className="editor-thumbs"
+              file={file}
+              pageCount={pageCount}
+              page={page}
+              onSelect={setPage}
+            />
             <div className="editor-document mt-3">
               {formUpdating && (
                 <p role="status" className="text-sm text-muted">

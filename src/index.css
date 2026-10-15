@@ -495,6 +495,26 @@ button:disabled {
   background: var(--color-bg);
   z-index: 5;
   padding: 0.5rem 0;
+  justify-content: space-between;
+}
+.editor-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.reader-zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.reader-zoom-value {
+  min-width: 3.2rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-muted);
 }
 .reader {
   min-width: 0;
@@ -512,6 +532,11 @@ button:disabled {
     overflow-x: auto;
     padding: 0.5rem 0;
     scrollbar-width: thin;
+  }
+  /* Keep both tool zones in the one scrollable row instead of each
+     wrapping its own buttons onto a second line. */
+  .editor-toolbar-group {
+    flex-wrap: nowrap;
   }
   .editor-toolbar button {
     flex-shrink: 0;
@@ -596,6 +621,10 @@ button:disabled {
   flex-direction: column;
   gap: 16px;
 }
+.workspace-thumbs {
+  order: -1;
+  min-width: 0;
+}
 .workspace-document {
   order: 0;
   min-width: 0;
@@ -603,6 +632,34 @@ button:disabled {
 .workspace-inspector {
   order: 1;
   min-width: 0;
+}
+/* Acrobat-style left page-navigation rail — a desktop-density convention
+   (see the plan's Section H), not something a narrow editor needs. */
+.page-thumb-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.page-thumb-rail-item {
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 2px;
+  background: transparent;
+  text-align: center;
+}
+.page-thumb-rail-item.is-active {
+  border-color: var(--color-accent);
+}
+.page-thumb-rail-label {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+@media (max-width: 1023px) {
+  .page-thumb-rail {
+    display: none;
+  }
 }
 .settings-content {
   border: 1px solid var(--color-border);
@@ -684,6 +741,29 @@ label:has(input[type="checkbox"]) {
   .workspace-inspector {
     grid-column: 2;
     grid-row: 1;
+  }
+}
+/* The page-thumbnail rail only applies at desktop width (see
+   .page-thumb-rail's own max-width:1023px rule) — this adds its column
+   rather than redefining the 768px breakpoint above, since 768-1023px
+   already falls back to a single flex column below. */
+@media (min-width: 1024px) {
+  .document-workspace {
+    grid-template-columns: 88px minmax(0, 1fr) 320px;
+  }
+  .workspace-thumbs {
+    grid-column: 1;
+    grid-row: 1;
+    position: sticky;
+    top: 20px;
+    max-height: calc(100dvh - 40px);
+    overflow-y: auto;
+  }
+  .workspace-document {
+    grid-column: 2;
+  }
+  .workspace-inspector {
+    grid-column: 3;
   }
 }
 @media (min-width: 768px) and (max-width: 1023px) {
@@ -795,13 +875,23 @@ label:has(input[type="checkbox"]) {
   gap: 16px;
   min-width: 0;
 }
+.editor-thumbs {
+  order: -1;
+  min-width: 0;
+}
 .editor-document {
   min-width: 0;
 }
 @media (min-width: 1024px) {
   .editor-workspace {
-    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-columns: 88px minmax(0, 1fr) 320px;
     align-items: start;
+  }
+  .editor-thumbs {
+    position: sticky;
+    top: 64px;
+    max-height: calc(100dvh - 84px);
+    overflow-y: auto;
   }
   .editor-document {
     position: sticky;

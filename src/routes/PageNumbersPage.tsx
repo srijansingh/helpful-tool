@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Hash } from "lucide-react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { RecentActivity } from "../components/RecentActivity";
 import { ToolSettings } from "../components/ToolSettings";
+import { PageThumbRail } from "../components/PageThumbRail";
 import { sourceKey } from "../lib/sourceKey";
 import { useSessionState } from "../hooks/useSessionState";
 import { LivePreviewPane } from "../components/LivePreviewPane";
@@ -59,7 +60,17 @@ export default function PageNumbersPage() {
     false,
   );
   const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [page, setPage] = useState(1);
   const { entries, logActivity } = useRecentActivity();
+  const previewFile = useMemo(
+    () =>
+      current
+        ? new File([current.bytes], `${current.name}.pdf`, {
+            type: "application/pdf",
+          })
+        : null,
+    [current],
+  );
 
   const handleFile = async (files: File[]) => {
     const file = files[0];
@@ -70,6 +81,7 @@ export default function PageNumbersPage() {
       const name = file.name.replace(/\.pdf$/i, "");
       setCurrent({ bytes, pageCount, name, size: file.size });
       setOutputName(`${name}-numbered`);
+      setPage(1);
       setStatus({ kind: "idle" });
       renderPdfThumbnail(file)
         .then(setThumb)
@@ -138,6 +150,13 @@ export default function PageNumbersPage() {
       </p>
 
       <div className="mt-6 lg:grid document-workspace lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+        <PageThumbRail
+          className="workspace-thumbs"
+          file={previewFile}
+          pageCount={current?.pageCount ?? 0}
+          page={page}
+          onSelect={setPage}
+        />
         <div className="workspace-inspector">
           <ToolSettings enabled={!!current} title="Number settings">
             <Dropzone
@@ -318,6 +337,8 @@ export default function PageNumbersPage() {
                 build={build}
                 watch={`${sourceKey(current.bytes)}-${position}-${format}-${startAt}-${fontSize}-${ranges}-${prefix}-${margin}-${skipCover}`}
                 emptyMessage="Add a PDF to see a live preview of the page numbers."
+                page={page}
+                onPage={setPage}
               />
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface-2/50 p-6 text-center">
