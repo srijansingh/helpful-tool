@@ -6,9 +6,10 @@ import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { Accordion } from "../components/Accordion";
+import { Card } from "../components/Card";
+import { LivePreviewPane } from "../components/LivePreviewPane";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { buildBooklet } from "../lib/pdf/workerOperations";
-import { PdfPreview } from "../components/PdfPreview";
 import { downloadBytes } from "../lib/download";
 import { useRecentActivity } from "../hooks/useRecentActivity";
 export default function BookletPage() {
@@ -37,9 +38,8 @@ export default function BookletPage() {
   const [right, setRight] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
-  const [preview, setPreview] = useState<Uint8Array | null>(null);
   const { logActivity } = useRecentActivity();
-  const build = async (exportFile: boolean) => {
+  const exportBooklet = async () => {
     if (!file || busy) return;
     setBusy(true);
     try {
@@ -48,19 +48,17 @@ export default function BookletPage() {
         paper,
         right,
       );
-      if (exportFile) {
-        const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-booklet"}.pdf`;
-        downloadBytes(out, name, "application/pdf");
-        setStatus({
-          kind: "done",
-          message:
-            "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
-        });
-        logActivity({
-          tool: "booklet",
-          label: `Built a booklet from ${file.name} into ${name}`,
-        });
-      } else setPreview(out);
+      const name = `${outputName.trim() || file.name.replace(/\.pdf$/i, "") + "-booklet"}.pdf`;
+      downloadBytes(out, name, "application/pdf");
+      setStatus({
+        kind: "done",
+        message:
+          "Booklet PDF ready. Print a test sheet at actual size, two-sided, flip on the short edge. Check orientation, then print the remaining sheets and fold them.",
+      });
+      logActivity({
+        tool: "booklet",
+        label: `Built a booklet from ${file.name} into ${name}`,
+      });
     } catch (e) {
       setStatus({ kind: "error", message: (e as Error).message });
     } finally {
@@ -69,100 +67,114 @@ export default function BookletPage() {
   };
   return (
     <section aria-busy={busy}>
-      <fieldset disabled={busy} className="contents">
-        <h1 className="text-2xl font-bold">Print a booklet</h1>
-        <p className="mt-2 text-muted">
-          Arrange pages on landscape sheets for folding. Blank pages are added
-          to make a multiple of four.
-        </p>
-        <div className="mt-4 max-w-[640px]">
-          <Dropzone
-            disabled={busy}
-            accept="application/pdf"
-            label="Choose a PDF"
-            hint={
-              file?.type === "application/pdf"
-                ? file.name
-                : "Pages will be fitted to half a sheet"
-            }
-            onFiles={(f) => {
-              setFile(f[0]);
-              useDocumentStore.getState().setCurrent(f[0]);
-              setOutputName(f[0].name.replace(/\.pdf$/i, "") + "-booklet");
-            }}
-          />
-        </div>
-        <div className="tool-form mt-4">
-          <label className="field-label">
-            Paper
-            <select
-              className="field"
-              value={paper}
-              onChange={(e) => setPaper(e.target.value as typeof paper)}
-            >
-              <option value="a4">A4</option>
-              <option value="letter">Letter</option>
-            </select>
-          </label>
-          <label className="panel flex gap-2">
-            <input
-              type="checkbox"
-              checked={right}
-              onChange={(e) => setRight(e.target.checked)}
+      <h1 className="text-2xl font-bold">Print a booklet</h1>
+      <p className="mt-2 text-muted">
+        Arrange pages on landscape sheets for folding. Blank pages are added
+        to make a multiple of four.
+      </p>
+      <div className="mt-6 lg:grid file-workspace lg:grid-cols-[minmax(0,1fr)_minmax(320px,1fr)] lg:items-start lg:gap-6">
+        <fieldset disabled={busy} className="contents">
+          <Card>
+            <Dropzone
+              disabled={busy}
+              accept="application/pdf"
+              label="Choose a PDF"
+              hint={
+                file?.type === "application/pdf"
+                  ? file.name
+                  : "Pages will be fitted to half a sheet"
+              }
+              onFiles={(f) => {
+                setFile(f[0]);
+                useDocumentStore.getState().setCurrent(f[0]);
+                setOutputName(f[0].name.replace(/\.pdf$/i, "") + "-booklet");
+              }}
             />
-            Right-side binding
-          </label>
-          {count > 0 && (
-            <Accordion
-              summary={`Sheet plan · ${Math.ceil(count / 4)} sheets · ${Math.ceil(count / 4) * 4 - count} blank pages`}
-            >
-              <ol className="text-sm space-y-2">
-                {bookletOrder(count, right)
-                  .slice(0, 40)
-                  .map((pair, i) => (
-                    <li key={i}>
-                      Sheet {Math.floor(i / 2) + 1}, {i % 2 ? "back" : "front"}:{" "}
-                      {pair
-                        .map((n) => (n === null ? "blank" : `page ${n + 1}`))
-                        .join(" | ")}
-                    </li>
-                  ))}
-              </ol>
-              {Math.ceil(count / 2) > 40 && (
-                <p>Preview the PDF for the remaining sheet sides.</p>
+            <div className="mt-5 flex flex-col gap-4">
+              <label className="field-label">
+                Paper
+                <select
+                  className="field"
+                  value={paper}
+                  onChange={(e) => setPaper(e.target.value as typeof paper)}
+                >
+                  <option value="a4">A4</option>
+                  <option value="letter">Letter</option>
+                </select>
+              </label>
+              <label className="panel flex gap-2">
+                <input
+                  type="checkbox"
+                  checked={right}
+                  onChange={(e) => setRight(e.target.checked)}
+                />
+                Right-side binding
+              </label>
+              {count > 0 && (
+                <Accordion
+                  summary={`Sheet plan · ${Math.ceil(count / 4)} sheets · ${Math.ceil(count / 4) * 4 - count} blank pages`}
+                >
+                  <ol className="text-sm space-y-2">
+                    {bookletOrder(count, right)
+                      .slice(0, 40)
+                      .map((pair, i) => (
+                        <li key={i}>
+                          Sheet {Math.floor(i / 2) + 1},{" "}
+                          {i % 2 ? "back" : "front"}:{" "}
+                          {pair
+                            .map((n) => (n === null ? "blank" : `page ${n + 1}`))
+                            .join(" | ")}
+                        </li>
+                      ))}
+                  </ol>
+                  {Math.ceil(count / 2) > 40 && (
+                    <p>Preview the PDF for the remaining sheet sides.</p>
+                  )}
+                </Accordion>
               )}
-            </Accordion>
+              <p className="text-sm text-muted">
+                Export includes page content and flattened interactive form
+                fields. Other annotations, links and attachments are omitted.
+                Existing certificate signatures are not retained.
+              </p>
+              <FilenameInput
+                value={outputName}
+                onChange={setOutputName}
+                extension="pdf"
+              />
+              <button
+                className="btn"
+                data-primary-action
+                disabled={busy || file?.type !== "application/pdf"}
+                onClick={() => void exportBooklet()}
+              >
+                {busy ? "Arranging pages…" : "Export booklet PDF"}
+              </button>
+              <StatusMessage status={status} />
+            </div>
+          </Card>
+        </fieldset>
+
+        <div className="file-workspace-preview">
+          {file?.type === "application/pdf" ? (
+            <LivePreviewPane
+              build={async (signal) => {
+                const bytes = new Uint8Array(await file.arrayBuffer());
+                signal.throwIfAborted();
+                return buildBooklet(bytes, paper, right);
+              }}
+              watch={[file, paper, right]}
+              emptyMessage="Choose a PDF to see a live preview of the booklet."
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-surface-2/50 p-6 text-center">
+              <p className="max-w-[16rem] text-sm text-muted">
+                Choose a PDF to see a live preview of the booklet.
+              </p>
+            </div>
           )}
-          <p className="text-sm text-muted">
-            Export includes page content and flattened interactive form
-            fields. Other annotations, links and attachments are omitted.
-            Check the preview before printing. Existing certificate
-            signatures are not retained.
-          </p>
-          <FilenameInput value={outputName} onChange={setOutputName} extension="pdf" />
-          <div className="flex flex-wrap gap-3">
-            <button
-              className="btn-secondary"
-              disabled={busy || file?.type !== "application/pdf"}
-              onClick={() => void build(false)}
-            >
-              Preview booklet
-            </button>
-            <button
-              className="btn"
-              data-primary-action
-              disabled={busy || file?.type !== "application/pdf"}
-              onClick={() => void build(true)}
-            >
-              {busy ? "Arranging pages…" : "Export booklet PDF"}
-            </button>
-          </div>
-          <StatusMessage status={status} />
         </div>
-        {preview && (
-          <PdfPreview bytes={preview} onClose={() => setPreview(null)} />
-        )}
-      </fieldset>
+      </div>
     </section>
   );
 }
