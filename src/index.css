@@ -94,6 +94,16 @@
   color-scheme: light;
 }
 
+/* A slightly finer icon line than Lucide's default 2px — closer to the
+   lighter, more editorial icon weight of a well-made chat/document app,
+   without touching color. Scoped to Lucide's own class so it never
+   touches the functional stroke-width on the Edit/Redact annotation
+   canvases (those are plain <svg>, not .lucide, and their stroke width
+   is a drawn mark's actual thickness, not a style choice). */
+.lucide {
+  stroke-width: 1.75px;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-fg);
@@ -317,6 +327,16 @@ button:disabled {
   border: 1px dashed var(--color-border);
   border-radius: 16px;
   padding: 16px;
+  transition:
+    border-color 0.12s ease,
+    background-color 0.12s ease;
+}
+/* The one real gap in the old dropzone: nothing told you a drag was over
+   a valid target until you let go. */
+.dropzone.is-drag-active {
+  border-color: var(--color-accent);
+  border-style: solid;
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-surface));
 }
 .sheet-overlay {
   position: fixed;

@@ -35,6 +35,8 @@ export function Dropzone({
   callback.current = onFiles;
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepth = useRef(0);
   const pending = useDocumentStore((s) => s.pending);
   const current = useDocumentStore((s) => s.current);
   const location = useLocation();
@@ -103,10 +105,22 @@ export function Dropzone({
   return (
     <div>
       <div
-        className="dropzone"
+        className={`dropzone${dragActive ? " is-drag-active" : ""}`}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          dragDepth.current += 1;
+          if (!busy && !disabled) setDragActive(true);
+        }}
         onDragOver={(e) => e.preventDefault()}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          dragDepth.current = Math.max(0, dragDepth.current - 1);
+          if (dragDepth.current === 0) setDragActive(false);
+        }}
         onDrop={(e) => {
           e.preventDefault();
+          dragDepth.current = 0;
+          setDragActive(false);
           if (!busy && !disabled)
             void validate(Array.from(e.dataTransfer.files));
         }}

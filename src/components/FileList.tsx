@@ -78,7 +78,7 @@ export function FileList({
           <li
             key={keyOf(file, i)}
             data-file-index={i}
-            className={`flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-shadow ${
+            className={`group flex items-center gap-2 rounded-xl bg-surface-2 p-2 pr-3 transition-[filter,box-shadow] hover:brightness-105 ${
               dragIndex === i
                 ? "relative z-10 shadow-lg ring-2 ring-accent"
                 : ""
@@ -114,13 +114,13 @@ export function FileList({
                 {formatSize(file.size)}
               </span>
             </span>
-            <span className="flex shrink-0 gap-1">
+            <span className="flex shrink-0 gap-0.5">
               <button
                 type="button"
                 aria-label={`Move ${file.name} up`}
                 disabled={i === 0}
                 onClick={() => move(i, -1)}
-                className="rounded-lg border border-border bg-surface p-1.5 text-fg disabled:opacity-30"
+                className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface hover:text-fg disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowUp className="h-3.5 w-3.5" />
               </button>
@@ -129,7 +129,7 @@ export function FileList({
                 aria-label={`Move ${file.name} down`}
                 disabled={i === files.length - 1}
                 onClick={() => move(i, 1)}
-                className="rounded-lg border border-border bg-surface p-1.5 text-fg disabled:opacity-30"
+                className="rounded-lg p-1.5 text-muted transition-colors hover:bg-surface hover:text-fg disabled:opacity-30 disabled:hover:bg-transparent"
               >
                 <ArrowDown className="h-3.5 w-3.5" />
               </button>
@@ -137,7 +137,7 @@ export function FileList({
                 type="button"
                 aria-label={`Remove ${file.name}`}
                 onClick={() => remove(i)}
-                className="rounded-lg border border-border bg-surface p-1.5 text-bad"
+                className="rounded-lg p-1.5 text-muted transition-colors hover:bg-bad/10 hover:text-bad"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
