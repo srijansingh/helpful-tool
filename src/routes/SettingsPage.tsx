@@ -1,16 +1,42 @@
 import { hasSessionDrafts } from "../hooks/useSessionState";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { StatusMessage, type Status } from "../components/StatusMessage";
 import { usePwaStore } from "../lib/pwa";
 import { useDocumentStore } from "../store/useDocumentStore";
+import {
+  isTelemetryEnabled,
+  setTelemetryEnabled,
+  getTelemetryEvents,
+  clearTelemetryEvents,
+  summarizeTelemetry,
+  type TelemetrySummary,
+} from "../lib/telemetry";
+
+function formatDuration(ms: number): string {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.round(s / 60);
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+}
+
 export default function SettingsPage() {
   const pwa = usePwaStore();
   const current = useDocumentStore((s) => s.current);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [confirmUpdate, setConfirmUpdate] = useState(false);
+  const [telemetryOn, setTelemetryOn] = useState(isTelemetryEnabled);
+  const [summary, setSummary] = useState<TelemetrySummary | null>(null);
+  const [confirmClearUsage, setConfirmClearUsage] = useState(false);
+  const refreshSummary = () =>
+    getTelemetryEvents().then((events) => setSummary(summarizeTelemetry(events)));
+  useEffect(() => {
+    refreshSummary();
+  }, []);
   return (
     <section>
       <h1 className="text-3xl font-bold">Settings</h1>
@@ -91,6 +117,95 @@ export default function SettingsPage() {
           or operating system, so export important files as a backup.
         </p>
       </div>
+      <div className="panel mt-4">
+        <h2>Usage & diagnostics</h2>
+        <p className="text-muted">
+          Counts of which tools get opened, finished or hit an error — kept
+          only on this device, never sent anywhere automatically. No
+          filenames, file contents, or error text are recorded, only which
+          tool and what happened. Export this if you want to share it with
+          the team yourself.
+        </p>
+        <label className="mt-3 flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={telemetryOn}
+            onChange={(e) => {
+              setTelemetryEnabled(e.target.checked);
+              setTelemetryOn(e.target.checked);
+            }}
+          />
+          Keep this usage log on this device
+        </label>
+        {telemetryOn && summary && summary.totalEvents > 0 && (
+          <>
+            {summary.timeToFirstSuccessMs !== null && (
+              <p className="mt-3 text-sm">
+                Time from first tool opened to first successful export:{" "}
+                <strong>{formatDuration(summary.timeToFirstSuccessMs)}</strong>
+              </p>
+            )}
+            <div className="mt-3 overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Tool</th>
+                    <th>Opened</th>
+                    <th>Finished</th>
+                    <th>Completion</th>
+                    <th>Errors</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.perTool.map((t) => (
+                    <tr key={t.tool}>
+                      <td>{t.tool}</td>
+                      <td>{t.opened}</td>
+                      <td>{t.completed}</td>
+                      <td>
+                        {t.completionRate === null
+                          ? "—"
+                          : `${Math.round(t.completionRate * 100)}%`}
+                      </td>
+                      <td>{t.errors}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+        {telemetryOn && summary && summary.totalEvents === 0 && (
+          <p className="mt-3 text-sm text-muted">
+            No usage recorded yet — this fills in as you use the tools.
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            className="btn-secondary"
+            disabled={!summary || summary.totalEvents === 0}
+            onClick={async () => {
+              const json = JSON.stringify(await getTelemetryEvents(), null, 2);
+              const blob = new Blob([json], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "localpdf-usage.json";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+          >
+            Export usage data
+          </button>
+          <button
+            className="btn-secondary"
+            disabled={!summary || summary.totalEvents === 0}
+            onClick={() => setConfirmClearUsage(true)}
+          >
+            Clear usage data
+          </button>
+        </div>
+      </div>
       <StatusMessage status={status} />
       <ConfirmDialog
         open={confirmUpdate}
@@ -103,6 +218,18 @@ export default function SettingsPage() {
           void pwa.update();
         }}
         onCancel={() => setConfirmUpdate(false)}
+      />
+      <ConfirmDialog
+        open={confirmClearUsage}
+        title="Clear usage data?"
+        description="Deletes the local usage log on this device. This can't be undone."
+        confirmLabel="Clear usage data"
+        danger
+        onConfirm={() => {
+          setConfirmClearUsage(false);
+          clearTelemetryEvents().then(refreshSummary);
+        }}
+        onCancel={() => setConfirmClearUsage(false)}
       />
     </section>
   );

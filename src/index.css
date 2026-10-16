@@ -268,6 +268,40 @@ button:disabled {
   font-weight: 700;
   margin-bottom: 8px;
 }
+/* Clean row-divider table, not a heavy grid — no vertical rules, a quiet
+   header row, generous cell padding. The app's first real <table>; this
+   is the convention the rest of the app should follow if more show up. */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+.data-table th {
+  padding: 8px 12px 8px 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.data-table tbody tr:hover td {
+  background: var(--color-surface-2);
+}
+.data-table td:first-child {
+  font-weight: 600;
+  text-transform: capitalize;
+}
 .btn,
 .btn-secondary,
 .btn-icon {

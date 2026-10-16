@@ -6,6 +6,7 @@ import {
 } from "./lib/pdfJobs";
 import { hasSessionDrafts } from "./hooks/useSessionState";
 import { useDocumentStore } from "./store/useDocumentStore";
+import { recordTelemetryEvent } from "./lib/telemetry";
 import { Suspense, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -25,6 +26,8 @@ export default function App() {
   useEffect(() => {
     leavePdfWorkspace();
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (TOOLS.some((t) => t.to === path))
+      recordTelemetryEvent(path.replace(/^\//, ""), "opened");
   }, [path]);
   useEffect(() => {
     const guard = (event: BeforeUnloadEvent) => {

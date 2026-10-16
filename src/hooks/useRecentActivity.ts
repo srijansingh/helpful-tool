@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { get, set } from "idb-keyval";
+import { recordTelemetryEvent } from "../lib/telemetry";
 
 // Only metadata is persisted — never file bytes. Storing the actual PDFs
 // would bloat browser storage and cut against the point of this tool
@@ -51,6 +52,12 @@ export function useRecentActivity() {
       });
       return next;
     });
+    // Every tool already calls logActivity exactly once, on a successful
+    // export — the one existing touch point that already means "this
+    // tool's job finished". The "was that easy?" ask lives in ResultPanel
+    // instead (same moment, but that's the actual shared success UI,
+    // rather than a second prompt competing with it).
+    recordTelemetryEvent(entry.tool, "completed");
   }, []);
 
   return { entries, loaded, logActivity };
