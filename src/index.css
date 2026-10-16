@@ -319,6 +319,27 @@ button:disabled {
   background: var(--color-action);
   color: white;
 }
+/* The generic button:disabled{opacity:.45} rule washes a solid, saturated
+   button+white-text combination out to ~2:1 contrast (measured) — fine
+   for a muted secondary button, not for this one. Flat, theme-proof
+   colors instead of dimming the accent itself. */
+.btn:disabled {
+  opacity: 1;
+  background: var(--color-surface-2);
+  color: var(--color-muted);
+}
+/* Several pages (Merge, Watermark, Page Numbers, Images → PDF, Split,
+   PDF → Images, Organize, Scan, Scan Library) build their primary button
+   from bg-accent + text-white directly instead of the shared .btn class
+   — same washed-out-disabled bug, same fix, in one rule instead of nine
+   separate JSX edits. Only engages where an element is both .bg-accent
+   and actually :disabled, so it's a no-op everywhere else .bg-accent
+   is used (nav items, toggles, etc. that are never disabled). */
+.bg-accent:disabled {
+  opacity: 1;
+  background-color: var(--color-surface-2);
+  color: var(--color-muted);
+}
 .btn-secondary {
   border: 1px solid var(--color-border);
   background: var(--color-surface-2);
