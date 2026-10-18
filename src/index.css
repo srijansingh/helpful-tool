@@ -903,8 +903,17 @@ label:has(input[type="checkbox"]) {
   .workspace-document .reader-search {
     display: flex;
   }
+  /* 60dvh didn't account for the fixed .settings-trigger bar sitting on
+     top of the same viewport region — measured via Playwright on a real
+     loaded preview, the pane's bottom edge overlapped the trigger by
+     ~154px. The ~414px of fixed-height chrome above the pane (header,
+     page-nav, zoom row, find-text row) plus the trigger's own ~140px
+     footprint is roughly constant in px regardless of viewport height,
+     so subtracting it from 100dvh (rather than using a flat dvh
+     percentage) keeps the preview clear of the trigger on both small and
+     large phones; max() keeps a usable floor on very short viewports. */
   .workspace-document .reader-scroll {
-    max-height: 60dvh;
+    max-height: max(130px, calc(100dvh - 560px));
   }
   .workspace-document .reader-controls {
     gap: 4px;
