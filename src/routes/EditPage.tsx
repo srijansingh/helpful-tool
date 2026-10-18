@@ -5,7 +5,7 @@ import { ToolSettings } from "../components/ToolSettings";
 import { Tooltip } from "../components/Tooltip";
 import { Accordion } from "../components/Accordion";
 import { StatusMessage, type Status } from "../components/StatusMessage";
-import { Cursor as MousePointer2, TextAa as Type, Pen as PenLine, Highlighter, Square, Image as ImageIcon, ArrowUUpLeft as Undo2, ArrowUUpRight as Redo2 } from "@phosphor-icons/react";
+import { Cursor as MousePointer2, TextAa as Type, Pen as PenLine, Highlighter, Square, Image as ImageIcon, ArrowUUpLeft as Undo2, ArrowUUpRight as Redo2, Check, Trash as TrashIcon, Minus, Plus } from "@phosphor-icons/react";
 import { editPdf, readForms } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";
@@ -39,11 +39,13 @@ export default function EditPage() {
   const [color, setColor] = useState("#202b47");
   const [selected, setSelected] = useState<string | null>(null);
   const [image, setImage] = useState("");
+  const [pendingText, setPendingText] = useState<{ x: number; y: number } | null>(null);
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [busy, setBusy] = useState(false);
   const { logActivity } = useRecentActivity();
   const loadedFile = useRef<File | null>(null);
   const svg = useRef<SVGSVGElement>(null);
+  const pendingInput = useRef<HTMLInputElement>(null);
   const gesture = useRef<{
     start: [number, number];
     mark: Mark;
@@ -127,6 +129,11 @@ export default function EditPage() {
   };
   const down = (e: PointerEvent<SVGSVGElement>) => {
     if (busy) return;
+    // The SVG itself isn't focusable, so a tap's default mousedown action
+    // blurs whatever currently has focus — including the inline text input
+    // this same tap is about to open. Suppressing it keeps that input
+    // focused once it mounts a moment later.
+    e.preventDefault();
     const p = point(e);
     e.currentTarget.setPointerCapture(e.pointerId);
     const id = (e.target as Element)
@@ -139,11 +146,8 @@ export default function EditPage() {
         gesture.current = { start: p, mark: old, original: marks, move: true };
       return;
     }
-    if (mode === "text" && !text.trim()) {
-      setStatus({
-        kind: "error",
-        message: "Enter your text or typed signature first.",
-      });
+    if (mode === "text") {
+      if (!pendingText) setPendingText({ x: p[0], y: p[1] });
       return;
     }
     if (mode === "image" && !image) {
@@ -242,6 +246,38 @@ export default function EditPage() {
     setCursor(cursor + 1);
     gesture.current = null;
   };
+  const commitPendingText = () => {
+    if (pendingText && text.trim()) {
+      const m: Mark = {
+        id: crypto.randomUUID(),
+        page,
+        kind: "text",
+        x: pendingText.x,
+        y: pendingText.y,
+        w: 0,
+        h: 0,
+        text,
+        size: fontSize,
+        color,
+        data: image,
+        points: [[pendingText.x, pendingText.y]],
+      };
+      commit([...marks, m]);
+      setSelected(m.id);
+    }
+    setPendingText(null);
+  };
+  useEffect(() => {
+    if (pendingText) pendingInput.current?.focus();
+  }, [pendingText]);
+  useEffect(() => {
+    if (pendingText) commitPendingText();
+    // Safety net only — the normal path commits on blur/Enter. Deliberately
+    // excludes pendingText/text/commitPendingText so this only fires when
+    // the tool or page actually changes underneath an open inline input,
+    // not every time that input's own state changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, page]);
   const save = async () => {
     if (!bytes || busy) return;
     setBusy(true);
@@ -394,6 +430,7 @@ export default function EditPage() {
                 onPage={setPage}
                 onSize={setSize}
                 overlay={
+                  <>
                   <svg
                     ref={svg}
                     className="pdf-overlay"
@@ -481,14 +518,110 @@ export default function EditPage() {
                                 (m.size * 1000) / size.height,
                               )}
                               fill="none"
-                              stroke="#2563eb"
-                              strokeDasharray="5 4"
+                              stroke="var(--color-accent)"
+                              strokeWidth="2.5"
+                              strokeDasharray="6 4"
                               pointerEvents="none"
                             />
                           )}
                         </g>
                       ))}
                   </svg>
+                  {pendingText && (
+                    <div
+                      className="pdf-inline-editor"
+                      style={{
+                        left: `${pendingText.x * 100}%`,
+                        top: `${pendingText.y * 100}%`,
+                      }}
+                    >
+                      <input
+                        ref={pendingInput}
+                        className="pdf-inline-input"
+                        style={{ color }}
+                        value={text}
+                        placeholder="Type text…"
+                        aria-label="Text to place"
+                        onChange={(e) => setText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            commitPendingText();
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            setPendingText(null);
+                          }
+                        }}
+                        onBlur={() => commitPendingText()}
+                      />
+                      <button
+                        type="button"
+                        className="pdf-inline-confirm"
+                        aria-label="Place text"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => commitPendingText()}
+                      >
+                        <Check size={14} aria-hidden="true" />
+                      </button>
+                    </div>
+                  )}
+                  {mode === "select" && active && !pendingText && (
+                    <div
+                      className="pdf-mark-toolbar"
+                      style={{
+                        left: `${active.x * 100}%`,
+                        top: `${active.y * 100}%`,
+                      }}
+                    >
+                      <Tooltip label="Smaller" side="top">
+                        <button
+                          type="button"
+                          aria-label="Smaller"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() =>
+                            commit(
+                              marks.map((m) =>
+                                m.id === active.id ? resizeMark(m, 0.9) : m,
+                              ),
+                            )
+                          }
+                        >
+                          <Minus size={14} aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip label="Larger" side="top">
+                        <button
+                          type="button"
+                          aria-label="Larger"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() =>
+                            commit(
+                              marks.map((m) =>
+                                m.id === active.id ? resizeMark(m, 1.1) : m,
+                              ),
+                            )
+                          }
+                        >
+                          <Plus size={14} aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip label="Delete" side="top">
+                        <button
+                          type="button"
+                          aria-label="Delete annotation"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => {
+                            commit(marks.filter((m) => m.id !== active.id));
+                            setSelected(null);
+                          }}
+                        >
+                          <TrashIcon size={14} aria-hidden="true" />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  )}
+                  </>
                 }
               />
             </div>
