@@ -2,7 +2,7 @@ import { pdfRenderingOptions } from "../lib/pdf/renderOptions";
 import { friendlyError } from "../lib/importFiles";
 import { Accordion } from "./Accordion";
 import { Tooltip } from "./Tooltip";
-import { Minus, Plus, ArrowsHorizontal as StretchHorizontal, ArrowsVertical as StretchVertical } from "@phosphor-icons/react";
+import { Minus, Plus, ArrowsHorizontal as StretchHorizontal, ArrowsVertical as StretchVertical, MagnifyingGlass as SearchIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   getDocument,
@@ -35,8 +35,10 @@ export function PdfReader({
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [text, setText] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const scroll = useRef<HTMLDivElement>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
   const sizeCallback = useRef(onSize);
   sizeCallback.current = onSize;
   const number = onPage ? page : localPage;
@@ -149,6 +151,9 @@ export function PdfReader({
       setLoading(false);
     }
   };
+  useEffect(() => {
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
   return (
     <div className="reader">
       <div className="reader-controls">
@@ -220,10 +225,22 @@ export function PdfReader({
               <StretchVertical size={16} aria-hidden="true" />
             </button>
           </Tooltip>
+          <Tooltip label="Find text" side="bottom">
+            <button
+              className="btn-secondary reader-search-toggle"
+              aria-label="Find text"
+              aria-expanded={searchOpen}
+              aria-pressed={searchOpen}
+              onClick={() => setSearchOpen((o) => !o)}
+            >
+              <SearchIcon size={16} aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
       </div>
-      <div className="reader-search">
+      <div className={`reader-search ${searchOpen ? "is-open" : ""}`}>
         <input
+          ref={searchInput}
           className="field"
           disabled={!allowCopy}
           aria-label="Find text in PDF"

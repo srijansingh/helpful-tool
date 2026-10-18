@@ -8,7 +8,7 @@ import { hasSessionDrafts } from "./hooks/useSessionState";
 import { useDocumentStore } from "./store/useDocumentStore";
 import { recordTelemetryEvent } from "./lib/telemetry";
 import { Suspense, useEffect } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "@phosphor-icons/react";
 import { TOOLS } from "./lib/tools";
 import { Sidebar } from "./components/Sidebar";
@@ -21,7 +21,9 @@ import { ImportPrompt } from "./components/ImportPrompt";
 import { ResultPanel } from "./components/ResultPanel";
 import { Banner } from "./components/Banner";
 export default function App() {
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
+  const navigate = useNavigate();
   const jobCount = usePdfJobState((s) => s.count);
   useEffect(() => {
     leavePdfWorkspace();
@@ -48,13 +50,18 @@ export default function App() {
         <header className={`mobile-header ${focused ? "task-header" : ""}`}>
           {focused ? (
             <>
-              <NavLink
-                to="/tools"
+              <button
+                type="button"
                 className="task-back"
-                aria-label="Back to tools"
+                aria-label="Back"
+                onClick={() =>
+                  location.key === "default"
+                    ? navigate("/tools")
+                    : navigate(-1)
+                }
               >
                 <ArrowLeft size={20} />
-              </NavLink>
+              </button>
               <span className="font-bold">
                 {tool?.shortLabel ?? "Read PDF"}
               </span>

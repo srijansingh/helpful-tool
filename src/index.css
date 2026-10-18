@@ -900,8 +900,16 @@ label:has(input[type="checkbox"]) {
   .settings-close {
     display: flex;
   }
-  .workspace-document .reader-search {
-    display: flex;
+  /* One fewer stacked row by default on a narrow screen — "Find text" is
+     a rarely-used, keyboard-heavy action, not something that needs to sit
+     permanently between the page-nav/zoom controls and the document.
+     Toggled open via the search icon button next to Fit page; desktop
+     keeps it always visible since there's no space pressure there. */
+  .reader-search:not(.is-open) {
+    display: none;
+  }
+  .reader-search.is-open {
+    margin-top: 0.5rem;
   }
   /* Now that .settings-trigger is in normal flow (see its own rule),
      this is just a sensible bound on preview height, not trigger-dodging
