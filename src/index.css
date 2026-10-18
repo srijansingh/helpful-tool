@@ -903,17 +903,12 @@ label:has(input[type="checkbox"]) {
   .workspace-document .reader-search {
     display: flex;
   }
-  /* 60dvh didn't account for the fixed .settings-trigger bar sitting on
-     top of the same viewport region — measured via Playwright on a real
-     loaded preview, the pane's bottom edge overlapped the trigger by
-     ~154px. The ~414px of fixed-height chrome above the pane (header,
-     page-nav, zoom row, find-text row) plus the trigger's own ~140px
-     footprint is roughly constant in px regardless of viewport height,
-     so subtracting it from 100dvh (rather than using a flat dvh
-     percentage) keeps the preview clear of the trigger on both small and
-     large phones; max() keeps a usable floor on very short viewports. */
+  /* Now that .settings-trigger is in normal flow (see its own rule),
+     this is just a sensible bound on preview height, not trigger-dodging
+     math — a 50dvh cap still lets the page scroll in a reasonable total
+     length while keeping most of a page visible at once. */
   .workspace-document .reader-scroll {
-    max-height: max(130px, calc(100dvh - 560px));
+    max-height: 50dvh;
   }
   .workspace-document .reader-controls {
     gap: 4px;
@@ -950,17 +945,23 @@ label:has(input[type="checkbox"]) {
   }
 }
 @media (max-width: 767px) {
+  /* Previously position:fixed, pinned near the bottom of the viewport —
+     same overlap-bug class as the original [data-primary-action] fix
+     (see that rule's own comment, same root cause): a fixed element sits
+     on top of whatever scrolls underneath it. For Edit/Redact specifically
+     this wasn't just visual — it sat over the canvas itself, right where
+     a tap or drag is supposed to place a mark or a redaction box, blocking
+     the interaction outright (measured ~350-390px of overlap, confirmed
+     via Playwright, not a guess). In normal flow instead, right after the
+     document/canvas, same as the primary action button already is.
+     Eliminates the whole bug class instead of chasing per-page max-height
+     numbers to dodge a fixed element — the reader-scroll max-height tweaks
+     below are now just "keep the preview a reasonable height," not
+     trigger-dodging math. */
   .settings-trigger {
-    position: fixed;
-    left: 16px;
-    right: 16px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-    width: calc(100% - 32px);
-    z-index: 26;
-    box-shadow: 0 4px 16px #0002;
-  }
-  .workspace.focused:has(.settings-trigger) {
-    padding-bottom: calc(164px + env(safe-area-inset-bottom));
+    width: 100%;
+    margin-top: 12px;
+    box-shadow: none;
   }
   .settings-content.is-open {
     z-index: 61;
@@ -998,8 +999,12 @@ label:has(input[type="checkbox"]) {
   }
 }
 @media (max-width: 767px) {
+  /* Same as .workspace-document .reader-scroll above — no longer needs
+     to dodge a fixed trigger, just a sensible height bound. A bit more
+     generous than the read-only preview pages since this is the actual
+     work surface for tapping/dragging marks and redaction boxes. */
   .editor .reader-scroll {
-    max-height: 60dvh;
+    max-height: 55dvh;
   }
 }
 
