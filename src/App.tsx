@@ -9,7 +9,7 @@ import { useDocumentStore } from "./store/useDocumentStore";
 import { recordTelemetryEvent } from "./lib/telemetry";
 import { Suspense, useEffect } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "@phosphor-icons/react";
 import { TOOLS } from "./lib/tools";
 import { Sidebar } from "./components/Sidebar";
 import { BottomTabBar } from "./components/BottomTabBar";

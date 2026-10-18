@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
-import { Eye, FileCheck2, RotateCcw, RotateCw, Trash2, X } from "lucide-react";
+import { Eye, CheckCircle as FileCheck2, ArrowCounterClockwise as RotateCcw, ArrowClockwise as RotateCw, Trash as Trash2, X } from "@phosphor-icons/react";
 import { Dropzone } from "../components/Dropzone";
 import { PageGrid } from "../components/organize/PageGrid";
 import { FilenameInput } from "../components/FilenameInput";

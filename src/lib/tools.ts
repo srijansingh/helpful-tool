@@ -1,19 +1,5 @@
-import {
-  FileStack,
-  Scissors,
-  LayoutGrid,
-  ImageIcon,
-  Images,
-  ScanLine,
-  Droplets,
-  Hash,
-  PenLine,
-  Minimize2,
-  ScanText,
-  ShieldCheck,
-  BookOpen,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Stack as FileStack, Scissors, SquaresFour as LayoutGrid, Image as ImageIcon, Images, Scan as ScanLine, Drop as Droplets, Hash, Pen as PenLine, ArrowsIn as Minimize2, FileMagnifyingGlass as ScanText, ShieldCheck, BookOpen } from "@phosphor-icons/react";
+import type { Icon as LucideIcon } from "@phosphor-icons/react";
 
 export interface ToolDef {
   to: string;

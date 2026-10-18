@@ -1,13 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  ScanLine,
-  FolderOpen,
-  ArrowRight,
-  ShieldCheck,
-  Command,
-  X,
-} from "lucide-react";
+import { Scan as ScanLine, FolderOpen, ArrowRight, ShieldCheck, Command, X } from "@phosphor-icons/react";
 import { TOOLS } from "../lib/tools";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";

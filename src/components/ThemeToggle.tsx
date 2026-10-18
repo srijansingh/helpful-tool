@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun, Monitor } from "@phosphor-icons/react";
 import { useTheme } from "../hooks/useTheme";
 import type { ThemeChoice } from "../hooks/useTheme";
 

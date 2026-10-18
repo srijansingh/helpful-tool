@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileStack } from "lucide-react";
+import { Stack as FileStack } from "@phosphor-icons/react";
 import { PdfReader } from "./PdfReader";
 
 interface LivePreviewPaneProps {

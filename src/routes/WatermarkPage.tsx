@@ -1,6 +1,6 @@
 import { prepareImage } from "../lib/imageBudget";
 import { useMemo, useState } from "react";
-import { Droplets } from "lucide-react";
+import { Drop as Droplets } from "@phosphor-icons/react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";

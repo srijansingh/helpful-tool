@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "@phosphor-icons/react";
 
 // A persistent, always-visible trust signal — not buried in a footer. The
 // whole pitch of this tool is "nothing leaves your device," so that claim

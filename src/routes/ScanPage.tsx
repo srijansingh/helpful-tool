@@ -2,7 +2,7 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { useSessionState } from "../hooks/useSessionState";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Eye, FileCheck2, Plus, FolderOpen } from "lucide-react";
+import { Eye, CheckCircle as FileCheck2, Plus, FolderOpen } from "@phosphor-icons/react";
 import { CameraCapture } from "../components/scan/CameraCapture";
 import { CropEditor } from "../components/scan/CropEditor";
 import { FilterPicker } from "../components/scan/FilterPicker";

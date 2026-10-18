@@ -39,7 +39,11 @@
   --color-bad: #f87171;
   --color-warning: #fbbf24;
   --color-info: #60a5fa;
-  --color-border: #ffffff1a;
+  /* Warm-tinted (a pale peach, not pure white-alpha) and roughly twice
+     as visible as before — crisper, more defined borders on cards and
+     inputs, and the color itself now echoes the coral accent instead of
+     being a disconnected neutral. */
+  --color-border: #f5ddd033;
 
   /* One radius scale, used everywhere instead of ad hoc 12/16/18px values
      scattered across components — sm for controls/chips, md for inputs and
@@ -73,7 +77,7 @@
     --color-bad: #dc2626;
     --color-warning: #b45309;
     --color-info: #1d4ed8;
-    --color-border: #0e10161a;
+    --color-border: #3b241a33;
     color-scheme: light;
   }
 }
@@ -90,18 +94,8 @@
   --color-bad: #dc2626;
   --color-warning: #b45309;
   --color-info: #1d4ed8;
-  --color-border: #0e10161a;
+  --color-border: #3b241a33;
   color-scheme: light;
-}
-
-/* A slightly finer icon line than Lucide's default 2px — closer to the
-   lighter, more editorial icon weight of a well-made chat/document app,
-   without touching color. Scoped to Lucide's own class so it never
-   touches the functional stroke-width on the Edit/Redact annotation
-   canvases (those are plain <svg>, not .lucide, and their stroke width
-   is a drawn mark's actual thickness, not a style choice). */
-.lucide {
-  stroke-width: 1.75px;
 }
 
 body {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { Sliders as SlidersHorizontal, X } from "@phosphor-icons/react";
 import { useDialogFocus } from "../hooks/useDialogFocus";
 import { Tooltip } from "./Tooltip";
 export function ToolSettings({

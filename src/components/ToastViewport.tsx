@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Undo2, X } from "lucide-react";
+import { ArrowUUpLeft as Undo2, X } from "@phosphor-icons/react";
 import { useToastStore } from "../store/useToastStore";
 
 function ToastItem({ id, message, actionLabel, onAction, duration }: ReturnType<typeof useToastStore.getState>["toasts"][number]) {

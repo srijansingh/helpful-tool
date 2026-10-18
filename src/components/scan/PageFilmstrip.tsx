@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { ChevronLeft, ChevronRight, GripVertical, X } from "lucide-react";
+import { CaretLeft as ChevronLeft, CaretRight as ChevronRight, DotsSixVertical as GripVertical, X } from "@phosphor-icons/react";
 import type { ScanPage } from "../../store/useScanStore";
 
 interface PageFilmstripProps {

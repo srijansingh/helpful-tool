@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { History } from "lucide-react";
+import { ClockCounterClockwise as History } from "@phosphor-icons/react";
 import type { ActivityEntry } from "../hooks/useRecentActivity";
 import { TOOLS } from "../lib/tools";
 

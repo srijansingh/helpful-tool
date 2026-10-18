@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil } from "@phosphor-icons/react";
 
 interface FilenameInputProps {
   value: string;

@@ -4,7 +4,7 @@ import { useDocumentStore } from "../store/useDocumentStore";
 import { ResultActions } from "./ResultActions";
 import { useDialogFocus } from "../hooks/useDialogFocus";
 import { useEffect, useRef, useState } from "react";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
+import { ThumbsUp, ThumbsDown } from "@phosphor-icons/react";
 import {
   shouldAskFeedback,
   markFeedbackAsked,

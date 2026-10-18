@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { LockKeyhole, AlertTriangle } from "lucide-react";
+import { LockKey as LockKeyhole, Warning as AlertTriangle } from "@phosphor-icons/react";
 import {
   useImportPrompt,
   type ImportPrompt as Prompt,

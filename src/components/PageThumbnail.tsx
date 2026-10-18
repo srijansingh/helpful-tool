@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText } from "lucide-react";
+import { FileText } from "@phosphor-icons/react";
 import { renderPageThumbnail } from "../lib/pdf/pageThumbnails";
 export function PageThumbnail({
   file,

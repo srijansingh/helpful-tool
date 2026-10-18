@@ -5,16 +5,7 @@ import { ToolSettings } from "../components/ToolSettings";
 import { Tooltip } from "../components/Tooltip";
 import { Accordion } from "../components/Accordion";
 import { StatusMessage, type Status } from "../components/StatusMessage";
-import {
-  MousePointer2,
-  Type,
-  PenLine,
-  Highlighter,
-  Square,
-  ImageIcon,
-  Undo2,
-  Redo2,
-} from "lucide-react";
+import { Cursor as MousePointer2, TextAa as Type, Pen as PenLine, Highlighter, Square, Image as ImageIcon, ArrowUUpLeft as Undo2, ArrowUUpRight as Redo2 } from "@phosphor-icons/react";
 import { editPdf, readForms } from "../lib/pdf/workerOperations";
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useDocumentStore } from "../store/useDocumentStore";

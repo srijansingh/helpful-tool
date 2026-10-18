@@ -1,7 +1,7 @@
 import { useDocumentStore } from "../../store/useDocumentStore";
 import { validateFiles } from "../../lib/importFiles";
 import { useEffect, useRef, useState } from "react";
-import { Camera, Upload, X } from "lucide-react";
+import { Camera, Upload, X } from "@phosphor-icons/react";
 
 interface CameraCaptureProps {
   // A single photo (camera shot, or one uploaded file) goes through the

@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { CheckCircle as CheckCircle2, WarningCircle as AlertCircle, CircleNotch as Loader2 } from "@phosphor-icons/react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { recordTelemetryEvent } from "../lib/telemetry";

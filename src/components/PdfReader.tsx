@@ -2,7 +2,7 @@ import { pdfRenderingOptions } from "../lib/pdf/renderOptions";
 import { friendlyError } from "../lib/importFiles";
 import { Accordion } from "./Accordion";
 import { Tooltip } from "./Tooltip";
-import { Minus, Plus, StretchHorizontal, StretchVertical } from "lucide-react";
+import { Minus, Plus, ArrowsHorizontal as StretchHorizontal, ArrowsVertical as StretchVertical } from "@phosphor-icons/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   getDocument,

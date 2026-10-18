@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PageThumbnail } from "../PageThumbnail";
 import { PageWindow } from "../PageWindow";
 import { thumbnailSource } from "../../lib/pdf/pageThumbnails";
-import { Check } from "lucide-react";
+import { Check } from "@phosphor-icons/react";
 
 interface PageRangePickerProps {
   thumbs: string[];

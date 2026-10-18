@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { ArrowDown, ArrowUp, GripVertical, X } from "lucide-react";
+import { ArrowDown, ArrowUp, DotsSixVertical as GripVertical, X } from "@phosphor-icons/react";
 import { formatSize } from "../lib/formatSize";
 
 interface FileListProps {

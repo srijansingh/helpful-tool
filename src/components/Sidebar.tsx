@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Search, ChevronDown, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { MagnifyingGlass as Search, CaretDown as ChevronDown, CaretDoubleLeft as ChevronsLeft, CaretDoubleRight as ChevronsRight } from "@phosphor-icons/react";
 import { DESTINATIONS } from "./BottomTabBar";
 import { TOOLS, TOOL_GROUPS } from "../lib/tools";
 import { TrustBadge } from "./TrustBadge";

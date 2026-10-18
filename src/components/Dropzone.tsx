@@ -1,7 +1,7 @@
 import { usePdfJobState } from "../lib/pdfJobs";
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { UploadCloud } from "lucide-react";
+import { CloudArrowUp as UploadCloud } from "@phosphor-icons/react";
 import { validateFiles, friendlyError } from "../lib/importFiles";
 import { useDocumentStore } from "../store/useDocumentStore";
 // Module-level (not component state): on an "automatic" route (DocumentGate's

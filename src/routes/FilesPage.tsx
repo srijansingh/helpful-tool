@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, FolderOpen, Trash2 } from "lucide-react";
+import { MagnifyingGlass as Search, FolderOpen, Trash as Trash2 } from "@phosphor-icons/react";
 import { useNavigate, Link } from "react-router-dom";
 import { Tooltip } from "../components/Tooltip";
 import { Accordion } from "../components/Accordion";

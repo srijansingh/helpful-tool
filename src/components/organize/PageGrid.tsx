@@ -6,14 +6,7 @@ import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
 } from "react";
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  GripVertical,
-  RotateCw,
-  X,
-} from "lucide-react";
+import { Check, CaretLeft as ChevronLeft, CaretRight as ChevronRight, DotsSixVertical as GripVertical, ArrowClockwise as RotateCw, X } from "@phosphor-icons/react";
 import type { OrganizePageState } from "../../lib/pdf/organize";
 
 interface PageGridProps {

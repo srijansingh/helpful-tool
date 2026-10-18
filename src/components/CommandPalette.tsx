@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderOpen, Home, Search } from "lucide-react";
+import { FolderOpen, House as Home, MagnifyingGlass as Search } from "@phosphor-icons/react";
 import { TOOLS, matchesTool } from "../lib/tools";
 import { useCommandPaletteStore } from "../store/useCommandPaletteStore";
 import { useDialogFocus } from "../hooks/useDialogFocus";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FileCheck2, Trash2, FolderOpen } from "lucide-react";
+import { CheckCircle as FileCheck2, Trash as Trash2, FolderOpen } from "@phosphor-icons/react";
 import { Card } from "../components/Card";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useSeo } from "../hooks/useSeo";

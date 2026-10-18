@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { CaretDown as ChevronDown } from "@phosphor-icons/react";
 import { useId, useState, type ReactNode } from "react";
 interface AccordionProps {
   summary: ReactNode;

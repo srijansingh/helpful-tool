@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash } from "@phosphor-icons/react";
 import { Dropzone } from "../components/Dropzone";
 import { FilenameInput } from "../components/FilenameInput";
 import { StatusMessage, type Status } from "../components/StatusMessage";
