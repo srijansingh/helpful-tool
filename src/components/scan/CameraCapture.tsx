@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { Camera, Upload, X } from "@phosphor-icons/react";
 
 interface CameraCaptureProps {
+  // True once the scan already has at least one page — this same choice
+  // screen reappears after every page so there's a way to scan another,
+  // but with nothing to mark that context it reads as a dead restart
+  // bolted above the pages you already have.
+  hasPages?: boolean;
   // A single photo (camera shot, or one uploaded file) goes through the
   // crop + filter editor.
   onCapture: (dataUrl: string) => void;
@@ -23,6 +28,7 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 export function CameraCapture({
+  hasPages,
   onCapture,
   onCaptureMultiple,
 }: CameraCaptureProps) {
@@ -100,6 +106,7 @@ export function CameraCapture({
   if (mode === "choose") {
     return (
       <div>
+        {hasPages && <p className="eyebrow">Add another page</p>}
         {current?.type.startsWith("image/") && (
           <button
             className="btn-secondary mb-3 w-full"

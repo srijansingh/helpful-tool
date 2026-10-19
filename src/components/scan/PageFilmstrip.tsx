@@ -132,36 +132,40 @@ export function PageFilmstrip({
           >
             <X className="h-3 w-3" />
           </button>
-          <div
-            onPointerDown={(e) => handlePointerDown(e, i)}
-            onPointerMove={handlePointerMove}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-            className="mt-1 flex touch-none select-none items-center justify-center gap-1 rounded-md border border-border bg-surface py-1 text-muted active:bg-surface-2"
-          >
-            <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
-            <span className="text-[10px] font-medium">Drag</span>
-          </div>
-          <div className="mt-1 flex gap-1">
-            <button
-              type="button"
-              aria-label={`Move page ${i + 1} earlier`}
-              disabled={i === 0}
-              onClick={() => move(i, -1)}
-              className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
-            >
-              <ChevronLeft className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              aria-label={`Move page ${i + 1} later`}
-              disabled={i === pages.length - 1}
-              onClick={() => move(i, 1)}
-              className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
-            >
-              <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          {pages.length > 1 && (
+            <>
+              <div
+                onPointerDown={(e) => handlePointerDown(e, i)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={endDrag}
+                onPointerCancel={endDrag}
+                className="mt-1 flex touch-none select-none items-center justify-center gap-1 rounded-md border border-border bg-surface py-1 text-muted active:bg-surface-2"
+              >
+                <GripVertical className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="text-[10px] font-medium">Drag</span>
+              </div>
+              <div className="mt-1 flex gap-1">
+                <button
+                  type="button"
+                  aria-label={`Move page ${i + 1} earlier`}
+                  disabled={i === 0}
+                  onClick={() => move(i, -1)}
+                  className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move page ${i + 1} later`}
+                  disabled={i === pages.length - 1}
+                  onClick={() => move(i, 1)}
+                  className="flex flex-1 items-center justify-center rounded-md border border-border bg-surface py-0.5 text-muted focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-30"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       ))}
     </div>

@@ -342,6 +342,7 @@ export default function ScanPage() {
         <Card>
           {step === "capture" && (
             <CameraCapture
+              hasPages={pages.length > 0}
               onCapture={handleCapture}
               onCaptureMultiple={handleCaptureMultiple}
             />
