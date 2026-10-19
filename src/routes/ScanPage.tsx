@@ -418,7 +418,7 @@ export default function ScanPage() {
 
             <div className="panel mt-3">
               <label className="field-label">
-                Batch filter
+                {pages.length > 1 ? "Batch filter" : "Filter"}
                 <select
                   className="field"
                   value={selectedFilter}
@@ -439,18 +439,21 @@ export default function ScanPage() {
                   checked={batchCrop}
                   onChange={(e) => setBatchCrop(e.target.checked)}
                 />
-                Try automatic crop for all pages
+                {pages.length > 1
+                  ? "Try automatic crop for all pages"
+                  : "Try automatic crop"}
               </label>
               <button
                 className="btn-secondary mt-3"
                 disabled={processing || step !== "capture"}
                 onClick={() => void batch()}
               >
-                Enhance all pages
+                {pages.length > 1 ? "Enhance all pages" : "Enhance this page"}
               </button>
               <p className="text-sm text-muted">
-                Low-contrast pages keep their full photo when edges cannot be
-                detected.
+                {pages.length > 1
+                  ? "Low-contrast pages keep their full photo when edges cannot be detected."
+                  : "Keeps the full photo if edges can't be detected."}
               </p>
             </div>
             <div className="mt-5 sm:max-w-xs lg:max-w-none">

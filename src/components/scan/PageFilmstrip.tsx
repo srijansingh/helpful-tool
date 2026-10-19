@@ -123,14 +123,20 @@ export function PageFilmstrip({
           <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[10px] font-bold text-fg">
             {i + 1}
           </span>
+          {/* The tap target stays the sitewide 44px minimum (enforced by
+              the global button sizing rule), but the colored circle inside
+              it is drawn much smaller — at this thumbnail's size (80x96)
+              a solid 44px red circle swallows over half the page. */}
           <button
             type="button"
             aria-label={`Remove page ${i + 1}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={() => onRemove(page.id)}
-            className="absolute right-1 top-1 rounded-full bg-bad p-0.5 text-white focus-visible:ring-2 focus-visible:ring-accent"
+            className="absolute -right-2 -top-2 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <X className="h-3 w-3" />
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-bad text-white">
+              <X className="h-3 w-3" aria-hidden="true" />
+            </span>
           </button>
           {pages.length > 1 && (
             <>
