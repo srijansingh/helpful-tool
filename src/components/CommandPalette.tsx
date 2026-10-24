@@ -94,7 +94,7 @@ export function CommandPalette() {
 
   return (
     <div
-      className="fixed inset-0 z-80 flex items-start justify-center bg-bg/60 px-4 pt-[15vh] backdrop-blur-sm"
+      className="modal-overlay fixed inset-0 z-80 flex items-start justify-center bg-bg/60 px-4 pt-[15vh] backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
@@ -104,7 +104,7 @@ export function CommandPalette() {
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-surface shadow-2xl"
+        className="dialog-card w-full max-w-lg overflow-hidden"
       >
         <div className="flex items-center gap-3 border-b border-border px-4 py-3">
           <Search className="h-4 w-4 shrink-0 text-muted" aria-hidden="true" />
@@ -173,7 +173,7 @@ export function CommandPalette() {
               >
                 <item.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-display text-sm font-semibold">
+                  <span className="block truncate text-sm font-semibold">
                     {item.label}
                   </span>
                   <span

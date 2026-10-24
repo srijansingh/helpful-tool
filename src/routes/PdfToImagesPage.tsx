@@ -148,7 +148,7 @@ export default function PdfToImagesPage() {
               )}
             </span>
             <div className="min-w-0">
-              <p className="truncate font-display text-sm font-semibold">
+              <p className="truncate text-sm font-semibold">
                 {file.name}
               </p>
               <p className="text-xs text-muted">{formatSize(file.size)}</p>
@@ -264,7 +264,7 @@ export default function PdfToImagesPage() {
           data-primary-action="true"
           disabled={status.kind === "working" || !file}
           onClick={handleConvert}
-          className="mt-5 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
+          className="btn mt-5 w-full sm:w-auto"
         >
           Convert &amp; Download
         </button>

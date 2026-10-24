@@ -184,7 +184,7 @@ export default function PageNumbersPage() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate font-display text-sm font-semibold">
+                  <p className="truncate text-sm font-semibold">
                     {current.name}.pdf
                   </p>
                   <p className="text-xs text-muted">
@@ -317,7 +317,7 @@ export default function PageNumbersPage() {
             data-primary-action="true"
             disabled={status.kind === "working" || !current}
             onClick={handleApply}
-            className="flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
+            className="btn sm:w-auto"
           >
             <Hash className="h-5 w-5" aria-hidden="true" />
             Apply &amp; Download

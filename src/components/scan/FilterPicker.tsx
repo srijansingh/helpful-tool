@@ -26,7 +26,7 @@ export function FilterPicker({ value, onChange, thumbnails }: FilterPickerProps)
               <span className="h-full w-full animate-pulse bg-border" />
             )}
           </span>
-          <span className="font-display text-xs font-semibold">{f.label}</span>
+          <span className="text-xs font-semibold">{f.label}</span>
         </button>
       ))}
     </div>

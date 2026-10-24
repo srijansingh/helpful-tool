@@ -62,7 +62,7 @@ function DocumentCard({
         }}
         aria-label="Document name — tap to rename"
         title="Tap to rename"
-        className="mt-2 w-full truncate rounded bg-transparent font-display text-sm font-semibold outline-none focus:bg-surface-2 focus:px-1"
+        className="mt-2 w-full truncate rounded bg-transparent text-sm font-semibold outline-none focus:bg-surface-2 focus:px-1"
       />
       <p className="text-xs text-muted">
         {doc.pages.length} page{doc.pages.length === 1 ? "" : "s"} —{" "}
@@ -138,7 +138,7 @@ export default function ScanLibraryPage() {
         ) : documents.length === 0 ? (
           <Card className="flex flex-col items-center gap-3 py-12 text-center">
             <FolderOpen className="h-10 w-10 text-muted" aria-hidden="true" />
-            <p className="font-display font-semibold">No scans saved yet</p>
+            <p className="font-semibold">No scans saved yet</p>
             <p className="text-sm text-muted">
               Scan a document and tap "Save to Library" to see it here.
             </p>

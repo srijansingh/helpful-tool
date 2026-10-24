@@ -68,7 +68,7 @@ export function LivePreviewPane({
   return (
     <div className="flex h-full flex-col rounded-2xl border border-border bg-surface">
       <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-        <h2 className="font-display text-sm font-bold text-fg">{title}</h2>
+        <h2 className="text-sm font-bold text-fg">{title}</h2>
         {loading && (
           <span
             className="h-3 w-3 animate-pulse rounded-full bg-accent"

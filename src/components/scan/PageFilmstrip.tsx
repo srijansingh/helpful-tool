@@ -120,7 +120,7 @@ export function PageFilmstrip({
               Edit
             </button>
           )}
-          <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[10px] font-bold text-fg">
+          <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 text-[10px] font-bold text-fg">
             {i + 1}
           </span>
           {/* The tap target stays the sitewide 44px minimum (enforced by

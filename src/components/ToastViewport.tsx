@@ -23,7 +23,7 @@ function ToastItem({ id, message, actionLabel, onAction, duration }: ReturnType<
             onAction();
             dismiss(id);
           }}
-          className="flex shrink-0 items-center gap-1 font-display text-sm font-bold text-accent focus-visible:ring-2 focus-visible:ring-accent"
+          className="flex shrink-0 items-center gap-1 text-sm font-bold text-accent focus-visible:ring-2 focus-visible:ring-accent"
         >
           <Undo2 className="h-3.5 w-3.5" aria-hidden="true" />
           {actionLabel}

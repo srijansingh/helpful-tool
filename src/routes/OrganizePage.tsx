@@ -316,7 +316,7 @@ export default function OrganizePage() {
         {bytes && (
           <>
             <div className="flex items-center justify-between">
-              <h2 className="truncate font-display text-sm font-semibold text-muted">
+              <h2 className="truncate text-sm font-semibold text-muted">
                 {fileName} — {pages.length} page{pages.length === 1 ? "" : "s"}
               </h2>
               <button
@@ -337,7 +337,7 @@ export default function OrganizePage() {
               <>
                 {selectedIds.size > 0 && (
                   <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-3 py-2">
-                    <span className="font-display text-sm font-semibold text-fg">
+                    <span className="text-sm font-semibold text-fg">
                       {selectedIds.size} page{selectedIds.size === 1 ? "" : "s"}{" "}
                       selected
                     </span>
@@ -345,7 +345,7 @@ export default function OrganizePage() {
                     <button
                       type="button"
                       onClick={handleBulkRotate}
-                      className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 font-display text-xs font-semibold text-fg focus-visible:ring-2 focus-visible:ring-accent"
+                      className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-semibold text-fg focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <RotateCw className="h-3.5 w-3.5" aria-hidden="true" />
                       Rotate
@@ -353,7 +353,7 @@ export default function OrganizePage() {
                     <button
                       type="button"
                       onClick={() => setConfirmBulkDelete(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-bad/40 bg-surface px-3 py-1.5 font-display text-xs font-semibold text-bad focus-visible:ring-2 focus-visible:ring-accent"
+                      className="flex items-center gap-1.5 rounded-lg border border-bad/40 bg-surface px-3 py-1.5 text-xs font-semibold text-bad focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                       Delete
@@ -511,7 +511,7 @@ export default function OrganizePage() {
                   type="button"
                   onClick={handlePreview}
                   disabled={previewing}
-                  className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+                  className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-accent disabled:opacity-50"
                 >
                   <Eye className="h-4 w-4" aria-hidden="true" />
                   {previewing ? "Building preview…" : "Preview PDF"}
@@ -524,7 +524,7 @@ export default function OrganizePage() {
                     status.kind === "working" || !bytes || pages.length === 0
                   }
                   onClick={handleExport}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
+                  className="btn mt-3 w-full sm:w-auto"
                 >
                   <FileCheck2 className="h-5 w-5" aria-hidden="true" />
                   Export PDF

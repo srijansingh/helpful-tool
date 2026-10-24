@@ -45,7 +45,7 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg/60 p-4 backdrop-blur-sm"
+      className="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-bg/60 p-4 backdrop-blur-sm"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
@@ -54,7 +54,7 @@ export function ConfirmDialog({
         if (e.target === e.currentTarget) onCancel();
       }}
     >
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-5 shadow-2xl">
+      <div className="dialog-card w-full max-w-sm p-5">
         <h2
           id="confirm-dialog-title"
           className="font-display text-base font-bold text-fg"
@@ -72,14 +72,14 @@ export function ConfirmDialog({
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="rounded-xl border border-border bg-surface-2 px-4 py-2 font-display text-sm font-semibold text-fg focus-visible:ring-2 focus-visible:ring-accent"
+            className="rounded-xl border border-border bg-surface-2 px-4 py-2 text-sm font-semibold text-fg focus-visible:ring-2 focus-visible:ring-accent"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`rounded-xl px-4 py-2 font-display text-sm font-semibold focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`rounded-xl px-4 py-2 text-sm font-semibold focus-visible:ring-2 focus-visible:ring-accent ${
               danger ? "bg-bad text-white" : "bg-accent text-white"
             }`}
           >

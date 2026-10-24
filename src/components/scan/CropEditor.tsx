@@ -258,7 +258,7 @@ export function CropEditor({ imageSrc, onConfirm }: CropEditorProps) {
               }
               onConfirm(quad, natural!.width, natural!.height);
             }}
-            className="mt-4 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
+            className="btn mt-4 w-full"
           >
             Confirm Crop
           </button>

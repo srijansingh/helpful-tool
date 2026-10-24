@@ -51,7 +51,7 @@ export function PageRangePicker({
               <span
                 className={`absolute inset-0 transition-colors ${isSelected ? "bg-accent/25" : "bg-transparent group-hover:bg-fg/5"}`}
               />
-              <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 font-display text-[9px] font-bold text-fg">
+              <span className="absolute left-1 top-1 rounded-full bg-bg/80 px-1.5 py-0.5 text-[9px] font-bold text-fg">
                 {i + 1}
               </span>
               {isSelected && (

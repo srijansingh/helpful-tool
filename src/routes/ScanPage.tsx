@@ -312,7 +312,7 @@ export default function ScanPage() {
         </div>
         <Link
           to="/scans"
-          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1.5 font-display text-xs font-semibold text-fg"
+          className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1.5 text-xs font-semibold text-fg"
         >
           <FolderOpen className="h-3.5 w-3.5" aria-hidden="true" />
           Library
@@ -380,7 +380,7 @@ export default function ScanPage() {
                 <button
                   type="button"
                   onClick={handleAddPage}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
+                  className="btn flex-1"
                 >
                   <Plus className="h-5 w-5" aria-hidden="true" />
                   {editingId ? "Save page changes" : "Add Page & Scan Another"}
@@ -388,7 +388,7 @@ export default function ScanPage() {
                 <button
                   type="button"
                   onClick={() => setStep("crop")}
-                  className="rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg"
+                  className="btn-secondary"
                 >
                   Re-crop
                 </button>
@@ -399,7 +399,7 @@ export default function ScanPage() {
 
         {pages.length > 0 && (
           <Card className="mt-4 lg:sticky lg:top-8 lg:mt-0">
-            <h2 className="font-display text-sm font-semibold text-muted">
+            <h2 className="text-sm font-semibold text-muted">
               {pages.length} page{pages.length === 1 ? "" : "s"} in this scan
             </h2>
             <div className="mt-3">
@@ -468,7 +468,7 @@ export default function ScanPage() {
               type="button"
               onClick={handlePreview}
               disabled={previewing || processing || step !== "capture"}
-              className="mt-4 flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+              className="mt-4 flex items-center gap-1.5 text-sm font-semibold text-accent disabled:opacity-50"
             >
               <Eye className="h-4 w-4" aria-hidden="true" />
               {previewing ? "Building preview…" : "Preview PDF"}
@@ -485,7 +485,7 @@ export default function ScanPage() {
                   pages.length === 0
                 }
                 onClick={handleExportPdf}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
+                className="btn flex-1"
               >
                 <FileCheck2 className="h-5 w-5" aria-hidden="true" />
                 Export PDF
@@ -496,7 +496,7 @@ export default function ScanPage() {
                   status.kind === "working" || processing || step !== "capture"
                 }
                 onClick={handleSaveToLibrary}
-                className="flex-1 rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
+                className="btn-outline flex-1"
               >
                 Save to Library
               </button>

@@ -109,7 +109,7 @@ export function FileList({
               )}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate font-display text-sm">{file.name}</span>
+              <span className="truncate text-sm">{file.name}</span>
               <span className="text-xs text-muted">
                 {formatSize(file.size)}
               </span>

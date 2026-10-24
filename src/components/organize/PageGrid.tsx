@@ -115,7 +115,7 @@ export function PageGrid({
                 onClick={(e: ReactMouseEvent) =>
                   onToggleSelect(page.id, i, e.shiftKey)
                 }
-                className={`absolute left-2.5 top-2.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 font-display text-[10px] font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
+                className={`absolute left-2.5 top-2.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
                   isSelected ? "bg-accent text-white" : "bg-bg/80 text-fg"
                 }`}
               >

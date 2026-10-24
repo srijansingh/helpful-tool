@@ -30,7 +30,7 @@ export function RecentActivity({
   return (
     <div className={`rounded-2xl border border-border bg-surface-2/50 p-4 ${className}`}>
       {showTitle && (
-        <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-muted">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-muted">
           <History className="h-4 w-4" aria-hidden="true" />
           Recent on this device
         </h3>

@@ -125,7 +125,7 @@ export default function MergePage() {
               data-primary-action="true"
               disabled={status.kind === "working" || files.length < 2}
               onClick={handleMerge}
-              className="mt-3 w-full rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] sm:w-auto"
+              className="btn mt-3 w-full sm:w-auto"
             >
               Merge &amp; Download
             </button>

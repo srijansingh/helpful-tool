@@ -132,7 +132,7 @@ export function CameraCapture({
               <Camera className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-sm font-bold text-fg">
+              <span className="block text-sm font-bold text-fg">
                 Use Camera
               </span>
               <span className="block text-xs text-muted">
@@ -149,7 +149,7 @@ export function CameraCapture({
               <Upload className="h-5 w-5" aria-hidden="true" />
             </span>
             <span className="min-w-0">
-              <span className="block font-display text-sm font-bold text-fg">
+              <span className="block text-sm font-bold text-fg">
                 Upload Photos
               </span>
               <span className="block text-xs text-muted">
@@ -214,7 +214,7 @@ export function CameraCapture({
           type="button"
           onClick={capture}
           disabled={!ready}
-          className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99] disabled:opacity-40"
+          className="btn flex-1"
         >
           <Camera className="h-5 w-5" aria-hidden="true" />
           Capture
@@ -222,7 +222,7 @@ export function CameraCapture({
         <button
           type="button"
           onClick={closeCamera}
-          className="rounded-xl border border-border bg-surface-2 px-5 py-3 font-display text-base font-bold text-fg"
+          className="btn-secondary"
         >
           Upload Instead
         </button>

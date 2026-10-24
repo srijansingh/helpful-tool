@@ -180,7 +180,7 @@ export default function SplitPage() {
               )}
             </span>
             <div className="min-w-0">
-              <p className="truncate font-display text-sm font-semibold">
+              <p className="truncate text-sm font-semibold">
                 {current.name}.pdf
               </p>
               <p className="text-xs text-muted">
@@ -248,7 +248,7 @@ export default function SplitPage() {
               type="button"
               onClick={handlePreview}
               disabled={previewing || selectedPages.size === 0}
-              className="flex items-center gap-1.5 font-display text-sm font-semibold text-accent disabled:opacity-50"
+              className="flex items-center gap-1.5 text-sm font-semibold text-accent disabled:opacity-50"
             >
               <Eye className="h-4 w-4" aria-hidden="true" />
               {previewing ? "Building preview…" : "Preview extracted pages"}
@@ -263,14 +263,14 @@ export default function SplitPage() {
                 selectedPages.size === 0
               }
               onClick={handleExtract}
-              className="rounded-xl bg-accent px-5 py-3 font-display text-base font-bold text-white transition-transform active:scale-[0.99]"
+              className="btn"
             >
               Extract Pages
             </button>
             <button
               type="button"
               onClick={handleSplitEvery}
-              className="rounded-xl border border-accent px-5 py-3 font-display text-base font-bold text-accent transition-transform active:scale-[0.99]"
+              className="btn-outline"
             >
               Split Every Page (zip)
             </button>
