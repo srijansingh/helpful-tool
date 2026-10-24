@@ -57,7 +57,7 @@ export function ConfirmDialog({
       <div className="dialog-card w-full max-w-sm p-5">
         <h2
           id="confirm-dialog-title"
-          className="font-display text-base font-bold text-fg"
+          className="text-base font-bold text-fg"
         >
           {title}
         </h2>

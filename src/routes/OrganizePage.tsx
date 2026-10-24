@@ -294,7 +294,7 @@ export default function OrganizePage() {
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+      <h1 className="text-2xl font-bold sm:text-3xl">
         Organize PDF
       </h1>
       <p className="mt-1 text-muted">

@@ -141,11 +141,23 @@ body {
   font-family: var(--font-body);
 }
 
-h1,
-h2,
-h3,
+/* The serif face is reserved for the brand wordmark alone (.font-display,
+   used only by the sidebar logo) — not applied to headings by default.
+   A document utility isn't an editorial/lifestyle app: Apple's own
+   in-app typography is one weight-driven sans face everywhere, including
+   large titles, and that's the model here too. Differentiation comes
+   from layout, density and restraint, not a second typeface competing
+   with the UI on every page. */
 .font-display {
   font-family: var(--font-display);
+}
+/* One consistent "large title" weight for every page heading — bold,
+   tightly tracked, matching the font-bold/text-2xl sm:text-3xl classes
+   already on each page's own <h1> (kept there for size/spacing; this
+   rule just standardizes the tracking so none of them have to repeat
+   it). */
+h1 {
+  letter-spacing: -0.01em;
 }
 
 /* One consistent keyboard-focus indicator for every interactive element
@@ -242,6 +254,42 @@ button:disabled {
   gap: 12px;
   margin: 20px 0;
 }
+/* A returning user's "Quick actions" row — low-commitment chips, not the
+   big decorative .secondary-tile cards reserved for the first-run empty
+   state. Once Recent work is the page's real content, these are
+   secondary by design: smaller, inline, same weight as a toolbar. */
+.quick-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.quick-row-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-fg);
+  transition:
+    background-color var(--motion-base) ease,
+    border-color var(--motion-base) ease,
+    transform var(--motion-fast) var(--ease-standard);
+}
+.quick-row-item:hover {
+  background: var(--color-surface-2);
+  border-color: color-mix(in srgb, var(--color-accent) 35%, var(--color-border));
+}
+.quick-row-item:active {
+  transform: scale(0.97);
+}
+.quick-row-item svg {
+  color: var(--color-accent);
+}
 .primary-tile,
 .secondary-tile {
   padding: 20px 14px;
@@ -304,6 +352,90 @@ button:disabled {
 }
 .tool-tile strong {
   font-size: 14px;
+}
+/* The Tools page's own listing — a dense, scannable row list grouped
+   into bordered category cards, the way a professional tool's command
+   list reads (Acrobat's "All tools", a Settings panel), not a wall of
+   equal-weight marketing cards. Each category is its own card; desktop
+   arranges categories two-up instead of stretching one long column. */
+.tool-category {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+.tool-category-heading {
+  padding: 14px 16px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+.tool-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px;
+  border-top: 1px solid var(--color-border);
+  min-height: 44px;
+  transition: background-color var(--motion-fast) ease;
+}
+.tool-row:hover {
+  background: var(--color-surface-2);
+}
+.tool-row-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  color: var(--color-accent);
+}
+.tool-row-text {
+  min-width: 0;
+  flex: 1;
+}
+.tool-row-text strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 650;
+}
+.tool-row-text span {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  color: var(--color-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tool-row-arrow {
+  flex-shrink: 0;
+  color: var(--color-muted);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity var(--motion-fast) ease,
+    transform var(--motion-fast) var(--ease-standard);
+}
+@media (hover: hover) {
+  .tool-row:hover .tool-row-arrow {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.tool-category-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .tool-category-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
 }
 .session-card {
   display: flex;

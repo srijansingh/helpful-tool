@@ -303,7 +303,7 @@ export default function ScanPage() {
     <section>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold sm:text-3xl">
+          <h1 className="text-2xl font-bold sm:text-3xl">
             Scan Document
           </h1>
           <p className="mt-1 text-muted">

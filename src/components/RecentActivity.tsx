@@ -21,12 +21,54 @@ export function RecentActivity({
   entries,
   className = "mt-8",
   showTitle = true,
+  variant = "compact",
 }: {
   entries: ActivityEntry[];
   className?: string;
   showTitle?: boolean;
+  // "compact" is the original embedded-in-a-tool's-sidebar treatment
+  // (a quiet text list for that one tool's own history). "prominent" is
+  // Home's own recent-work surface — real rows with their own icon
+  // treatment and tap targets, since there it's the primary content of
+  // the page, not a footnote underneath it.
+  variant?: "compact" | "prominent";
 }) {
   if (entries.length === 0) return null;
+  if (variant === "prominent") {
+    return (
+      <div className={className}>
+        {showTitle && (
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted">
+            <History className="h-4 w-4" aria-hidden="true" />
+            Recent
+          </h2>
+        )}
+        <ul className={`flex flex-col gap-1.5 ${showTitle ? "mt-3" : ""}`}>
+          {entries.map((e) => {
+            const tool = TOOLS.find((t) => t.to === `/${e.tool}`);
+            const Icon = tool?.icon ?? History;
+            return (
+              <li key={e.id}>
+                <Link to={tool?.to ?? "/"} className="session-card">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <strong className="block truncate text-sm">{e.label}</strong>
+                      <small className="block">
+                        {tool?.shortLabel ?? "Tool"} · {timeAgo(e.timestamp)}
+                      </small>
+                    </span>
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  }
   return (
     <div className={`rounded-2xl border border-border bg-surface-2/50 p-4 ${className}`}>
       {showTitle && (

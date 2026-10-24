@@ -149,7 +149,7 @@ export default function SplitPage() {
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">Split PDF</h1>
+      <h1 className="text-2xl font-bold sm:text-3xl">Split PDF</h1>
       <p className="mt-1 text-muted">
         Pull out specific pages, or split every page into its own file.
       </p>

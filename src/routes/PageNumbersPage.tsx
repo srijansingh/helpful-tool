@@ -142,7 +142,7 @@ export default function PageNumbersPage() {
 
   return (
     <section>
-      <h1 className="font-display text-2xl font-bold sm:text-3xl">
+      <h1 className="text-2xl font-bold sm:text-3xl">
         Page Numbers
       </h1>
       <p className="mt-1 text-muted">

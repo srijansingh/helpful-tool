@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Scan as ScanLine, FolderOpen, ArrowRight, ShieldCheck, Command, X } from "@phosphor-icons/react";
+import { Scan as ScanLine, FolderOpen, ArrowRight, ShieldCheck, Command, X, CloudArrowUp as UploadCloud } from "@phosphor-icons/react";
 import { TOOLS } from "../lib/tools";
 import { useDocumentStore } from "../store/useDocumentStore";
 import { Dropzone } from "../components/Dropzone";
@@ -36,6 +36,73 @@ export default function HomePage() {
       // private browsing / blocked storage — dismissal just won't persist
     }
   };
+  const openFile = (files: File[]) => {
+    useDocumentStore.getState().setCurrent(files[0]);
+    dismissOnboarding();
+    navigate("/document");
+  };
+
+  // A tool opened daily shouldn't greet a returning user with the same
+  // pitch every time — that's a landing page, not a home screen. The
+  // full pitch (headline, privacy line, big dropzone) is the onboarding
+  // state for a genuinely first run; once there's a document in
+  // progress or recent history, Home becomes what Preview/Acrobat/Files
+  // all do instead: your actual work, front and center.
+  const hasHistory = Boolean(current) || entries.length > 0;
+
+  if (hasHistory) {
+    return (
+      <section>
+        <h1 className="text-2xl font-bold sm:text-3xl">Home</h1>
+
+        {current && (
+          <Link to="/document" className="session-card mt-4">
+            <span className="flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                <ArrowRight size={18} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <small>CONTINUE YOUR DOCUMENT</small>
+                <strong className="block truncate">{current.name}</strong>
+              </span>
+            </span>
+          </Link>
+        )}
+
+        <RecentActivity
+          entries={entries}
+          variant="prominent"
+          className={current ? "mt-5" : "mt-4"}
+        />
+
+        <h2 className="mt-7 text-sm font-semibold text-muted">
+          Quick actions
+        </h2>
+        <div className="quick-row mt-3">
+          <button type="button" className="quick-row-item" onClick={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "application/pdf,image/*";
+            input.onchange = () => {
+              if (input.files?.[0]) openFile([input.files[0]]);
+            };
+            input.click();
+          }}>
+            <UploadCloud size={20} aria-hidden="true" />
+            Open a file
+          </button>
+          <Link to="/scan" className="quick-row-item">
+            <ScanLine size={20} aria-hidden="true" />
+            Scan a document
+          </Link>
+          <Link to="/files" className="quick-row-item">
+            <FolderOpen size={20} aria-hidden="true" />
+            My files
+          </Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section>
@@ -83,23 +150,9 @@ export default function HomePage() {
           label="Open a file"
           hint="Choose a PDF or photo — pick what to do with it next"
           multiple={false}
-          onFiles={(files) => {
-            useDocumentStore.getState().setCurrent(files[0]);
-            dismissOnboarding();
-            navigate("/document");
-          }}
+          onFiles={openFile}
         />
       </div>
-
-      {current && (
-        <Link to="/document" className="session-card mt-4">
-          <span className="min-w-0">
-            <small>CONTINUE YOUR DOCUMENT</small>
-            <strong className="block truncate">{current.name}</strong>
-          </span>
-          <ArrowRight />
-        </Link>
-      )}
 
       <div className="quick-actions">
         <Link to="/scan" className="secondary-tile">
@@ -125,8 +178,6 @@ export default function HomePage() {
           </Link>
         ))}
       </div>
-
-      <RecentActivity entries={entries} className="mt-6" />
     </section>
   );
 }
